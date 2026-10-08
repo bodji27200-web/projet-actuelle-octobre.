@@ -771,7 +771,9 @@ func _anim(k: String, kind: String) -> void:
 			if kind.begins_with("aura_"):
 				var ac: Color = {"aura_fire": Color(1.6, 0.8, 0.5), "aura_steel": Color(1.2, 1.2, 1.5), "aura_electric": Color(1.6, 1.5, 0.6),
 					"aura_ghost": Color(1.0, 0.7, 1.5), "aura_dragon": Color(1.1, 0.8, 1.7), "aura_grass": Color(0.8, 1.6, 0.8),
-					"aura_dark": Color(0.7, 0.6, 0.8)}.get(kind, Color(1.4, 1.4, 1.4))
+					"aura_dark": Color(0.7, 0.6, 0.8), "aura_water": Color(0.7, 1.0, 1.7), "aura_ice": Color(0.9, 1.4, 1.7),
+					"aura_psychic": Color(1.6, 0.8, 1.3), "aura_fairy": Color(1.7, 1.1, 1.5), "aura_fighting": Color(1.5, 0.9, 0.6),
+					"aura_rock": Color(1.4, 1.2, 0.8), "aura_ground": Color(1.5, 1.2, 0.6), "aura_flying": Color(1.1, 1.3, 1.7)}.get(kind, Color(1.4, 1.4, 1.4))
 				tr.set_meta("aura", ac)
 				var tw3 := create_tween()
 				tw3.tween_property(tr, "modulate", ac, 0.3)

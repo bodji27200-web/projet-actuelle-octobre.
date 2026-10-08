@@ -1,0 +1,4418 @@
+{
+"abandoned-ship": {
+"fr": "Épave",
+"region": "3"
+},
+"abundant-shrine": {
+"fr": "Autel Abondance",
+"region": "5"
+},
+"abyssal-ruins": {
+"fr": "Ruines des Abysses",
+"region": "5"
+},
+"accumula-gate": {
+"fr": "Porte Arabelle",
+"region": "5"
+},
+"accumula-town": {
+"fr": "Arabelle",
+"region": "5"
+},
+"acuity-cavern": {
+"fr": "Caverne Savoir",
+"region": "4"
+},
+"acuity-lakefront": {
+"fr": "Rive Lac Savoir",
+"region": "4"
+},
+"aether-paradise": {
+"fr": "Paradis Æther",
+"region": "7"
+},
+"agate-village": {
+"fr": "Agate Village",
+"region": "11"
+},
+"aipom-hill": {
+"fr": "Mont des Capumain",
+"region": "9"
+},
+"akala-meadow": {
+"fr": "Jardin d’Akala",
+"region": "7"
+},
+"akala-outskirts": {
+"fr": "Côte Reculée d’Akala",
+"region": "7"
+},
+"alfornada": {
+"fr": "Alforneira",
+"region": "10"
+},
+"alfornada-cavern": {
+"fr": "Grotte d'Alforneira",
+"region": "10"
+},
+"alola-berry-fields": {
+"fr": "Champ de Baies d'Alola",
+"region": "7"
+},
+"alola-pokemon-league": {
+"fr": "Ligue Pokémon",
+"region": "7"
+},
+"alola-route-1": {
+"fr": "Route 1",
+"region": "7"
+},
+"alola-route-1--hauoli-outskirts": {
+"fr": "Route 1",
+"region": "7"
+},
+"alola-route-10": {
+"fr": "Route 10",
+"region": "7"
+},
+"alola-route-11": {
+"fr": "Route 11",
+"region": "7"
+},
+"alola-route-12": {
+"fr": "Route 12",
+"region": "7"
+},
+"alola-route-13": {
+"fr": "Route 13",
+"region": "7"
+},
+"alola-route-14": {
+"fr": "Route 14",
+"region": "7"
+},
+"alola-route-15": {
+"fr": "Route 15",
+"region": "7"
+},
+"alola-route-16": {
+"fr": "Route 16",
+"region": "7"
+},
+"alola-route-17": {
+"fr": "Route 17",
+"region": "7"
+},
+"alola-route-2": {
+"fr": "Route 2",
+"region": "7"
+},
+"alola-route-3": {
+"fr": "Route 3",
+"region": "7"
+},
+"alola-route-4": {
+"fr": "Route 4",
+"region": "7"
+},
+"alola-route-5": {
+"fr": "Route 5",
+"region": "7"
+},
+"alola-route-6": {
+"fr": "Route 6",
+"region": "7"
+},
+"alola-route-7": {
+"fr": "Route 7",
+"region": "7"
+},
+"alola-route-8": {
+"fr": "Route 8",
+"region": "7"
+},
+"alola-route-9": {
+"fr": "Route 9",
+"region": "7"
+},
+"altar-of-the-moone": {
+"fr": "Autel de la Lune",
+"region": "7"
+},
+"altar-of-the-sunne": {
+"fr": "Autel du Soleil",
+"region": "7"
+},
+"ambrette-aquarium": {
+"fr": "Aquarium R. s/Gliffe",
+"region": "6"
+},
+"ambrette-gate": {
+"fr": "Porte de R. s/Gliffe",
+"region": "6"
+},
+"ambrette-town": {
+"fr": "Roche-sur-Gliffe",
+"region": "6"
+},
+"amity-square": {
+"fr": "Square Paisible",
+"region": "4"
+},
+"ancient-poni-path": {
+"fr": "Vieille Route",
+"region": "7"
+},
+"ancient-quarry": {
+"fr": "Ancienne Carrière",
+"region": "9"
+},
+"ancient-tomb": {
+"fr": "Tombeau Antique",
+"region": "3"
+},
+"anistar-city": {
+"fr": "Flusselles",
+"region": "6"
+},
+"anistar-gate": {
+"fr": "Porte de Flusselles",
+"region": "6"
+},
+"anville-town": {
+"fr": "Rotombourg",
+"region": "5"
+},
+"apple-hills": {
+"fr": "Coteau Pommes",
+"region": "10"
+},
+"aquacorde-town": {
+"fr": "Quarellis",
+"region": "6"
+},
+"area-zero": {
+"fr": "Zone Zéro",
+"region": "10"
+},
+"arenas-approach": {
+"fr": "Sentier de l'Arène",
+"region": "9"
+},
+"artazon": {
+"fr": "Cuencia",
+"region": "10"
+},
+"artisan-cave": {
+"fr": "Grotte Atelier",
+"region": "3"
+},
+"asado-desert": {
+"fr": "Désert Rôtissable",
+"region": "10"
+},
+"aspertia-city": {
+"fr": "Pavonnay",
+"region": "5"
+},
+"aspertia-gate": {
+"fr": "Porte Pavonnay",
+"region": "5"
+},
+"aspiration-hill": {
+"fr": "Colline Ambition",
+"region": "9"
+},
+"avalanche-slopes": {
+"fr": "Pente de l'Avalanche",
+"region": "9"
+},
+"avaluggs-legacy": {
+"fr": "Glacier Séracrawl",
+"region": "9"
+},
+"avance-trail": {
+"fr": "Chemin Progrès",
+"region": "6"
+},
+"axews-eye": {
+"fr": "Œil du Lac",
+"region": "8"
+},
+"azalea-town": {
+"fr": "Ecorcia",
+"region": "2"
+},
+"azure-bay": {
+"fr": "Baie Azur",
+"region": "6"
+},
+"ballimere-lake": {
+"fr": "Lac Poké Ball",
+"region": "8"
+},
+"ballonlea": {
+"fr": "Corrifey",
+"region": "8"
+},
+"bathers-lagoon": {
+"fr": "Lagune des Bains",
+"region": "9"
+},
+"battle-arcade": {
+"fr": "Arcade de Combat",
+"region": "4"
+},
+"battle-castle": {
+"fr": "Castel de Combat",
+"region": "4"
+},
+"battle-chateau": {
+"fr": "Château de Combat",
+"region": "6"
+},
+"battle-factory": {
+"fr": "Usine de Combat",
+"region": "4"
+},
+"battle-frontier": {
+"fr": "Zone de Combat",
+"region": "4"
+},
+"battle-hall": {
+"fr": "Scène de Combat",
+"region": "4"
+},
+"battle-maison": {
+"fr": "Maison de Combat",
+"region": "6"
+},
+"battle-park": {
+"fr": "Parc des Combats",
+"region": "4"
+},
+"battle-resort": {
+"fr": "Atoll de Combat",
+"region": "3"
+},
+"battle-royal-dome": {
+"fr": "Dôme Royal",
+"region": "7"
+},
+"battle-subway": {
+"fr": "Métro de Combat",
+"region": "5"
+},
+"battle-tree": {
+"fr": "Arbre de Combat",
+"region": "7"
+},
+"battleground": {
+"fr": "Café Combats",
+"region": "4"
+},
+"bell-tower": {
+"fr": "Tour Carillon",
+"region": "2"
+},
+"bellchime-trail": {
+"fr": "Sentier Carillon",
+"region": "2"
+},
+"berry-forest": {
+"fr": "Bois Baies",
+"region": "1"
+},
+"birth-island": {
+"fr": "Île Aurore",
+"region": "1"
+},
+"black-city": {
+"fr": "Ville Noire",
+"region": "5"
+},
+"black-gate": {
+"fr": "Porte Noire",
+"region": "5"
+},
+"black-tower": {
+"fr": "Gratte-Ciel Noir",
+"region": "5"
+},
+"blackthorn-city": {
+"fr": "Ebènelle",
+"region": "2"
+},
+"blazing-chamber": {
+"fr": "Chambre du Brasier",
+"region": "6"
+},
+"blush-mountain": {
+"fr": "Mont Ardent",
+"region": "7"
+},
+"bolderoll-ravine": {
+"fr": "Mont des Gringoles",
+"region": "9"
+},
+"bolderoll-slope": {
+"fr": "Pente des Gringoles",
+"region": "9"
+},
+"bond-bridge": {
+"fr": "Pont du Lien",
+"region": "1"
+},
+"bonechill-wastes": {
+"fr": "Étendue Polaire",
+"region": "9"
+},
+"brava-arena": {
+"fr": "Arène du Théâtre",
+"region": "9"
+},
+"brawlers-cave": {
+"fr": "Grotte du Pugilat",
+"region": "8"
+},
+"bridge-field": {
+"fr": "Prairie Entre-Ponts",
+"region": "8"
+},
+"bridge-gate": {
+"fr": "Porte de Pont",
+"region": "5"
+},
+"brooklet-hill": {
+"fr": "Colline Clapotis",
+"region": "7"
+},
+"brooklet-hill--totems-den": {
+"fr": "Colline Clapotis",
+"region": "7"
+},
+"brun-way": {
+"fr": "Chemin Brun",
+"region": "6"
+},
+"burned-tower": {
+"fr": "Tour Cendrée",
+"region": "2"
+},
+"cabo-poco": {
+"fr": "Cuchalaga",
+"region": "10"
+},
+"camphrier-town": {
+"fr": "Fort-Vanitas",
+"region": "6"
+},
+"canalave-city": {
+"fr": "Joliberges",
+"region": "4"
+},
+"canalave-library": {
+"fr": "Bibl. Joliberges",
+"region": "4"
+},
+"canyon-biome": {
+"fr": "Zone Canyon",
+"region": "10"
+},
+"canyon-entrance": {
+"fr": "Entrée du Canyon",
+"region": "1"
+},
+"canyon-plaza": {
+"fr": "Poste Canyon",
+"region": "10"
+},
+"cape-brink": {
+"fr": "Cap Falaise",
+"region": "1"
+},
+"caph-squads-base": {
+"fr": "Repaire du Groupe Caph",
+"region": "10"
+},
+"cascarrafa": {
+"fr": "Jarramanca",
+"region": "10"
+},
+"casseroya-lake": {
+"fr": "Lac Asrol",
+"region": "10"
+},
+"castaway-shore": {
+"fr": "Plage de l'Errance",
+"region": "9"
+},
+"castelia-city": {
+"fr": "Volucité",
+"region": "5"
+},
+"castelia-gate": {
+"fr": "Porte Volucité",
+"region": "5"
+},
+"castelia-sewers": {
+"fr": "Égouts de Volucité",
+"region": "5"
+},
+"cave-of-being": {
+"fr": "Caverne des Esprits",
+"region": "5"
+},
+"cave-of-origin": {
+"fr": "Grotte Origine",
+"region": "3"
+},
+"celadon-city": {
+"fr": "Céladopole",
+"region": "1"
+},
+"celestial-tower": {
+"fr": "Tour des Cieux",
+"region": "5"
+},
+"celestic-town": {
+"fr": "Célestia",
+"region": "4"
+},
+"celestica-ruins": {
+"fr": "Temple Céleste",
+"region": "9"
+},
+"celestica-trail": {
+"fr": "Sentier Céleste",
+"region": "9"
+},
+"central-plaza": {
+"fr": "Poste Central",
+"region": "10"
+},
+"cerulean-cave": {
+"fr": "Caverne Azurée",
+"region": "1"
+},
+"cerulean-city": {
+"fr": "Azuria",
+"region": "1"
+},
+"challenge-beach": {
+"fr": "Plage de l'Épreuve",
+"region": "8"
+},
+"challenge-road": {
+"fr": "Route de l'Épreuve",
+"region": "8"
+},
+"challengers-cave": {
+"fr": "Antre d'Entraînement",
+"region": "5"
+},
+"chamber-of-emptiness": {
+"fr": "Chambre Néant",
+"region": "6"
+},
+"chargestone-cave": {
+"fr": "Grotte Électrolithe",
+"region": "5"
+},
+"chargestone-cavern": {
+"fr": "Caverne Électrolithe",
+"region": "10"
+},
+"cherrygrove-city": {
+"fr": "Ville Griotte",
+"region": "2"
+},
+"chilling-waterhead": {
+"fr": "Grotte Douche Froide",
+"region": "10"
+},
+"cianwood-city": {
+"fr": "Irisia",
+"region": "2"
+},
+"cinnabar-island": {
+"fr": "Cramois'Ile",
+"region": "1"
+},
+"cipher-key-lair": {
+"fr": "Cipher Key Lair",
+"region": "11"
+},
+"cipher-lab": {
+"fr": "Cipher Lab",
+"region": "11"
+},
+"circhester": {
+"fr": "Ludester",
+"region": "8"
+},
+"citadark-isle": {
+"fr": "Citadark Isle",
+"region": "11"
+},
+"clamberclaw-cliffs": {
+"fr": "Falaise Cascade",
+"region": "9"
+},
+"clay-tunnel": {
+"fr": "Route Bardane",
+"region": "5"
+},
+"cliff-cave": {
+"fr": "Grotte Falaise",
+"region": "2"
+},
+"cliff-edge-gate": {
+"fr": "Portail Falaise",
+"region": "2"
+},
+"cloudcap-pass": {
+"fr": "Passage des Nuages",
+"region": "9"
+},
+"cloudpool-ridge": {
+"fr": "Col Mer-de-Nuages",
+"region": "9"
+},
+"coastal-biome": {
+"fr": "Zone Côtière",
+"region": "10"
+},
+"coastal-plaza": {
+"fr": "Poste Côtier",
+"region": "10"
+},
+"coastlands-camp": {
+"fr": "Bivouac Côtier",
+"region": "9"
+},
+"cold-storage": {
+"fr": "Hangar Frigorifique",
+"region": "5"
+},
+"concert-event": {
+"fr": "Evénem. Concert",
+"region": ""
+},
+"connecting-cave": {
+"fr": "Cave Connecterre",
+"region": "6"
+},
+"contest-hall": {
+"fr": "Salle Concours",
+"region": "4"
+},
+"cortondo": {
+"fr": "Sevaro",
+"region": "10"
+},
+"cottonsedge-prairie": {
+"fr": "Lande Herbacoton",
+"region": "9"
+},
+"coumarine-city": {
+"fr": "Port Tempères",
+"region": "6"
+},
+"coumarine-gate": {
+"fr": "Porte de P. Tempères",
+"region": "6"
+},
+"courageous-cavern": {
+"fr": "Caverne Pugnacité",
+"region": "8"
+},
+"couriway-gate": {
+"fr": "Porte de Mozheim",
+"region": "6"
+},
+"couriway-town": {
+"fr": "Mozheim",
+"region": "6"
+},
+"crescent-isle": {
+"fr": "Île de l’Arc",
+"region": "3"
+},
+"crossing-slope": {
+"fr": "Coteau du Passage",
+"region": "9"
+},
+"crown-shrine": {
+"fr": "Temple Couronne",
+"region": "8"
+},
+"crystal-pool": {
+"fr": "Lac Cristallin",
+"region": "10"
+},
+"cyllage-city": {
+"fr": "Relifac-le-Haut",
+"region": "6"
+},
+"cynthia": {
+"fr": "Cynthia",
+"region": ""
+},
+"dalizapa-passage": {
+"fr": "Tunnel Mezcla-Pincho",
+"region": "10"
+},
+"dappled-grove": {
+"fr": "Bois de Clairjour",
+"region": "8"
+},
+"dark-cave": {
+"fr": "Antre Noir",
+"region": "2"
+},
+"day-care-couple": {
+"fr": "Couple Pension",
+"region": ""
+},
+"deadwood-haunt": {
+"fr": "Rive des Revenants",
+"region": "9"
+},
+"deertrack-heights": {
+"fr": "Plateau Cer-Mont",
+"region": "9"
+},
+"deertrack-path": {
+"fr": "Sentier Cer-Mont",
+"region": "9"
+},
+"dendemille-gate": {
+"fr": "Porte de La Frescale",
+"region": "6"
+},
+"dendemille-town": {
+"fr": "La Frescale",
+"region": "6"
+},
+"derniere-way": {
+"fr": "Chemin Final",
+"region": "6"
+},
+"desert-resort": {
+"fr": "Désert Délassant",
+"region": "5"
+},
+"desert-ruins": {
+"fr": "Ruines Désert",
+"region": "3"
+},
+"desert-underpass": {
+"fr": "Voie du Désert",
+"region": "3"
+},
+"detourner-way": {
+"fr": "Chemin Détour",
+"region": "6"
+},
+"dewford-town": {
+"fr": "Myokara",
+"region": "3"
+},
+"diamond-heath": {
+"fr": "Lisière du Hameau",
+"region": "9"
+},
+"diamond-settlement": {
+"fr": "Hameau Diamant",
+"region": "9"
+},
+"digletts-cave": {
+"fr": "Cave TAUPIQUEUR",
+"region": "1"
+},
+"digletts-tunnel": {
+"fr": "Tunnel Taupiqueur",
+"region": "7"
+},
+"dilford-chamber": {
+"fr": "Chambre Jonquatre",
+"region": "1"
+},
+"distant-land": {
+"fr": "Pays lointain",
+"region": ""
+},
+"distortion-world": {
+"fr": "Monde Distorsion",
+"region": "4"
+},
+"dividing-peak-tunnel": {
+"fr": "Tunnel Perce-Mont",
+"region": "7"
+},
+"dragonmark-chamber": {
+"fr": "Chambre de la Guivre",
+"region": "6"
+},
+"dragons-den": {
+"fr": "Antre du Dragon",
+"region": "2"
+},
+"dragonspiral-tower": {
+"fr": "Tour Dragospire",
+"region": "5"
+},
+"dreaded-den": {
+"fr": "Antre Interdit",
+"region": "10"
+},
+"dreamyard": {
+"fr": "Vestiges du Rêve",
+"region": "5"
+},
+"driftveil-city": {
+"fr": "Port Yoneuve",
+"region": "5"
+},
+"driftveil-drawbridge": {
+"fr": "Pont Yoneuve",
+"region": "5"
+},
+"droning-meadow": {
+"fr": "Champ Bourdonne",
+"region": "9"
+},
+"dusty-bowl": {
+"fr": "Fosse des Sables",
+"region": "8"
+},
+"dyna-tree-hill": {
+"fr": "Butte du Dynarbre",
+"region": "8"
+},
+"east-lake-axewell": {
+"fr": "Lac Coupenotte Est",
+"region": "8"
+},
+"east-paldean-sea": {
+"fr": "Mer de l'Est de Paldea",
+"region": "10"
+},
+"ecruteak-city": {
+"fr": "Rosalia",
+"region": "2"
+},
+"embedded-tower": {
+"fr": "Tour Enfouie",
+"region": "2"
+},
+"energy-plant": {
+"fr": "Energy Plant",
+"region": "8"
+},
+"entralink": {
+"fr": "Heylink",
+"region": "5"
+},
+"entree-forest": {
+"fr": "Forêt du Heylink",
+"region": "5"
+},
+"eterna-city": {
+"fr": "Vestigion",
+"region": "4"
+},
+"eterna-forest": {
+"fr": "Forêt Vestigion",
+"region": "4"
+},
+"event-site": {
+"fr": "Lieu d'Evénement",
+"region": ""
+},
+"ever-grande-city": {
+"fr": "Éternara",
+"region": "3"
+},
+"exeggutor-island": {
+"fr": "Île Noadkoko",
+"region": "7"
+},
+"fabled-cave": {
+"fr": "Grotte Évanescente",
+"region": "3"
+},
+"fabled-spring": {
+"fr": "Source Féérique",
+"region": "9"
+},
+"fallarbor-town": {
+"fr": "Autéquia",
+"region": "3"
+},
+"faraway-island": {
+"fr": "Île lointaine",
+"region": "3"
+},
+"faraway-place": {
+"fr": "Endroit lointain",
+"region": ""
+},
+"fellhorn-gorge": {
+"fr": "Gorge de la Corne",
+"region": "10"
+},
+"fields-of-honor": {
+"fr": "Plaine Salutation",
+"region": "8"
+},
+"fiery-path": {
+"fr": "Chemin Ardent",
+"region": "3"
+},
+"fight-area": {
+"fr": "Aire de Combat",
+"region": "4"
+},
+"firescourge-shrine": {
+"fr": "Sanctuaire du Feu Ravageur",
+"region": "10"
+},
+"firespit-island": {
+"fr": "Île Crache-Feu",
+"region": "9"
+},
+"five-island": {
+"fr": "Ile 5",
+"region": "1"
+},
+"five-isle-meadow": {
+"fr": "Pré Ile 5",
+"region": "1"
+},
+"floaro-gardens": {
+"fr": "Champ Flora",
+"region": "9"
+},
+"floaroma-meadow": {
+"fr": "Pré Floraville",
+"region": "4"
+},
+"floaroma-town": {
+"fr": "Floraville",
+"region": "4"
+},
+"floccesy-ranch": {
+"fr": "Ranch d'Amaillide",
+"region": "5"
+},
+"floccesy-town": {
+"fr": "Amaillide",
+"region": "5"
+},
+"flood-chamber": {
+"fr": "Chambre du Barrage",
+"region": "6"
+},
+"flower-paradise": {
+"fr": "Paradis Fleuri",
+"region": "4"
+},
+"footstep-house": {
+"fr": "Abri Petitpas",
+"region": "4"
+},
+"forest-of-focus": {
+"fr": "Forêt Flexion",
+"region": "8"
+},
+"fortree-city": {
+"fr": "Cimetronelle",
+"region": "3"
+},
+"four-island": {
+"fr": "Ile 4",
+"region": "1"
+},
+"fourrage-road": {
+"fr": "Chemin Fourrage",
+"region": "6"
+},
+"freezington": {
+"fr": "Hameau Gelé",
+"region": "8"
+},
+"friend-safari": {
+"fr": "Safari des Amis",
+"region": "6"
+},
+"frigid-sea": {
+"fr": "Mer Banquise",
+"region": "8"
+},
+"frontier-access": {
+"fr": "Atrium Combat",
+"region": "2"
+},
+"frost-cavern": {
+"fr": "Caverne Gelée",
+"region": "6"
+},
+"frostpoint-field": {
+"fr": "Plaine Granfroy",
+"region": "8"
+},
+"fuchsia-city": {
+"fr": "Parmanie",
+"region": "1"
+},
+"fuego-ironworks": {
+"fr": "Forge Fuego",
+"region": "4"
+},
+"fullmoon-island": {
+"fr": "Ile Pleine Lune",
+"region": "4"
+},
+"galactic-hq": {
+"fr": "QG Galaxie",
+"region": "4"
+},
+"galar-battle-tower": {
+"fr": "Tour de Combat",
+"region": "8"
+},
+"galar-iceberg-ruins": {
+"fr": "Ruines Iceberg",
+"region": "8"
+},
+"galar-iron-ruins": {
+"fr": "Ruines de Fer",
+"region": "8"
+},
+"galar-mine": {
+"fr": "Mine de Galar",
+"region": "8"
+},
+"galar-mine-no-2": {
+"fr": "Mine de Galar n° 2",
+"region": "8"
+},
+"galar-rock-peak-ruins": {
+"fr": "Ruines Pic Roche",
+"region": "8"
+},
+"galar-route-1": {
+"fr": "Route 1",
+"region": "8"
+},
+"galar-route-10": {
+"fr": "Route 10",
+"region": "8"
+},
+"galar-route-2": {
+"fr": "Route 2",
+"region": "8"
+},
+"galar-route-3": {
+"fr": "Route 3",
+"region": "8"
+},
+"galar-route-4": {
+"fr": "Route 4",
+"region": "8"
+},
+"galar-route-5": {
+"fr": "Route 5",
+"region": "8"
+},
+"galar-route-6": {
+"fr": "Route 6",
+"region": "8"
+},
+"galar-route-7": {
+"fr": "Route 7",
+"region": "8"
+},
+"galar-route-8": {
+"fr": "Route 8",
+"region": "8"
+},
+"galar-route-9": {
+"fr": "Route 9",
+"region": "8"
+},
+"galar-wild-area-max-dens": {
+"fr": "Max Dens in the Galar Wild Area",
+"region": "8"
+},
+"gapejaw-bog": {
+"fr": "Marais Bouchebée",
+"region": "9"
+},
+"gateon-port": {
+"fr": "Gateon Port",
+"region": "11"
+},
+"gear-station": {
+"fr": "Engrenage du Métro",
+"region": "5"
+},
+"geosenge-town": {
+"fr": "Cromlac’h",
+"region": "6"
+},
+"giant-chasm": {
+"fr": "Grotte Cyclopéenne",
+"region": "5"
+},
+"giants-bed": {
+"fr": "Repos du Géant",
+"region": "8"
+},
+"giants-cap": {
+"fr": "Coiffe du Géant",
+"region": "8"
+},
+"giants-foot": {
+"fr": "Empreinte du Géant",
+"region": "8"
+},
+"giants-mirror": {
+"fr": "Miroir du Géant",
+"region": "8"
+},
+"giants-seat": {
+"fr": "Siège du Géant",
+"region": "8"
+},
+"ginkgo-landing": {
+"fr": "Place Ginkgo",
+"region": "9"
+},
+"glacier-room": {
+"fr": "Salle Iceberg",
+"region": "5"
+},
+"glacier-terrace": {
+"fr": "Terrasse du Glacier",
+"region": "9"
+},
+"glaseado-mountain": {
+"fr": "Mont Nappé",
+"region": "10"
+},
+"glimwood-tangle": {
+"fr": "Forêt de Lumirinth",
+"region": "8"
+},
+"glittering-cave": {
+"fr": "Grotte Étincelante",
+"region": "6"
+},
+"gnarled-den": {
+"fr": "Gouffre Informe",
+"region": "3"
+},
+"golden-lowlands": {
+"fr": "Plaine d'Or",
+"region": "9"
+},
+"goldenrod-city": {
+"fr": "Doublonville",
+"region": "2"
+},
+"goldenrod-tunnel": {
+"fr": "Doublon-Tunnel",
+"region": "2"
+},
+"grand-lake": {
+"fr": "Grand Lac",
+"region": "4"
+},
+"grande-vallee-way": {
+"fr": "Chemin du Val",
+"region": "6"
+},
+"grandtree-arena": {
+"fr": "Arène du Grand Arbre",
+"region": "9"
+},
+"granite-cave": {
+"fr": "Grotte Granite",
+"region": "3"
+},
+"grasswither-shrine": {
+"fr": "Sanctuaire du Bois Mourant",
+"region": "10"
+},
+"great-marsh": {
+"fr": "Grand Marais",
+"region": "4"
+},
+"green-path": {
+"fr": "Chemin Vert",
+"region": "1"
+},
+"groundblight-shrine": {
+"fr": "Sanctuaire du Sol Corrompu",
+"region": "10"
+},
+"grueling-grove": {
+"fr": "Bocage Agité",
+"region": "9"
+},
+"gts": {
+"fr": "GTS",
+"region": "4"
+},
+"guidance-chamber": {
+"fr": "Espace Guide",
+"region": "5"
+},
+"haina-desert": {
+"fr": "Désert Haina",
+"region": "7"
+},
+"hammerlocke": {
+"fr": "Kickenham",
+"region": "8"
+},
+"hammerlocke-hills": {
+"fr": "Plateau de Kickenham",
+"region": "8"
+},
+"hano-beach": {
+"fr": "Plage Hano-Hano",
+"region": "7"
+},
+"hano-grand-resort": {
+"fr": "Club Hano-Hano",
+"region": "7"
+},
+"hauoli-cemetery": {
+"fr": "Cimetière d’Ekaeka",
+"region": "7"
+},
+"hauoli-city": {
+"fr": "Ekaeka",
+"region": "7"
+},
+"hauoli-city--beachfront": {
+"fr": "Ekaeka",
+"region": "7"
+},
+"hauoli-city--marina": {
+"fr": "Ekaeka",
+"region": "7"
+},
+"hauoli-city--shopping-district": {
+"fr": "Ekaeka",
+"region": "7"
+},
+"heahea-beach": {
+"fr": "Plage d'Ho'ohale",
+"region": "7"
+},
+"heahea-city": {
+"fr": "Ho’ohale",
+"region": "7"
+},
+"hearthome-city": {
+"fr": "Unionpolis",
+"region": "4"
+},
+"hearts-crag": {
+"fr": "Rocher Esprit",
+"region": "9"
+},
+"heavenward-lookout": {
+"fr": "Hauts de l'Humilité",
+"region": "9"
+},
+"heights-camp": {
+"fr": "Bivouac de la Friche",
+"region": "9"
+},
+"hidden-grotto": {
+"fr": "Trouée Cachée",
+"region": "5"
+},
+"hideaway-bay": {
+"fr": "Crique Paisible",
+"region": "9"
+},
+"hisui-lake-acuity": {
+"fr": "Lac Savoir",
+"region": "9"
+},
+"hisui-lake-valor": {
+"fr": "Lac Courage",
+"region": "9"
+},
+"hisui-lake-verity": {
+"fr": "Lac Vérité",
+"region": "9"
+},
+"hisui-snowpoint-temple": {
+"fr": "Temple de Frimapic",
+"region": "9"
+},
+"hisui-solaceon-ruins": {
+"fr": "Ruines de Bonville",
+"region": "9"
+},
+"hisui-spring-path": {
+"fr": "Chemin de la Source",
+"region": "9"
+},
+"hisui-turnback-cave": {
+"fr": "Grotte du Retour",
+"region": "9"
+},
+"hisui-wayward-cave": {
+"fr": "Grotte des Égarés",
+"region": "9"
+},
+"hoenn": {
+"fr": "Hoenn",
+"region": ""
+},
+"hoenn-altering-cave": {
+"fr": "Grotte Métamo",
+"region": "3"
+},
+"hoenn-battle-frontier": {
+"fr": "Zone de Combat",
+"region": "3"
+},
+"hoenn-battle-tower": {
+"fr": "Tour de Combat",
+"region": "3"
+},
+"hoenn-pokecenter": {
+"fr": "hoenn-pokecenter",
+"region": "3"
+},
+"hoenn-pokemart": {
+"fr": "hoenn-pokemart",
+"region": "3"
+},
+"hoenn-pokemon-league": {
+"fr": "Ligue Pokémon",
+"region": "3"
+},
+"hoenn-route-101": {
+"fr": "Route 101",
+"region": "3"
+},
+"hoenn-route-102": {
+"fr": "Route 102",
+"region": "3"
+},
+"hoenn-route-103": {
+"fr": "Route 103",
+"region": "3"
+},
+"hoenn-route-104": {
+"fr": "Route 104",
+"region": "3"
+},
+"hoenn-route-105": {
+"fr": "Chenal 105",
+"region": "3"
+},
+"hoenn-route-106": {
+"fr": "Chenal 106",
+"region": "3"
+},
+"hoenn-route-107": {
+"fr": "Chenal 107",
+"region": "3"
+},
+"hoenn-route-108": {
+"fr": "Chenal 108",
+"region": "3"
+},
+"hoenn-route-109": {
+"fr": "Chenal 109",
+"region": "3"
+},
+"hoenn-route-110": {
+"fr": "Route 110",
+"region": "3"
+},
+"hoenn-route-111": {
+"fr": "Route 111",
+"region": "3"
+},
+"hoenn-route-112": {
+"fr": "Route 112",
+"region": "3"
+},
+"hoenn-route-113": {
+"fr": "Route 113",
+"region": "3"
+},
+"hoenn-route-114": {
+"fr": "Route 114",
+"region": "3"
+},
+"hoenn-route-115": {
+"fr": "Route 115",
+"region": "3"
+},
+"hoenn-route-116": {
+"fr": "Route 116",
+"region": "3"
+},
+"hoenn-route-117": {
+"fr": "Route 117",
+"region": "3"
+},
+"hoenn-route-118": {
+"fr": "Route 118",
+"region": "3"
+},
+"hoenn-route-119": {
+"fr": "Route 119",
+"region": "3"
+},
+"hoenn-route-120": {
+"fr": "Route 120",
+"region": "3"
+},
+"hoenn-route-121": {
+"fr": "Route 121",
+"region": "3"
+},
+"hoenn-route-122": {
+"fr": "Chenal 122",
+"region": "3"
+},
+"hoenn-route-123": {
+"fr": "Route 123",
+"region": "3"
+},
+"hoenn-route-124": {
+"fr": "Chenal 124",
+"region": "3"
+},
+"hoenn-route-125": {
+"fr": "Chenal 125",
+"region": "3"
+},
+"hoenn-route-126": {
+"fr": "Chenal 126",
+"region": "3"
+},
+"hoenn-route-127": {
+"fr": "Chenal 127",
+"region": "3"
+},
+"hoenn-route-128": {
+"fr": "Chenal 128",
+"region": "3"
+},
+"hoenn-route-129": {
+"fr": "Chenal 129",
+"region": "3"
+},
+"hoenn-route-130": {
+"fr": "Chenal 130",
+"region": "3"
+},
+"hoenn-route-131": {
+"fr": "Chenal 131",
+"region": "3"
+},
+"hoenn-route-132": {
+"fr": "Chenal 132",
+"region": "3"
+},
+"hoenn-route-133": {
+"fr": "Chenal 133",
+"region": "3"
+},
+"hoenn-route-134": {
+"fr": "Chenal 134",
+"region": "3"
+},
+"hoenn-safari-zone": {
+"fr": "Parc Safari",
+"region": "3"
+},
+"hoenn-victory-road": {
+"fr": "Route Victoire",
+"region": "3"
+},
+"hokulani-observatory": {
+"fr": "Observatoire",
+"region": "7"
+},
+"holm-of-trials": {
+"fr": "Île de l’Épreuve",
+"region": "9"
+},
+"honeycalm-island": {
+"fr": "Îlot Calméole",
+"region": "8"
+},
+"honeycalm-sea": {
+"fr": "Mer Calméole",
+"region": "8"
+},
+"horseshoe-plains": {
+"fr": "Val Ferrache",
+"region": "9"
+},
+"hulbury": {
+"fr": "Skifford",
+"region": "8"
+},
+"humilau-city": {
+"fr": "Papeloa",
+"region": "5"
+},
+"ice-column-chamber": {
+"fr": "Chambre des Piliers",
+"region": "9"
+},
+"ice-path": {
+"fr": "Route de Glace",
+"region": "2"
+},
+"iceberg-ruins": {
+"fr": "Ruines Iceberg",
+"region": "4"
+},
+"icebound-falls": {
+"fr": "Chute d'Oglacé",
+"region": "9"
+},
+"icefall-cave": {
+"fr": "Grotte de Glace",
+"region": "1"
+},
+"icepeak-arena": {
+"fr": "Arène de l'Iceberg",
+"region": "9"
+},
+"icepeak-cavern": {
+"fr": "Souterrain de Givre",
+"region": "9"
+},
+"icerend-shrine": {
+"fr": "Sanctuaire du Froid Cruel",
+"region": "10"
+},
+"icirrus-city": {
+"fr": "Flocombe",
+"region": "5"
+},
+"iki-town": {
+"fr": "Lili’i",
+"region": "7"
+},
+"ilex-forest": {
+"fr": "Bois aux Chênes",
+"region": "2"
+},
+"indigo-plateau": {
+"fr": "Plateau Indigo",
+"region": "1"
+},
+"infernal-pass": {
+"fr": "Val Infernal",
+"region": "10"
+},
+"inlet-grotto": {
+"fr": "Caverne de la Crique",
+"region": "10"
+},
+"inside-of-truck": {
+"fr": "???",
+"region": "3"
+},
+"insular-sea": {
+"fr": "Mer Isol'Îlots",
+"region": "8"
+},
+"iron-island": {
+"fr": "Ile de Fer",
+"region": "4"
+},
+"iron-room": {
+"fr": "Salle Fer",
+"region": "5"
+},
+"iron-ruins": {
+"fr": "Ruines de Fer",
+"region": "4"
+},
+"ironworks-chamber": {
+"fr": "Chambre de l’Alliage",
+"region": "6"
+},
+"island-cave": {
+"fr": "Grotte de l’Îlot",
+"region": "3"
+},
+"isle-of-armor-caves": {
+"fr": "Random caves across the Isle of Armor",
+"region": "8"
+},
+"islespy-shore": {
+"fr": "Plage Long-des-Îles",
+"region": "9"
+},
+"jagged-pass": {
+"fr": "Sentier Sinuroc",
+"region": "3"
+},
+"johto": {
+"fr": "Johto",
+"region": ""
+},
+"johto-lighthouse": {
+"fr": "Phare",
+"region": "2"
+},
+"johto-pokemart": {
+"fr": "johto-pokemart",
+"region": "2"
+},
+"johto-route-29": {
+"fr": "Route 29",
+"region": "2"
+},
+"johto-route-30": {
+"fr": "Route 30",
+"region": "2"
+},
+"johto-route-31": {
+"fr": "Route 31",
+"region": "2"
+},
+"johto-route-32": {
+"fr": "Route 32",
+"region": "2"
+},
+"johto-route-33": {
+"fr": "Route 33",
+"region": "2"
+},
+"johto-route-34": {
+"fr": "Route 34",
+"region": "2"
+},
+"johto-route-35": {
+"fr": "Route 35",
+"region": "2"
+},
+"johto-route-36": {
+"fr": "Route 36",
+"region": "2"
+},
+"johto-route-37": {
+"fr": "Route 37",
+"region": "2"
+},
+"johto-route-38": {
+"fr": "Route 38",
+"region": "2"
+},
+"johto-route-39": {
+"fr": "Route 39",
+"region": "2"
+},
+"johto-route-42": {
+"fr": "Route 42",
+"region": "2"
+},
+"johto-route-43": {
+"fr": "Route 43",
+"region": "2"
+},
+"johto-route-44": {
+"fr": "Route 44",
+"region": "2"
+},
+"johto-route-45": {
+"fr": "Route 45",
+"region": "2"
+},
+"johto-route-46": {
+"fr": "Route 46",
+"region": "2"
+},
+"johto-route-47": {
+"fr": "Route 47",
+"region": "2"
+},
+"johto-route-48": {
+"fr": "Route 48",
+"region": "2"
+},
+"johto-safari-zone": {
+"fr": "Parc Safari",
+"region": "2"
+},
+"johto-sea-route-40": {
+"fr": "Chenal 40",
+"region": "2"
+},
+"johto-sea-route-41": {
+"fr": "Chenal 41",
+"region": "2"
+},
+"join-avenue": {
+"fr": "Galerie Concorde",
+"region": "5"
+},
+"jubilife-city": {
+"fr": "Féli-Cité",
+"region": "4"
+},
+"jubilife-tv": {
+"fr": "Féli-Télé",
+"region": "4"
+},
+"jubilife-village": {
+"fr": "Rusti-Cité",
+"region": "9"
+},
+"kalae-bay": {
+"fr": "Baie de Kala’e",
+"region": "7"
+},
+"kalos-berry-fields": {
+"fr": "kalos-berry-fields",
+"region": "6"
+},
+"kalos-pokemon-league": {
+"fr": "Ligue Pokémon",
+"region": "6"
+},
+"kalos-power-plant": {
+"fr": "Centrale de Kalos",
+"region": "6"
+},
+"kalos-route-1": {
+"fr": "Route 1",
+"region": "6"
+},
+"kalos-route-10": {
+"fr": "Route 10",
+"region": "6"
+},
+"kalos-route-11": {
+"fr": "Route 11",
+"region": "6"
+},
+"kalos-route-12": {
+"fr": "Route 12",
+"region": "6"
+},
+"kalos-route-13": {
+"fr": "Route 13",
+"region": "6"
+},
+"kalos-route-14": {
+"fr": "Route 14",
+"region": "6"
+},
+"kalos-route-15": {
+"fr": "Route 15",
+"region": "6"
+},
+"kalos-route-16": {
+"fr": "Route 16",
+"region": "6"
+},
+"kalos-route-17": {
+"fr": "Route 17",
+"region": "6"
+},
+"kalos-route-18": {
+"fr": "Route 18",
+"region": "6"
+},
+"kalos-route-19": {
+"fr": "Route 19",
+"region": "6"
+},
+"kalos-route-2": {
+"fr": "Route 2",
+"region": "6"
+},
+"kalos-route-20": {
+"fr": "Route 20",
+"region": "6"
+},
+"kalos-route-21": {
+"fr": "Route 21",
+"region": "6"
+},
+"kalos-route-22": {
+"fr": "Route 22",
+"region": "6"
+},
+"kalos-route-3": {
+"fr": "Route 3",
+"region": "6"
+},
+"kalos-route-4": {
+"fr": "Route 4",
+"region": "6"
+},
+"kalos-route-5": {
+"fr": "Route 5",
+"region": "6"
+},
+"kalos-route-6": {
+"fr": "Route 6",
+"region": "6"
+},
+"kalos-route-7": {
+"fr": "Route 7",
+"region": "6"
+},
+"kalos-route-8": {
+"fr": "Route 8",
+"region": "6"
+},
+"kalos-route-9": {
+"fr": "Route 9",
+"region": "6"
+},
+"kalos-victory-road": {
+"fr": "Route Victoire",
+"region": "6"
+},
+"kanto": {
+"fr": "Kanto",
+"region": ""
+},
+"kanto-altering-cave": {
+"fr": "Grotte Métamo",
+"region": "1"
+},
+"kanto-pokecenter": {
+"fr": "kanto-pokecenter",
+"region": "1"
+},
+"kanto-pokemart": {
+"fr": "kanto-pokemart",
+"region": "1"
+},
+"kanto-power-plant": {
+"fr": "Centrale",
+"region": "1"
+},
+"kanto-route-1": {
+"fr": "Route 1",
+"region": "1"
+},
+"kanto-route-10": {
+"fr": "Route 10",
+"region": "1"
+},
+"kanto-route-11": {
+"fr": "Route 11",
+"region": "1"
+},
+"kanto-route-12": {
+"fr": "Route 12",
+"region": "1"
+},
+"kanto-route-13": {
+"fr": "Route 13",
+"region": "1"
+},
+"kanto-route-14": {
+"fr": "Route 14",
+"region": "1"
+},
+"kanto-route-15": {
+"fr": "Route 15",
+"region": "1"
+},
+"kanto-route-16": {
+"fr": "Route 16",
+"region": "1"
+},
+"kanto-route-17": {
+"fr": "Route 17",
+"region": "1"
+},
+"kanto-route-18": {
+"fr": "Route 18",
+"region": "1"
+},
+"kanto-route-2": {
+"fr": "Route 2",
+"region": "1"
+},
+"kanto-route-22": {
+"fr": "Route 22",
+"region": "1"
+},
+"kanto-route-23": {
+"fr": "Route 23",
+"region": "1"
+},
+"kanto-route-24": {
+"fr": "Route 24",
+"region": "1"
+},
+"kanto-route-25": {
+"fr": "Route 25",
+"region": "1"
+},
+"kanto-route-26": {
+"fr": "Route 26",
+"region": "1"
+},
+"kanto-route-27": {
+"fr": "Route 27",
+"region": "1"
+},
+"kanto-route-28": {
+"fr": "Route 28",
+"region": "1"
+},
+"kanto-route-3": {
+"fr": "Route 3",
+"region": "1"
+},
+"kanto-route-4": {
+"fr": "Route 4",
+"region": "1"
+},
+"kanto-route-5": {
+"fr": "Route 5",
+"region": "1"
+},
+"kanto-route-6": {
+"fr": "Route 6",
+"region": "1"
+},
+"kanto-route-7": {
+"fr": "Route 7",
+"region": "1"
+},
+"kanto-route-8": {
+"fr": "Route 8",
+"region": "1"
+},
+"kanto-route-9": {
+"fr": "Route 9",
+"region": "1"
+},
+"kanto-safari-zone": {
+"fr": "Parc Safari",
+"region": "1"
+},
+"kanto-sea-route-19": {
+"fr": "Chenal 19",
+"region": "1"
+},
+"kanto-sea-route-20": {
+"fr": "Chenal 20",
+"region": "1"
+},
+"kanto-sea-route-21": {
+"fr": "Chenal 21",
+"region": "1"
+},
+"kanto-underground-path": {
+"fr": "Kanto Underground Path",
+"region": "1"
+},
+"kanto-victory-road-1": {
+"fr": "Route Victoire",
+"region": "1"
+},
+"kanto-victory-road-2": {
+"fr": "Route Victoire",
+"region": "1"
+},
+"kiloude-city": {
+"fr": "Batisques",
+"region": "6"
+},
+"kiloude-station": {
+"fr": "Gare de Batisques",
+"region": "6"
+},
+"kindle-road": {
+"fr": "Route Tison",
+"region": "1"
+},
+"kitakami-hall": {
+"fr": "Septemplion",
+"region": "10"
+},
+"kitakami-road": {
+"fr": "Route de Septentria",
+"region": "10"
+},
+"kitakami-wilds": {
+"fr": "Terres Vierges de Septentria",
+"region": "10"
+},
+"konikoni-city": {
+"fr": "Konikoni",
+"region": "7"
+},
+"lacunosa-town": {
+"fr": "Entrelasque",
+"region": "5"
+},
+"lake-acuity": {
+"fr": "Lac Savoir",
+"region": "4"
+},
+"lake-of-outrage": {
+"fr": "Lac Ouragan",
+"region": "8"
+},
+"lake-of-rage": {
+"fr": "Lac Colère",
+"region": "2"
+},
+"lake-of-the-moone": {
+"fr": "Lac du Halo Lunaire",
+"region": "7"
+},
+"lake-of-the-sunne": {
+"fr": "Lac du Halo Solaire",
+"region": "7"
+},
+"lake-valor": {
+"fr": "Lac Courage",
+"region": "4"
+},
+"lake-verity": {
+"fr": "Lac Vérité",
+"region": "4"
+},
+"lakeside-cave": {
+"fr": "Grotte du Lac",
+"region": "8"
+},
+"lavaridge-town": {
+"fr": "Vermilava",
+"region": "3"
+},
+"lavender-town": {
+"fr": "Lavanville",
+"region": "1"
+},
+"laverre-city": {
+"fr": "Romant-sous-Bois",
+"region": "6"
+},
+"laverre-gate": {
+"fr": "Porte de Romant",
+"region": "6"
+},
+"laverre-nature-trail": {
+"fr": "Laie Romant-ss-Bois",
+"region": "6"
+},
+"league-club-room": {
+"fr": "Club de la Ligue",
+"region": "10"
+},
+"lentimas-town": {
+"fr": "Arpentières",
+"region": "5"
+},
+"levincia": {
+"fr": "Levalendura",
+"region": "10"
+},
+"liberty-garden": {
+"fr": "Île Liberté",
+"region": "5"
+},
+"lilycove-city": {
+"fr": "Nénucrique",
+"region": "3"
+},
+"link-trade-arrive": {
+"fr": "Echange Link",
+"region": ""
+},
+"link-trade-met": {
+"fr": "Echange Link",
+"region": ""
+},
+"liptoo-chamber": {
+"fr": "Chambre Deulipe",
+"region": "1"
+},
+"littleroot-town": {
+"fr": "Bourg-en-Vol",
+"region": "3"
+},
+"lonely-spring": {
+"fr": "Source Reculée",
+"region": "9"
+},
+"loop-lagoon": {
+"fr": "Lagune Circulaire",
+"region": "8"
+},
+"los-platos": {
+"fr": "Plato Real",
+"region": "10"
+},
+"lost-cave": {
+"fr": "Grotte Perdue",
+"region": "1"
+},
+"lost-hotel": {
+"fr": "Hôtel Désolation",
+"region": "6"
+},
+"lost-tower": {
+"fr": "Tour Perdue",
+"region": "4"
+},
+"lostlorn-forest": {
+"fr": "Bois des Illusions",
+"region": "5"
+},
+"lovely-place": {
+"fr": "Endroit superbe",
+"region": ""
+},
+"loyalty-plaza": {
+"fr": "Parc Adorami",
+"region": "10"
+},
+"lumiose-badlands": {
+"fr": "Steppe d’Illumis",
+"region": "6"
+},
+"lumiose-city": {
+"fr": "Illumis",
+"region": "6"
+},
+"lumiose-gate": {
+"fr": "Porte d’Illumis",
+"region": "6"
+},
+"lumiose-station": {
+"fr": "Gare d’Illumis",
+"region": "6"
+},
+"lunkers-lair": {
+"fr": "Arche Poissigrand",
+"region": "9"
+},
+"lush-jungle": {
+"fr": "Jungle Sombrefeuille",
+"region": "7"
+},
+"lysandre-labs": {
+"fr": "Labos Lysandre",
+"region": "6"
+},
+"magma-hideout": {
+"fr": "Planque Magma",
+"region": "3"
+},
+"mahalo-trail": {
+"fr": "Sentier de Mahalo",
+"region": "7"
+},
+"mahalo-trail--plank-bridge": {
+"fr": "Sentier de Mahalo",
+"region": "7"
+},
+"mahogany-town": {
+"fr": "Acajou",
+"region": "2"
+},
+"malie-city": {
+"fr": "Malié",
+"region": "7"
+},
+"malie-city--outer-cape": {
+"fr": "Malié",
+"region": "7"
+},
+"malie-city-proper": {
+"fr": "Malié",
+"region": "7"
+},
+"malie-garden": {
+"fr": "Parc de Malié",
+"region": "7"
+},
+"mamoswine-road": {
+"fr": "Route Mammochon",
+"region": "6"
+},
+"maniac-tunnel": {
+"fr": "Tunnel Runiem.",
+"region": "4"
+},
+"marine-cave": {
+"fr": "Grotte Marine",
+"region": "3"
+},
+"marine-tube": {
+"fr": "Aquatube",
+"region": "5"
+},
+"marvelous-bridge": {
+"fr": "Pont de l'Inconnu",
+"region": "5"
+},
+"master-dojo": {
+"fr": "Dojo de la Maîtrise",
+"region": "8"
+},
+"mauville-city": {
+"fr": "Lavandia",
+"region": "3"
+},
+"max-lair": {
+"fr": "Grand Antre Dynamax",
+"region": "8"
+},
+"medal-secretariat": {
+"fr": "Bureau des Médailles",
+"region": "5"
+},
+"medali": {
+"fr": "Mezclamora",
+"region": "10"
+},
+"meetup-spot": {
+"fr": "Meetup Spot",
+"region": "8"
+},
+"melancolie-path": {
+"fr": "Chemin Tristesse",
+"region": "6"
+},
+"melemele-meadow": {
+"fr": "Jardin de Mele-Mele",
+"region": "7"
+},
+"melemele-sea": {
+"fr": "Mer de Mele-Mele",
+"region": "7"
+},
+"memorial-hill": {
+"fr": "Colline Memento",
+"region": "7"
+},
+"memorial-pillar": {
+"fr": "Mémorial",
+"region": "1"
+},
+"menhir-trail": {
+"fr": "Route Menhir",
+"region": "6"
+},
+"mesagoza": {
+"fr": "Mesaledo",
+"region": "10"
+},
+"meteor-falls": {
+"fr": "Site Météore",
+"region": "3"
+},
+"mining-museum": {
+"fr": "Musée Minier",
+"region": "4"
+},
+"mirage-island": {
+"fr": "mirage-island",
+"region": "3"
+},
+"mirage-spot-cave": {
+"fr": "Grotte Mirage",
+"region": "3"
+},
+"mirage-spot-forest": {
+"fr": "Forêt Mirage",
+"region": "3"
+},
+"mirage-spot-island": {
+"fr": "Île Mirage",
+"region": "3"
+},
+"mirage-spot-mountain": {
+"fr": "Mont Mirage",
+"region": "3"
+},
+"mirage-tower": {
+"fr": "Tour Mirage",
+"region": "3"
+},
+"miroir-way": {
+"fr": "Chemin Miroir",
+"region": "6"
+},
+"mistralton-cave": {
+"fr": "Grotte Parsemille",
+"region": "5"
+},
+"mistralton-city": {
+"fr": "Parsemille",
+"region": "5"
+},
+"molten-arena": {
+"fr": "Arène de la Lave",
+"region": "9"
+},
+"monean-chamber": {
+"fr": "Chambre Anemune",
+"region": "1"
+},
+"montenevera": {
+"fr": "Frigao",
+"region": "10"
+},
+"moonview-arena": {
+"fr": "Arène de la Lune",
+"region": "9"
+},
+"moor-of-icirrus": {
+"fr": "Tourbière Flocombe",
+"region": "5"
+},
+"mossdeep-city": {
+"fr": "Algatia",
+"region": "3"
+},
+"mossdeep-space-center": {
+"fr": "Centre Spatial d'Algatia",
+"region": "3"
+},
+"mossfell-confluence": {
+"fr": "Rives du Confluent",
+"region": "10"
+},
+"mossui-town": {
+"fr": "Jaderaude",
+"region": "10"
+},
+"motostoke": {
+"fr": "Motorby",
+"region": "8"
+},
+"motostoke-outskirts": {
+"fr": "Abords de Motorby",
+"region": "8"
+},
+"motostoke-riverbank": {
+"fr": "Berges de Motorby",
+"region": "8"
+},
+"mount-hokulani": {
+"fr": "Mont Hokulani",
+"region": "7"
+},
+"mount-lanakila": {
+"fr": "Mont Lanakila",
+"region": "7"
+},
+"mr-pokemon": {
+"fr": "M. Pokémon",
+"region": ""
+},
+"mt-battle": {
+"fr": "Mt. Battle",
+"region": "11"
+},
+"mt-chimney": {
+"fr": "Mont Chimnée",
+"region": "3"
+},
+"mt-coronet": {
+"fr": "Mont Couronné",
+"region": "4"
+},
+"mt-ember": {
+"fr": "Mont Braise",
+"region": "1"
+},
+"mt-moon": {
+"fr": "Mont Sélénite",
+"region": "1"
+},
+"mt-mortar": {
+"fr": "Mont Creuset",
+"region": "2"
+},
+"mt-pyre": {
+"fr": "Mont Mémoria",
+"region": "3"
+},
+"mt-silver": {
+"fr": "Mont Argenté",
+"region": "2"
+},
+"mt-silver-cave": {
+"fr": "Grotte Argentée",
+"region": "2"
+},
+"muraille-coast": {
+"fr": "Falaise Muraille",
+"region": "6"
+},
+"musical-theater": {
+"fr": "Music-Hall",
+"region": "5"
+},
+"mystery-zone": {
+"fr": "Endroit mystér.",
+"region": ""
+},
+"nacrene-city": {
+"fr": "Maillard",
+"region": "5"
+},
+"nacrene-gate": {
+"fr": "Porte Maillard",
+"region": "5"
+},
+"nameless-cavern": {
+"fr": "Grotte Oubliée",
+"region": "3"
+},
+"naranja-academy": {
+"fr": "Académie Orange",
+"region": "10"
+},
+"national-park": {
+"fr": "Parc Naturel",
+"region": "2"
+},
+"nature-sanctuary": {
+"fr": "Réserve Naturelle",
+"region": "5"
+},
+"natures-pantry": {
+"fr": "Cellier Champêtre",
+"region": "9"
+},
+"navel-rock": {
+"fr": "Roc Nombri",
+"region": "1"
+},
+"navi-squads-base": {
+"fr": "Repaire du Groupe Tsih",
+"region": "10"
+},
+"new-bark-town": {
+"fr": "Bourg Geon",
+"region": "2"
+},
+"new-mauville": {
+"fr": "New Lavandia",
+"region": "3"
+},
+"newmoon-island": {
+"fr": "Ile Nouvellelune",
+"region": "4"
+},
+"nimbasa-city": {
+"fr": "Méanville",
+"region": "5"
+},
+"nimbasa-gate": {
+"fr": "Porte Méanville",
+"region": "5"
+},
+"nintendo-world": {
+"fr": "Nintendo World",
+"region": ""
+},
+"north-lake-miloch": {
+"fr": "Lac Milobellus Nord",
+"region": "8"
+},
+"north-paldean-sea": {
+"fr": "Mer du Nord de Paldea",
+"region": "10"
+},
+"ns-castle": {
+"fr": "Palais de N",
+"region": "5"
+},
+"nuvema-town": {
+"fr": "Renouet",
+"region": "5"
+},
+"obsidian-falls": {
+"fr": "Chute d'Obsidienne",
+"region": "9"
+},
+"old-cemetery": {
+"fr": "Cimetière Ancien",
+"region": "8"
+},
+"old-chateau": {
+"fr": "Vieux Château",
+"region": "4"
+},
+"oldale-town": {
+"fr": "Rosyères",
+"region": "3"
+},
+"olivine-city": {
+"fr": "Oliville",
+"region": "2"
+},
+"onbs": {
+"fr": "ONBS",
+"region": "11"
+},
+"one-island": {
+"fr": "Ile 1",
+"region": "1"
+},
+"oni-mountain": {
+"fr": "Mont Strueux",
+"region": "10"
+},
+"onis-maw": {
+"fr": "Gueule du Monstre",
+"region": "10"
+},
+"opelucid-city": {
+"fr": "Janusia",
+"region": "5"
+},
+"opelucid-gate": {
+"fr": "Porte Janusia",
+"region": "5"
+},
+"oreburgh-city": {
+"fr": "Charbourg",
+"region": "4"
+},
+"oreburgh-gate": {
+"fr": "Entrée Charbourg",
+"region": "4"
+},
+"oreburgh-mine": {
+"fr": "Mine Charbourg",
+"region": "4"
+},
+"oreburrow-tunnel": {
+"fr": "Tunnel de Fer",
+"region": "9"
+},
+"outcast-island": {
+"fr": "Ile du Lointain",
+"region": "1"
+},
+"outskirt-stand": {
+"fr": "Outskirt Stand",
+"region": "11"
+},
+"ouvert-way": {
+"fr": "Chemin Ouvert",
+"region": "6"
+},
+"p2-laboratory": {
+"fr": "Labo P2",
+"region": "5"
+},
+"pacifidlog-town": {
+"fr": "Pacifiville",
+"region": "3"
+},
+"pal-park": {
+"fr": "Parc des Amis",
+"region": "4"
+},
+"palais-lane": {
+"fr": "Allée du Palais",
+"region": "6"
+},
+"paldea-east-province-area-one": {
+"fr": "Zone Est n° 1",
+"region": "10"
+},
+"paldea-east-province-area-three": {
+"fr": "Zone Est n° 3",
+"region": "10"
+},
+"paldea-east-province-area-two": {
+"fr": "Zone Est n° 2",
+"region": "10"
+},
+"paldea-north-province-area-one": {
+"fr": "Zone Nord n° 1",
+"region": "10"
+},
+"paldea-north-province-area-three": {
+"fr": "Zone Nord n° 3",
+"region": "10"
+},
+"paldea-north-province-area-two": {
+"fr": "Zone Nord n° 2",
+"region": "10"
+},
+"paldea-south-province-area-five": {
+"fr": "Zone Sud n° 5",
+"region": "10"
+},
+"paldea-south-province-area-four": {
+"fr": "Zone Sud n° 4",
+"region": "10"
+},
+"paldea-south-province-area-one": {
+"fr": "Zone Sud n° 1",
+"region": "10"
+},
+"paldea-south-province-area-six": {
+"fr": "Zone Sud n°6",
+"region": "10"
+},
+"paldea-south-province-area-three": {
+"fr": "Zone Sud n° 3",
+"region": "10"
+},
+"paldea-south-province-area-two": {
+"fr": "Zone Sud n° 2",
+"region": "10"
+},
+"paldea-west-province-area-one": {
+"fr": "Zone Ouest n° 1",
+"region": "10"
+},
+"paldea-west-province-area-three": {
+"fr": "Zone Ouest n° 3",
+"region": "10"
+},
+"paldea-west-province-area-two": {
+"fr": "Zone Ouest n° 2",
+"region": "10"
+},
+"pallet-town": {
+"fr": "Bourg Palette",
+"region": "1"
+},
+"paniola-ranch": {
+"fr": "Ranch Ohana",
+"region": "7"
+},
+"paniola-town": {
+"fr": "Ohana",
+"region": "7"
+},
+"paradise-barrens": {
+"fr": "Lande de la Quiétude",
+"region": "10"
+},
+"parfum-palace": {
+"fr": "Palais Chaydeuvre",
+"region": "6"
+},
+"parterre-way": {
+"fr": "Route Fleurie",
+"region": "6"
+},
+"pastoria-city": {
+"fr": "Verchamps",
+"region": "4"
+},
+"path-to-the-peak": {
+"fr": "Sentier Blanche-Cime",
+"region": "8"
+},
+"pathless-plain": {
+"fr": "Plaine Sans Nom",
+"region": "3"
+},
+"pattern-bush": {
+"fr": "Forbuissons",
+"region": "1"
+},
+"pc-fukuoka": {
+"fr": "CP Fukuoka",
+"region": ""
+},
+"pc-nagoya": {
+"fr": "CP Nagoya",
+"region": ""
+},
+"pc-osaka": {
+"fr": "CP Osaka",
+"region": ""
+},
+"pc-sapporo": {
+"fr": "CP Sapporo",
+"region": ""
+},
+"pc-tokyo": {
+"fr": "CP Tokyo",
+"region": ""
+},
+"pc-yokohama": {
+"fr": "CP Yokohama",
+"region": ""
+},
+"pearl-settlement": {
+"fr": "Hameau Perle",
+"region": "9"
+},
+"petalburg-city": {
+"fr": "Clémenti-Ville",
+"region": "3"
+},
+"petalburg-woods": {
+"fr": "Bois Clémenti",
+"region": "3"
+},
+"pewter-city": {
+"fr": "Argenta",
+"region": "1"
+},
+"phenac-city": {
+"fr": "Phenac City",
+"region": "11"
+},
+"pinwheel-forest": {
+"fr": "Forêt d'Empoigne",
+"region": "5"
+},
+"plasma-frigate": {
+"fr": "Frégate Plasma",
+"region": "5"
+},
+"pledge-grove": {
+"fr": "Bois du Serment",
+"region": "5"
+},
+"po-town": {
+"fr": "Kokohio",
+"region": "7"
+},
+"poco-path": {
+"fr": "Route de Cuchalaga",
+"region": "10"
+},
+"poffin-house": {
+"fr": "Poffinerie",
+"region": "4"
+},
+"poke-ball-factory": {
+"fr": "Usine de Poké Balls",
+"region": "6"
+},
+"poke-pelago": {
+"fr": "Poké Loisir",
+"region": "7"
+},
+"poke-transfer-lab": {
+"fr": "Laboratoire Fret",
+"region": "5"
+},
+"pokeathlon-dome": {
+"fr": "Dôme Pokéathlon",
+"region": "2"
+},
+"pokemon-cartoon": {
+"fr": "Dessin ani. PKMN",
+"region": ""
+},
+"pokemon-center": {
+"fr": "Centre Pokémon",
+"region": ""
+},
+"pokemon-day-care": {
+"fr": "Pension Pokémon",
+"region": "4"
+},
+"pokemon-event": {
+"fr": "Evénem. Pokémon",
+"region": ""
+},
+"pokemon-event-06": {
+"fr": "Evén. Pokémon 06",
+"region": ""
+},
+"pokemon-event-07": {
+"fr": "Evén. Pokémon 07",
+"region": ""
+},
+"pokemon-event-08": {
+"fr": "Evén. Pokémon 08",
+"region": ""
+},
+"pokemon-event-09": {
+"fr": "Evén. Pokémon 09",
+"region": ""
+},
+"pokemon-event-10": {
+"fr": "Evén. Pokémon 10",
+"region": ""
+},
+"pokemon-event-11": {
+"fr": "Evén. Pokémon 11",
+"region": ""
+},
+"pokemon-event-12": {
+"fr": "Evén. Pokémon 12",
+"region": ""
+},
+"pokemon-event-13": {
+"fr": "Evén. Pokémon 13",
+"region": ""
+},
+"pokemon-event-14": {
+"fr": "Evén. Pokémon 14",
+"region": ""
+},
+"pokemon-event-15": {
+"fr": "Evén. Pokémon 15",
+"region": ""
+},
+"pokemon-event-16": {
+"fr": "Evén. Pokémon 16",
+"region": ""
+},
+"pokemon-fan-club": {
+"fr": "Fan Club Pokémon",
+"region": ""
+},
+"pokemon-festa": {
+"fr": "Pokémon Festa",
+"region": ""
+},
+"pokemon-festa-06": {
+"fr": "Pokémon Festa 06",
+"region": ""
+},
+"pokemon-festa-07": {
+"fr": "Pokémon Festa 07",
+"region": ""
+},
+"pokemon-festa-08": {
+"fr": "Pokémon Festa 08",
+"region": ""
+},
+"pokemon-festa-09": {
+"fr": "Pokémon Festa 09",
+"region": ""
+},
+"pokemon-festa-10": {
+"fr": "Pokémon Festa 10",
+"region": ""
+},
+"pokemon-festa-11": {
+"fr": "Pokémon Festa 11",
+"region": ""
+},
+"pokemon-festa-12": {
+"fr": "Pokémon Festa 12",
+"region": ""
+},
+"pokemon-festa-13": {
+"fr": "Pokémon Festa 13",
+"region": ""
+},
+"pokemon-festa-14": {
+"fr": "Pokémon Festa 14",
+"region": ""
+},
+"pokemon-festa-15": {
+"fr": "Pokémon Festa 15",
+"region": ""
+},
+"pokemon-festa-16": {
+"fr": "Pokémon Festa 16",
+"region": ""
+},
+"pokemon-hq-lab": {
+"fr": "Pokemon Hq Lab",
+"region": "11"
+},
+"pokemon-league": {
+"fr": "Ligue Pokémon",
+"region": "10"
+},
+"pokemon-league-gate": {
+"fr": "Porte de la Ligue",
+"region": "6"
+},
+"pokemon-mansion": {
+"fr": "Manoir Pokémon",
+"region": "1"
+},
+"pokemon-movie": {
+"fr": "Film Pokémon",
+"region": ""
+},
+"pokemon-movie-06": {
+"fr": "Film Pokémon 06",
+"region": ""
+},
+"pokemon-movie-07": {
+"fr": "Film Pokémon 07",
+"region": ""
+},
+"pokemon-movie-08": {
+"fr": "Film Pokémon 08",
+"region": ""
+},
+"pokemon-movie-09": {
+"fr": "Film Pokémon 09",
+"region": ""
+},
+"pokemon-movie-10": {
+"fr": "Film Pokémon 10",
+"region": ""
+},
+"pokemon-movie-11": {
+"fr": "Film Pokémon 11",
+"region": ""
+},
+"pokemon-movie-12": {
+"fr": "Film Pokémon 12",
+"region": ""
+},
+"pokemon-movie-13": {
+"fr": "Film Pokémon 13",
+"region": ""
+},
+"pokemon-movie-14": {
+"fr": "Film Pokémon 14",
+"region": ""
+},
+"pokemon-movie-15": {
+"fr": "Film Pokémon 15",
+"region": ""
+},
+"pokemon-movie-16": {
+"fr": "Film Pokémon 16",
+"region": ""
+},
+"pokemon-ranger": {
+"fr": "Pokémon Ranger",
+"region": ""
+},
+"pokemon-tower": {
+"fr": "Tour Pokémon",
+"region": "1"
+},
+"pokemon-village": {
+"fr": "Village Pokémon",
+"region": "6"
+},
+"pokepark": {
+"fr": "POKéPARK",
+"region": ""
+},
+"pokepark-06": {
+"fr": "POKéPARK 06",
+"region": ""
+},
+"pokepark-07": {
+"fr": "POKéPARK 07",
+"region": ""
+},
+"pokepark-08": {
+"fr": "POKéPARK 08",
+"region": ""
+},
+"pokepark-09": {
+"fr": "POKéPARK 09",
+"region": ""
+},
+"pokepark-10": {
+"fr": "POKéPARK 10",
+"region": ""
+},
+"pokepark-11": {
+"fr": "POKéPARK 11",
+"region": ""
+},
+"pokepark-12": {
+"fr": "POKéPARK 12",
+"region": ""
+},
+"pokepark-13": {
+"fr": "POKéPARK 13",
+"region": ""
+},
+"pokepark-14": {
+"fr": "POKéPARK 14",
+"region": ""
+},
+"pokepark-15": {
+"fr": "POKéPARK 15",
+"region": ""
+},
+"pokepark-16": {
+"fr": "POKéPARK 16",
+"region": ""
+},
+"pokespot": {
+"fr": "Pokespot",
+"region": "11"
+},
+"pokestar-studios": {
+"fr": "Pokéwood",
+"region": "5"
+},
+"poketch-co": {
+"fr": "Pokémontre S.A.",
+"region": "4"
+},
+"pokewalker": {
+"fr": "Pokéwalker",
+"region": "2"
+},
+"polar-biome": {
+"fr": "Zone Polaire",
+"region": "10"
+},
+"polar-plaza": {
+"fr": "Poste Polaire",
+"region": "10"
+},
+"poni-breaker-coast": {
+"fr": "Récif de Poni",
+"region": "7"
+},
+"poni-coast": {
+"fr": "Côte de Poni",
+"region": "7"
+},
+"poni-gauntlet": {
+"fr": "Chemin du Défi",
+"region": "7"
+},
+"poni-grove": {
+"fr": "Forêt de Poni",
+"region": "7"
+},
+"poni-meadow": {
+"fr": "Jardin de Poni",
+"region": "7"
+},
+"poni-plains": {
+"fr": "Plaine de Poni",
+"region": "7"
+},
+"poni-wilds": {
+"fr": "Prairie de Poni",
+"region": "7"
+},
+"porto-marinada": {
+"fr": "Porto Marinada",
+"region": "10"
+},
+"postwick": {
+"fr": "Paddoxton",
+"region": "8"
+},
+"potbottom-desert": {
+"fr": "Sables de Kudsac",
+"region": "8"
+},
+"primeval-grotto": {
+"fr": "Grotte Préhistorique",
+"region": "9"
+},
+"primo": {
+"fr": "Castor",
+"region": ""
+},
+"prism-tower": {
+"fr": "Tour Prismatique",
+"region": "6"
+},
+"pyrite-bldg": {
+"fr": "Pyrite Bldg",
+"region": "11"
+},
+"pyrite-cave": {
+"fr": "Pyrite Cave",
+"region": "11"
+},
+"pyrite-town": {
+"fr": "Pyrite Town",
+"region": "11"
+},
+"radiant-chamber": {
+"fr": "Chambre de l’Éclat",
+"region": "6"
+},
+"radio-tower": {
+"fr": "Tour Radio",
+"region": "2"
+},
+"ramanas-island": {
+"fr": "Île Rosa Rugosa",
+"region": "9"
+},
+"ravaged-path": {
+"fr": "Chemin Rocheux",
+"region": "4"
+},
+"realgam-tower": {
+"fr": "Realgam Tower",
+"region": "11"
+},
+"reflection-cave": {
+"fr": "Grotte Miroitante",
+"region": "6"
+},
+"relic-castle": {
+"fr": "Château Enfoui",
+"region": "5"
+},
+"relic-passage": {
+"fr": "Chemin Enfoui",
+"region": "5"
+},
+"resolution-cave": {
+"fr": "Caverne Coda",
+"region": "7"
+},
+"resort-area": {
+"fr": "Aire de Détente",
+"region": "4"
+},
+"resort-gorgeous": {
+"fr": "Camp de Vacances",
+"region": "1"
+},
+"revelers-road": {
+"fr": "Sentier de la Liesse",
+"region": "10"
+},
+"reversal-mountain": {
+"fr": "Mont Renenvers",
+"region": "5"
+},
+"riley": {
+"fr": "Armand",
+"region": ""
+},
+"riviere-walk": {
+"fr": "Chemin des Berges",
+"region": "6"
+},
+"rixy-chamber": {
+"fr": "Chambre Irix",
+"region": "1"
+},
+"roaming-crown-tundra": {
+"fr": "Roaming the Crown Tundra",
+"region": "8"
+},
+"roaming-galar-wild-area": {
+"fr": "Roaming Galar Wild Areas",
+"region": "8"
+},
+"roaming-hoenn": {
+"fr": "Sillonnant Hoenn",
+"region": "3"
+},
+"roaming-isle-of-armor": {
+"fr": "Roaming the Isle of Armor",
+"region": "8"
+},
+"roaming-johto": {
+"fr": "Sillonnant Johto",
+"region": "2"
+},
+"roaming-kalos": {
+"fr": "Kalos (Sillonnant)",
+"region": "6"
+},
+"roaming-kanto": {
+"fr": "Sillonnant Kanto",
+"region": "1"
+},
+"roaming-sinnoh": {
+"fr": "Sillonnant Sinnoh",
+"region": "4"
+},
+"roaming-unova": {
+"fr": "Unys (Sillonnant)",
+"region": "5"
+},
+"roaring-sea-caves": {
+"fr": "Cavernes Gronde-Mer",
+"region": "8"
+},
+"rock-peak-ruins": {
+"fr": "Ruines Pic Roche",
+"region": "4"
+},
+"rock-tunnel": {
+"fr": "Grotte",
+"region": "1"
+},
+"rocky-mountain-room": {
+"fr": "Salle Pic Rocheux",
+"region": "5"
+},
+"rolling-fields": {
+"fr": "Plaine Verdoyante",
+"region": "8"
+},
+"rotoms-room": {
+"fr": "Salle MOTISMA",
+"region": "4"
+},
+"route-gate": {
+"fr": "Porte de Route",
+"region": "5"
+},
+"royal-avenue": {
+"fr": "Rue du Dôme Royal",
+"region": "7"
+},
+"royal-unova": {
+"fr": "L'Étoile d'Unys",
+"region": "5"
+},
+"ruchbah-squads-base": {
+"fr": "Repaire du Groupe Ruchbah",
+"region": "10"
+},
+"ruin-maniac-cave": {
+"fr": "Grotte Ruinem.",
+"region": "4"
+},
+"ruin-valley": {
+"fr": "Vallée Ruine",
+"region": "1"
+},
+"ruins-of-abundance": {
+"fr": "Ruines de l’Essor",
+"region": "7"
+},
+"ruins-of-alph": {
+"fr": "Ruines d'Alpha",
+"region": "2"
+},
+"ruins-of-conflict": {
+"fr": "Ruines du Conflit",
+"region": "7"
+},
+"ruins-of-hope": {
+"fr": "Ruines de l’Au-Delà",
+"region": "7"
+},
+"ruins-of-life": {
+"fr": "Ruines de l’Éveil",
+"region": "7"
+},
+"rumination-field": {
+"fr": "Clairière Réflexion",
+"region": "5"
+},
+"rustboro-city": {
+"fr": "Mérouville",
+"region": "3"
+},
+"rusturf-tunnel": {
+"fr": "Tunnel Mérazon",
+"region": "3"
+},
+"sacred-plaza": {
+"fr": "Parvis des Prières",
+"region": "9"
+},
+"safari-zone-gate": {
+"fr": "Portail Safari",
+"region": "2"
+},
+"saffron-city": {
+"fr": "Safrania",
+"region": "1"
+},
+"sandgem-flats": {
+"fr": "Plaine Littorella",
+"region": "9"
+},
+"sandgem-town": {
+"fr": "Littorella",
+"region": "4"
+},
+"sands-reach": {
+"fr": "Main de Sable",
+"region": "9"
+},
+"sandy-cave": {
+"fr": "Grotte de la Plage",
+"region": "7"
+},
+"santalune-city": {
+"fr": "Neuvartault",
+"region": "6"
+},
+"santalune-forest": {
+"fr": "Forêt de Neuvartault",
+"region": "6"
+},
+"savanna-biome": {
+"fr": "Zone Savane",
+"region": "10"
+},
+"savanna-plaza": {
+"fr": "Poste Savane",
+"region": "10"
+},
+"scarlet-bog": {
+"fr": "Marais Carlate",
+"region": "9"
+},
+"schedar-squads-base": {
+"fr": "Repaire du Groupe Schedar",
+"region": "10"
+},
+"scorched-slab": {
+"fr": "Grotte Zénith",
+"region": "3"
+},
+"scufib-chamber": {
+"fr": "Chambre Hibicinq",
+"region": "1"
+},
+"sea-mauville": {
+"fr": "Lavandia Sea",
+"region": "3"
+},
+"sea-spirits-den": {
+"fr": "Antre Néréen",
+"region": "6"
+},
+"seabreak-path": {
+"fr": "Passage Marin",
+"region": "4"
+},
+"seafloor-cavern": {
+"fr": "Caverne Fondmer",
+"region": "3"
+},
+"seafoam-islands": {
+"fr": "Iles Ecume",
+"region": "1"
+},
+"seafolk-village": {
+"fr": "Village Flottant",
+"region": "7"
+},
+"seagrass-haven": {
+"fr": "Havre des Algues",
+"region": "9"
+},
+"sealed-chamber": {
+"fr": "Sanctuaire",
+"region": "3"
+},
+"seaside-cave": {
+"fr": "Grotte Littorale",
+"region": "5"
+},
+"seaside-hollow": {
+"fr": "Creux du Cap",
+"region": "9"
+},
+"seaward-cave": {
+"fr": "Grotte Verlamer",
+"region": "7"
+},
+"secluded-shore": {
+"fr": "Côte Sauvage",
+"region": "7"
+},
+"secret-base": {
+"fr": "Base Secrète",
+"region": "3"
+},
+"secret-islet": {
+"fr": "Îlot Secret",
+"region": "3"
+},
+"secret-meadow": {
+"fr": "Champ Fleuri Secret",
+"region": "3"
+},
+"secret-shore": {
+"fr": "Plage Secrète",
+"region": "3"
+},
+"segin-squads-base": {
+"fr": "Repaire du Groupe Segin",
+"region": "10"
+},
+"sendoff-spring": {
+"fr": "Source Adieu",
+"region": "4"
+},
+"sevault-canyon": {
+"fr": "Canyon Sesor",
+"region": "1"
+},
+"seven-island": {
+"fr": "Île 7",
+"region": "1"
+},
+"shabboneau-castle": {
+"fr": "Fort de Vanitas",
+"region": "6"
+},
+"shadow-pokemon-lab": {
+"fr": "Shadow Pokémon Lab",
+"region": "11"
+},
+"shady-house": {
+"fr": "Manoir Chelou",
+"region": "7"
+},
+"shalour-city": {
+"fr": "Yantreizh",
+"region": "6"
+},
+"shalour-gate": {
+"fr": "Porte de Yantreizh",
+"region": "6"
+},
+"shoal-cave": {
+"fr": "Grotte Tréfonds",
+"region": "3"
+},
+"shrouded-ruins": {
+"fr": "Ruines Brumeuses",
+"region": "9"
+},
+"sinjoh-ruins": {
+"fr": "Ruines Sinjoh",
+"region": "2"
+},
+"sinnoh": {
+"fr": "Sinnoh",
+"region": ""
+},
+"sinnoh-battle-tower": {
+"fr": "Tour de Combat",
+"region": "4"
+},
+"sinnoh-cafe": {
+"fr": "Café",
+"region": "4"
+},
+"sinnoh-cycle-shop": {
+"fr": "Boutique de Vélo",
+"region": "4"
+},
+"sinnoh-flower-shop": {
+"fr": "Fleuriste",
+"region": "4"
+},
+"sinnoh-foreign-building": {
+"fr": "Bâtiment Etrange",
+"region": "4"
+},
+"sinnoh-game-corner": {
+"fr": "Casino",
+"region": "4"
+},
+"sinnoh-global-terminal": {
+"fr": "Terminal Mondial",
+"region": "4"
+},
+"sinnoh-hall-of-origin-1": {
+"fr": "Salle Originelle",
+"region": "4"
+},
+"sinnoh-hall-of-origin-2": {
+"fr": "Salle Originelle",
+"region": "4"
+},
+"sinnoh-pokemart": {
+"fr": "sinnoh-pokemart",
+"region": "4"
+},
+"sinnoh-pokemon-league": {
+"fr": "Ligue Pokémon",
+"region": "4"
+},
+"sinnoh-restaurant": {
+"fr": "Restaurant",
+"region": "4"
+},
+"sinnoh-route-201": {
+"fr": "Route 201",
+"region": "4"
+},
+"sinnoh-route-202": {
+"fr": "Route 202",
+"region": "4"
+},
+"sinnoh-route-203": {
+"fr": "Route 203",
+"region": "4"
+},
+"sinnoh-route-204": {
+"fr": "Route 204",
+"region": "4"
+},
+"sinnoh-route-205": {
+"fr": "Route 205",
+"region": "4"
+},
+"sinnoh-route-206": {
+"fr": "Route 206",
+"region": "4"
+},
+"sinnoh-route-207": {
+"fr": "Route 207",
+"region": "4"
+},
+"sinnoh-route-208": {
+"fr": "Route 208",
+"region": "4"
+},
+"sinnoh-route-209": {
+"fr": "Route 209",
+"region": "4"
+},
+"sinnoh-route-210": {
+"fr": "Route 210",
+"region": "4"
+},
+"sinnoh-route-211": {
+"fr": "Route 211",
+"region": "4"
+},
+"sinnoh-route-212": {
+"fr": "Route 212",
+"region": "4"
+},
+"sinnoh-route-213": {
+"fr": "Route 213",
+"region": "4"
+},
+"sinnoh-route-214": {
+"fr": "Route 214",
+"region": "4"
+},
+"sinnoh-route-215": {
+"fr": "Route 215",
+"region": "4"
+},
+"sinnoh-route-216": {
+"fr": "Route 216",
+"region": "4"
+},
+"sinnoh-route-217": {
+"fr": "Route 217",
+"region": "4"
+},
+"sinnoh-route-218": {
+"fr": "Route 218",
+"region": "4"
+},
+"sinnoh-route-219": {
+"fr": "Route 219",
+"region": "4"
+},
+"sinnoh-route-221": {
+"fr": "Route 221",
+"region": "4"
+},
+"sinnoh-route-222": {
+"fr": "Route 222",
+"region": "4"
+},
+"sinnoh-route-224": {
+"fr": "Route 224",
+"region": "4"
+},
+"sinnoh-route-225": {
+"fr": "Route 225",
+"region": "4"
+},
+"sinnoh-route-227": {
+"fr": "Route 227",
+"region": "4"
+},
+"sinnoh-route-228": {
+"fr": "Route 228",
+"region": "4"
+},
+"sinnoh-route-229": {
+"fr": "Route 229",
+"region": "4"
+},
+"sinnoh-sea-route-220": {
+"fr": "Chenal 220",
+"region": "4"
+},
+"sinnoh-sea-route-223": {
+"fr": "Chenal 223",
+"region": "4"
+},
+"sinnoh-sea-route-226": {
+"fr": "Chenal 226",
+"region": "4"
+},
+"sinnoh-sea-route-230": {
+"fr": "Chenal 230",
+"region": "4"
+},
+"sinnoh-victory-road": {
+"fr": "Route Victoire",
+"region": "4"
+},
+"sinnoh-villa": {
+"fr": "Villa",
+"region": "4"
+},
+"six-island": {
+"fr": "Île 6",
+"region": "1"
+},
+"sky-pillar": {
+"fr": "Pilier Céleste",
+"region": "3"
+},
+"skyarrow-bridge": {
+"fr": "Pont Sagiciel",
+"region": "5"
+},
+"slateport-city": {
+"fr": "Poivressel",
+"region": "3"
+},
+"slippery-slope": {
+"fr": "Plateau Beau-Gant",
+"region": "8"
+},
+"slowpoke-well": {
+"fr": "Puits RAMOLOSS",
+"region": "2"
+},
+"sludge-mound": {
+"fr": "Plateau Tourbeux",
+"region": "9"
+},
+"slumbering-weald": {
+"fr": "Forêt de Sleepwood",
+"region": "8"
+},
+"snagem-hideout": {
+"fr": "Snagem Hideout",
+"region": "11"
+},
+"snowbelle-city": {
+"fr": "Auffrac-les-Congères",
+"region": "6"
+},
+"snowbelle-gate": {
+"fr": "Porte d’Auffrac",
+"region": "6"
+},
+"snowfall-hot-spring": {
+"fr": "Source Panora-Neige",
+"region": "9"
+},
+"snowpoint-city": {
+"fr": "Frimapic",
+"region": "4"
+},
+"snowpoint-temple": {
+"fr": "Temple Frimapic",
+"region": "4"
+},
+"snowslide-slope": {
+"fr": "Pente Enneigée",
+"region": "8"
+},
+"soaring-in-the-sky": {
+"fr": "Grand Ciel",
+"region": "3"
+},
+"socarrat-trail": {
+"fr": "Forêt Toastée",
+"region": "10"
+},
+"solaceon-ruins": {
+"fr": "Ruines Bonville",
+"region": "4"
+},
+"solaceon-town": {
+"fr": "Bonville",
+"region": "4"
+},
+"sonorous-path": {
+"fr": "Sentier des Pèlerins",
+"region": "9"
+},
+"soothing-wetlands": {
+"fr": "Lande Boldair",
+"region": "8"
+},
+"sootopolis-city": {
+"fr": "Atalanopolis",
+"region": "3"
+},
+"south-lake-miloch": {
+"fr": "Lac Milobellus Sud",
+"region": "8"
+},
+"south-paldean-sea": {
+"fr": "Mer du Sud de Paldea",
+"region": "10"
+},
+"southern-island": {
+"fr": "Île du Sud",
+"region": "3"
+},
+"space-time-distortion": {
+"fr": "Distorsion Spatio-Temporelle",
+"region": "9"
+},
+"space-world": {
+"fr": "Space World",
+"region": ""
+},
+"space-world-06": {
+"fr": "Space World 06",
+"region": ""
+},
+"space-world-07": {
+"fr": "Space World 07",
+"region": ""
+},
+"space-world-08": {
+"fr": "Space World 08",
+"region": ""
+},
+"space-world-09": {
+"fr": "Space World 09",
+"region": ""
+},
+"space-world-10": {
+"fr": "Space World 10",
+"region": ""
+},
+"space-world-11": {
+"fr": "Space World 11",
+"region": ""
+},
+"space-world-12": {
+"fr": "Space World 12",
+"region": ""
+},
+"space-world-13": {
+"fr": "Space World 13",
+"region": ""
+},
+"space-world-14": {
+"fr": "Space World 14",
+"region": ""
+},
+"space-world-15": {
+"fr": "Space World 15",
+"region": ""
+},
+"space-world-16": {
+"fr": "Space World 16",
+"region": ""
+},
+"spear-pillar": {
+"fr": "Colonnes Lances",
+"region": "4"
+},
+"spikemuth": {
+"fr": "Smashings",
+"region": "8"
+},
+"spikes-passage": {
+"fr": "Piste Piquante",
+"region": "6"
+},
+"split-decision-ruins": {
+"fr": "Ruines du Choix",
+"region": "8"
+},
+"spring-path": {
+"fr": "Chemin Source",
+"region": "4"
+},
+"sprout-tower": {
+"fr": "Tour CHETIFLOR",
+"region": "2"
+},
+"ss-anne": {
+"fr": "L'Océane",
+"region": "1"
+},
+"ss-aqua": {
+"fr": "Aquaria",
+"region": "2"
+},
+"ss-tidal": {
+"fr": "Le Marina",
+"region": "3"
+},
+"stark-mountain": {
+"fr": "Mont Abrupt",
+"region": "4"
+},
+"steamdrift-way": {
+"fr": "Route 8",
+"region": "8"
+},
+"stepping-stone-sea": {
+"fr": "Mer Align'Îlots",
+"region": "8"
+},
+"stonetooth-rows": {
+"fr": "Col Pierlevé",
+"region": "9"
+},
+"stony-wilderness": {
+"fr": "Plaine Rocheuse",
+"region": "8"
+},
+"stow-on-side": {
+"fr": "Old Chister",
+"region": "8"
+},
+"strange-house": {
+"fr": "Manoir de l'Étrange",
+"region": "5"
+},
+"striaton-city": {
+"fr": "Ogoesse",
+"region": "5"
+},
+"sunyshore-city": {
+"fr": "Rivamar",
+"region": "4"
+},
+"sunyshore-market": {
+"fr": "Marché Rivamar",
+"region": "4"
+},
+"survival-area": {
+"fr": "Aire de Survie",
+"region": "4"
+},
+"tagtree-thicket": {
+"fr": "Bosquet Tagué",
+"region": "10"
+},
+"tanoby-ruins": {
+"fr": "Ruines Tanoby",
+"region": "1"
+},
+"tapu-village": {
+"fr": "Village Toko",
+"region": "7"
+},
+"team-aqua-hideout": {
+"fr": "Planque Aqua",
+"region": "3"
+},
+"team-flare-secret-hq": {
+"fr": "Repaire Team Flare",
+"region": "6"
+},
+"team-magma-hideout": {
+"fr": "Planque Magma",
+"region": "3"
+},
+"team-rocket-hq": {
+"fr": "Repaire Rocket d'Acajou",
+"region": "2"
+},
+"team-rockets-castle": {
+"fr": "Château Rocket",
+"region": "7"
+},
+"temple-of-sinnoh": {
+"fr": "Temple de Sinnoh",
+"region": "9"
+},
+"ten-carat-hill": {
+"fr": "Colline Dicarat",
+"region": "7"
+},
+"ten-carat-hill--farthest-hollow": {
+"fr": "Colline Dicarat",
+"region": "7"
+},
+"terminus-cave": {
+"fr": "Grotte Coda",
+"region": "6"
+},
+"terra-cave": {
+"fr": "Grotte Terra",
+"region": "3"
+},
+"tg-eterna-bldg": {
+"fr": "Team G Vestigion",
+"region": "4"
+},
+"the-heartwood": {
+"fr": "Forêt Lointaine",
+"region": "9"
+},
+"the-under": {
+"fr": "The Under",
+"region": "11"
+},
+"three-island": {
+"fr": "Île 3",
+"region": "1"
+},
+"three-isle-path": {
+"fr": "Route Île 3",
+"region": "1"
+},
+"three-isle-port": {
+"fr": "Port Ile 3",
+"region": "1"
+},
+"three-point-pass": {
+"fr": "Croisée Trois-Voies",
+"region": "8"
+},
+"thrifty-megamart": {
+"fr": "Rue du Dôme Royal",
+"region": "7"
+},
+"thrifty-megamart--abandoned-site": {
+"fr": "Bradley Prix",
+"region": "7"
+},
+"tidewater-dam": {
+"fr": "Digue de l'Estuaire",
+"region": "9"
+},
+"timeless-woods": {
+"fr": "Forêt Ternelle",
+"region": "10"
+},
+"tohjo-falls": {
+"fr": "Chutes Tohjo",
+"region": "2"
+},
+"tombolo-walk": {
+"fr": "Presqu'île Tombolo",
+"region": "9"
+},
+"torchlit-labyrinth": {
+"fr": "Dédale des Torches",
+"region": "10"
+},
+"tower-of-darkness": {
+"fr": "Tour des Ténèbres",
+"region": "8"
+},
+"tower-of-mastery": {
+"fr": "Tour Maîtrise",
+"region": "6"
+},
+"tower-of-waters": {
+"fr": "Tour de l'Eau",
+"region": "8"
+},
+"trackless-forest": {
+"fr": "Forêt Impénétrable",
+"region": "3"
+},
+"trainer-tower": {
+"fr": "Tour Dresseurs",
+"region": "1"
+},
+"trainers-school": {
+"fr": "Ecole Dresseurs",
+"region": "4"
+},
+"training-lowlands": {
+"fr": "Plaine des Efforts",
+"region": "8"
+},
+"tranquility-cove": {
+"fr": "Baie Sérénité",
+"region": "9"
+},
+"traveling-man": {
+"fr": "un voyageur",
+"region": ""
+},
+"treasure-beach": {
+"fr": "Plage Trésor",
+"region": "1"
+},
+"trial-chamber": {
+"fr": "Salle Épreuve",
+"region": "5"
+},
+"trophy-garden": {
+"fr": "Jardin Trophée",
+"region": "4"
+},
+"tubeline-bridge": {
+"fr": "Pont Ferroviaire",
+"region": "5"
+},
+"tunnel-to-the-top": {
+"fr": "Galeries Monte-Pic",
+"region": "8"
+},
+"turffield": {
+"fr": "Greenbury",
+"region": "8"
+},
+"turnback-cave": {
+"fr": "Grotte Retour",
+"region": "4"
+},
+"twinleaf-town": {
+"fr": "Bonaugure",
+"region": "4"
+},
+"twist-mountain": {
+"fr": "Mont Foré",
+"region": "5"
+},
+"two-island": {
+"fr": "Île 2",
+"region": "1"
+},
+"ulaula-beach": {
+"fr": "Plage d'Ula-Ula",
+"region": "7"
+},
+"ulaula-meadow": {
+"fr": "Jardin d’Ula-Ula",
+"region": "7"
+},
+"ultra-megalopolis": {
+"fr": "Ultra-Mégalopole",
+"region": "7"
+},
+"ultra-space": {
+"fr": "Ultra-Dimension",
+"region": "7"
+},
+"ultra-space-wilds": {
+"fr": "Ultra-Dimension Zéro",
+"region": "7"
+},
+"undella-bay": {
+"fr": "Baie Vaguelone",
+"region": "5"
+},
+"undella-gate": {
+"fr": "Porte Vaguelone",
+"region": "5"
+},
+"undella-town": {
+"fr": "Vaguelone",
+"region": "5"
+},
+"underground-ruins": {
+"fr": "Ruines Enfouies",
+"region": "5"
+},
+"underwater": {
+"fr": "Fond marin",
+"region": "3"
+},
+"union-cave": {
+"fr": "Caves Jumelles",
+"region": "2"
+},
+"unity-tower": {
+"fr": "Tour Union",
+"region": "5"
+},
+"unknown-all-bugs": {
+"fr": "Inconnu; que des insectes",
+"region": "2"
+},
+"unknown-all-poliwag": {
+"fr": "Inconnu; que des Ptitard",
+"region": "2"
+},
+"unknown-all-rattata": {
+"fr": "Inconnu; que des Rattata",
+"region": "2"
+},
+"unknown-dungeon": {
+"fr": "Grotte Inconnue",
+"region": "6"
+},
+"unova-faraway-place": {
+"fr": "Endroit Lointain",
+"region": "5"
+},
+"unova-mystery-zone": {
+"fr": "Endroit Mystérieux",
+"region": "5"
+},
+"unova-pokemon-league": {
+"fr": "Ligue Pokémon",
+"region": "5"
+},
+"unova-route-1": {
+"fr": "Route 1",
+"region": "5"
+},
+"unova-route-10": {
+"fr": "Route 10",
+"region": "5"
+},
+"unova-route-11": {
+"fr": "Route 11",
+"region": "5"
+},
+"unova-route-12": {
+"fr": "Route 12",
+"region": "5"
+},
+"unova-route-13": {
+"fr": "Route 13",
+"region": "5"
+},
+"unova-route-14": {
+"fr": "Route 14",
+"region": "5"
+},
+"unova-route-15": {
+"fr": "Route 15",
+"region": "5"
+},
+"unova-route-16": {
+"fr": "Route 16",
+"region": "5"
+},
+"unova-route-17": {
+"fr": "Chenal 17",
+"region": "5"
+},
+"unova-route-18": {
+"fr": "Route 18",
+"region": "5"
+},
+"unova-route-19": {
+"fr": "Route 19",
+"region": "5"
+},
+"unova-route-2": {
+"fr": "Route 2",
+"region": "5"
+},
+"unova-route-20": {
+"fr": "Route 20",
+"region": "5"
+},
+"unova-route-21": {
+"fr": "Chenal 21",
+"region": "5"
+},
+"unova-route-22": {
+"fr": "Route 22",
+"region": "5"
+},
+"unova-route-23": {
+"fr": "Route 23",
+"region": "5"
+},
+"unova-route-3": {
+"fr": "Route 3",
+"region": "5"
+},
+"unova-route-4": {
+"fr": "Route 4",
+"region": "5"
+},
+"unova-route-5": {
+"fr": "Route 5",
+"region": "5"
+},
+"unova-route-6": {
+"fr": "Route 6",
+"region": "5"
+},
+"unova-route-7": {
+"fr": "Route 7",
+"region": "5"
+},
+"unova-route-8": {
+"fr": "Route 8",
+"region": "5"
+},
+"unova-route-9": {
+"fr": "Route 9",
+"region": "5"
+},
+"unova-shopping-mall": {
+"fr": "Centre Commercial",
+"region": "5"
+},
+"unova-victory-road": {
+"fr": "Route Victoire",
+"region": "5"
+},
+"unova-victory-road-2": {
+"fr": "Route Victoire",
+"region": "5"
+},
+"ursas-ring": {
+"fr": "Arène Ursa",
+"region": "9"
+},
+"uva-academy": {
+"fr": "Académie Raisin",
+"region": "10"
+},
+"vallee-etroite-way": {
+"fr": "Chemin des Gorges",
+"region": "6"
+},
+"valley-windworks": {
+"fr": "Les Eoliennes",
+"region": "4"
+},
+"valor-cavern": {
+"fr": "Caverne Courage",
+"region": "4"
+},
+"valor-lakefront": {
+"fr": "Rive Lac Courage",
+"region": "4"
+},
+"vaniville-pathway": {
+"fr": "Sentier Croquis",
+"region": "6"
+},
+"vaniville-town": {
+"fr": "Bourg Croquis",
+"region": "6"
+},
+"vast-poni-canyon": {
+"fr": "Grand Canyon de Poni",
+"region": "7"
+},
+"veilstone-cape": {
+"fr": "Cap du Voile",
+"region": "9"
+},
+"veilstone-city": {
+"fr": "Voilaroc",
+"region": "4"
+},
+"veilstone-store": {
+"fr": "C. Com. Voilaroc",
+"region": "4"
+},
+"verdant-cavern": {
+"fr": "Grotte Verdoyante",
+"region": "7"
+},
+"verdant-cavern--totems-den": {
+"fr": "Grotte Verdoyante",
+"region": "7"
+},
+"verdant-cavern--trial-site": {
+"fr": "Grotte Verdoyante",
+"region": "7"
+},
+"verdanturf-town": {
+"fr": "Vergazon",
+"region": "3"
+},
+"verity-cavern": {
+"fr": "Caverne Vérité",
+"region": "4"
+},
+"verity-lakefront": {
+"fr": "Rive Lac Vérité",
+"region": "4"
+},
+"vermilion-city": {
+"fr": "Carmin sur Mer",
+"region": "1"
+},
+"versant-road": {
+"fr": "Chemin du Versant",
+"region": "6"
+},
+"viapos-chamber": {
+"fr": "Chambre Poinsept",
+"region": "1"
+},
+"village-bridge": {
+"fr": "Pont du Hameau",
+"region": "5"
+},
+"violet-city": {
+"fr": "Mauville",
+"region": "2"
+},
+"virbank-city": {
+"fr": "Ondes-sur-Mer",
+"region": "5"
+},
+"virbank-complex": {
+"fr": "Z.I. d'Ondes-sur-Mer",
+"region": "5"
+},
+"virbank-gate": {
+"fr": "Porte Ondes-sur-Mer",
+"region": "5"
+},
+"viridian-city": {
+"fr": "Jadielle",
+"region": "1"
+},
+"viridian-forest": {
+"fr": "Forêt de Jade",
+"region": "1"
+},
+"vista-lighthouse": {
+"fr": "Phare Panorama",
+"region": "4"
+},
+"warm-up-tunnel": {
+"fr": "Voie des Étirements",
+"region": "8"
+},
+"watchtower-ruins": {
+"fr": "Tour en ruines",
+"region": "8"
+},
+"water-labyrinth": {
+"fr": "Labyrinthe d'O",
+"region": "1"
+},
+"water-path": {
+"fr": "Agualcanal",
+"region": "1"
+},
+"wayward-cave": {
+"fr": "Grotte Revèche",
+"region": "4"
+},
+"wayward-wood": {
+"fr": "Forêt des Égarés",
+"region": "9"
+},
+"wedgehurst": {
+"fr": "Brasswick",
+"region": "8"
+},
+"weepth-chamber": {
+"fr": "Chambre Prois",
+"region": "1"
+},
+"wela-volcano-park": {
+"fr": "Parc Volcanique",
+"region": "7"
+},
+"wela-volcano-park--totems-den": {
+"fr": "Parc Volcanique",
+"region": "7"
+},
+"wellspring-cave": {
+"fr": "Veine Souterraine",
+"region": "5"
+},
+"west-lake-axewell": {
+"fr": "Lac Coupenotte Ouest",
+"region": "8"
+},
+"west-paldean-sea": {
+"fr": "Mer de l'Ouest de Paldea",
+"region": "10"
+},
+"whirl-islands": {
+"fr": "Tourb'Iles",
+"region": "2"
+},
+"white-forest": {
+"fr": "Forêt Blanche",
+"region": "5"
+},
+"white-gate": {
+"fr": "Porte Blanche",
+"region": "5"
+},
+"white-treehollow": {
+"fr": "Arbre Creux Blanc",
+"region": "5"
+},
+"whiteout-valley": {
+"fr": "Vallée Enneigée",
+"region": "9"
+},
+"wi-fi-event": {
+"fr": "Evénement Wi-Fi",
+"region": ""
+},
+"wi-fi-gift": {
+"fr": "Cadeau Wi-Fi",
+"region": ""
+},
+"windbreak-stand": {
+"fr": "Bois Brise-Vent",
+"region": "9"
+},
+"winding-woods": {
+"fr": "Bois du Dédale",
+"region": "6"
+},
+"windswept-run": {
+"fr": "Rive Filevent",
+"region": "9"
+},
+"wistful-fields": {
+"fr": "Plaine des Glycines",
+"region": "10"
+},
+"workout-sea": {
+"fr": "Mer Eau-Hisse",
+"region": "8"
+},
+"worn-bridge": {
+"fr": "Pont Rocheux",
+"region": "9"
+},
+"wyndon": {
+"fr": "Winscor",
+"region": "8"
+},
+"zapapico": {
+"fr": "Pinchoria",
+"region": "10"
+},
+"zero-lab": {
+"fr": "Laboratoire Zéro",
+"region": "10"
+},
+"zubat-roost": {
+"fr": "Antre Nosferapti",
+"region": "6"
+}
+}

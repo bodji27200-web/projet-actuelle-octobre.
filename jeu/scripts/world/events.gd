@@ -13,7 +13,11 @@ const RIVAL_TEAMS := {
 	6: [[18, 47], [112, 45], [65, 47], ["mate0", 45], ["mate1", 45], ["starter", 53]],
 	7: [[18, 59], [65, 57], [112, 59], ["mate0", 61], ["mate1", 61], ["starter", 63]],
 }
-const FOSSILS := {"helix-fossil": 138, "dome-fossil": 140, "old-amber": 142}
+const FOSSILS := {"helix-fossil": 138, "dome-fossil": 140, "old-amber": 142, "root-fossil": 345, "claw-fossil": 347,
+	"skull-fossil": 408, "armor-fossil": 410, "cover-fossil": 564, "plume-fossil": 566, "jaw-fossil": 696, "sail-fossil": 698}
+## Fossiles de Galar : deux moitiés différentes donnent un Pokémon (haut + bas).
+const GALAR_FOSSILS := {["fossilized-bird", "fossilized-drake"]: 880, ["fossilized-bird", "fossilized-dino"]: 881,
+	["fossilized-fish", "fossilized-drake"]: 882, ["fossilized-fish", "fossilized-dino"]: 883}
 
 
 static func ui() -> Node:
@@ -195,6 +199,8 @@ static func talk(ow: Node, w: Node) -> void:
 			await run_script(ow, w, n.get("script", []))
 		"social":
 			await social_npc(ow, n)
+		"relearn":
+			await relearn()
 		_:
 			await ui().say(n.get("text", ["..."]))
 
@@ -273,8 +279,11 @@ static func chen_talk() -> void:
 		return
 	if Game.caught.size() >= 150 and Game.flag("champion") and not Game.flag("mew_got"):
 		await ui().say(["Prof. Chen : Incroyable ! 150 Pokémon capturés !", "Un Pokémon mystérieux est apparu dans mon jardin ce matin... Il t'attendait, je crois."])
-		Game.set_flag("mew_got")
-		await run_battle([[Pokemon.create(151, 30)]], true, [], {"legend": true})
+		var r: String = await run_battle([[Pokemon.create(151, 30)]], true, [], {"legend": true})
+		if r == "caught":
+			Game.set_flag("mew_got")
+		else:
+			await ui().say("Prof. Chen : Il s'est envolé... Repasse me voir, il reviendra sûrement !")
 		return
 	await ui().say(["Prof. Chen : Alors, {player}, comment avance ton Pokédex ?",
 		"Tu as vu %d Pokémon et tu en as capturé %d." % [Game.seen.size(), Game.caught.size()],
@@ -392,11 +401,14 @@ static func _cmd(ow: Node, w: Node, c: Array) -> bool:
 			if lm.species > 0:
 				Audio.cry(lm.sprite_id())
 			var r: String = await run_battle([[lm]], true, [], {"legend": true, "cave": ow.map.get("cave", false)})
-			if r in ["win", "caught"]:
+			if r == "caught":
 				Game.set_flag(c[3])
 				if w != null and is_instance_valid(w):
 					ow.remove_walker(w)
 			else:
+				# Mis K.O. ou fuite : le légendaire reste là, sinon le Pokédex deviendrait impossible à compléter.
+				if r == "win":
+					await ui().say("%s se relève lentement... Il t'attend toujours." % lm.name())
 				return false
 		"boss":
 			var bm := make_boss(int(c[1]), int(c[2]))
@@ -436,6 +448,8 @@ static func special(ow: Node, _w: Node, name: String, args: Array) -> bool:
 			Audio.jingle("item")
 			await ui().say("%s reçoit un Œuf !" % Game.player_name)
 			Game.set_quest("pension", 1)
+		_:
+			return await Campaign.special(ow, _w, name, args)
 	return true
 
 
@@ -591,9 +605,13 @@ static func rival_final(ow: Node, w: Node) -> void:
 ## Construit une équipe à partir de [[espèce, niveau], ...] selon la difficulté choisie.
 static func make_team(entries: Array, t: Dictionary = {}) -> Array:
 	var diff := Game.difficulty()
-	var strong: bool = t.get("kind", "") in ["leader", "elite", "rival"]
+	var strong: bool = t.get("kind", "") in ["leader", "elite", "rival", "champion", "villain", "abyss"]
 	var team := []
 	for e in entries:
+		var spec: Dictionary = e[2] if e.size() > 2 and e[2] is Dictionary else {}
+		if spec.get("exact", false) or t.get("build", "") == "auto" or spec.get("auto", false):
+			team.append(_make_spec(e[0], e[1], spec, t))
+			continue
 		var lvl: int = e[1]
 		if diff == 1:
 			lvl = int(round(lvl * (1.1 if strong else 1.05)))
@@ -612,6 +630,44 @@ static func make_team(entries: Array, t: Dictionary = {}) -> Array:
 			m.hp = m.max_hp()
 		team.append(m)
 	return team
+
+
+## Pokémon de dresseur détaillé : build compétitif automatique (fin de jeu) et/ou réglages précis.
+## spec : item, moves (identifiants), nature (identifiant), ability ("ha" ou identifiant), ivs (nombre), evs (6), shiny.
+static func _make_spec(sid: int, lvl: int, spec: Dictionary, t: Dictionary) -> Pokemon:
+	var m := Pokemon.create(sid, clampi(lvl, 1, 100))
+	if t.get("build", "") == "auto" or spec.get("auto", false):
+		Builds.auto(m, t.get("mega", true))
+	if spec.has("nature"):
+		for i in Data.natures.size():
+			if Data.natures[i].get("ident", "") == spec["nature"]:
+				m.nature = i
+	if spec.has("ability"):
+		if spec["ability"] == "ha" and int(m.data().get("ha", 0)) != 0:
+			m.ability = m.data()["ha"]
+		else:
+			for a in m.data().get("abilities", []) + [m.data().get("ha", 0)]:
+				if Data.ability_ident(a) == spec["ability"]:
+					m.ability = a
+	if spec.has("ivs"):
+		for i in 6:
+			m.ivs[i] = int(spec["ivs"])
+	if spec.has("evs"):
+		m.evs = spec["evs"].duplicate()
+	if spec.has("moves"):
+		var mv := []
+		for ident in spec["moves"]:
+			var id := Builds._id_of(str(ident))
+			if id > 0:
+				mv.append(Pokemon.make_move(id))
+		if mv.size() > 0:
+			m.moves = mv
+	if spec.has("item"):
+		m.held_item = spec["item"]
+	m.shiny = spec.get("shiny", m.shiny)
+	m.recalc_stats()
+	m.hp = m.max_hp()
+	return m
 
 
 static func make_boss(sid: int, lvl: int) -> Pokemon:
@@ -671,7 +727,7 @@ static func trainer_battle(ow: Node, w: Node) -> void:
 static func trainer_battle_id(_ow: Node, tid: String, _w: Node = null, skip_intro := true) -> String:
 	var t: Dictionary = Game.trainers[tid].duplicate(true)
 	t["defeat"] = fmt(t["defeat"])
-	var result: String = await run_battle([make_team(t["team"], t)], false, [t], {})
+	var result: String = await run_battle([make_team(t["team"], t)], false, [t], {"double": t.get("double", false)})
 	if result == "win":
 		Game.set_flag("tr_%s" % tid)
 	return result
@@ -842,6 +898,17 @@ static func daycare() -> void:
 
 
 static func fossil() -> void:
+	for pair in GALAR_FOSSILS:
+		if Game.item_count(pair[0]) > 0 and Game.item_count(pair[1]) > 0:
+			await ui().say(["Chercheur : %s et %s ! Ces deux moitiés vont ensemble... à peu près." % [Data.item_name(pair[0]), Data.item_name(pair[1])], "Patiente un instant..."])
+			Game.remove_item(pair[0])
+			Game.remove_item(pair[1])
+			await ui().flash(3)
+			var g := Pokemon.create(GALAR_FOSSILS[pair], 25)
+			Game.give_pokemon(g)
+			Audio.jingle("item")
+			await ui().say("Le fossile est devenu %s !" % g.name())
+			return
 	for item in FOSSILS:
 		if Game.item_count(item) > 0:
 			await ui().say(["Chercheur : Oh ! C'est un %s ! Je peux ressusciter le Pokémon qui est dedans !" % Data.item_name(item), "Patiente un instant..."])
@@ -863,6 +930,12 @@ static func hall_of_fame(ow: Node) -> void:
 	Game.heal_party()
 	Game.save_game()
 	await ui().say(["Félicitations, Maître {player} !", "La Grotte Azurée, au nord-ouest d'Azuria, t'est maintenant ouverte...", "Et le Prof. Chen a peut-être une surprise si tu complètes le Pokédex !"])
+	if Game.item_count("passe-croisiere") == 0:
+		Game.add_item("passe-croisiere")
+		Game.set_quest("suite", 1)
+		Audio.jingle("item")
+		await ui().say(["Prof. Chen : Prends ce Passe Croisière, {player}.", "Des sbires d'une nouvelle Team Rocket, la « Team Rainbow Rocket », ont été vus aux Îles Sevii...",
+			"Le capitaine du port de Carmin-sur-Mer t'y emmènera. Le monde entier a besoin d'un Maître comme toi !"])
 	await ow.warp_to("maison", Vector2i(4, 3), "down")
 
 
@@ -887,7 +960,7 @@ static func run_battle(enemy_parties: Array, wild: bool, trainers: Array, opts :
 	Audio.play_music(_battle_music(wild, trainers, opts))
 	await ui().battle_intro()
 	var screen := BattleScreen.new()
-	var bopts := battle_opts(opts, wild, enemy_parties)
+	var bopts := battle_opts(opts, wild, enemy_parties, trainers)
 	bopts["player_names"] = [Game.player_name]
 	screen.battle = Battle.new([Game.party], enemy_parties, wild, trainers, bopts)
 	screen.battle.player_name = Game.player_name
@@ -901,10 +974,14 @@ static func run_battle(enemy_parties: Array, wild: bool, trainers: Array, opts :
 
 
 ## Options du moteur pour un combat du joueur : Méga-Anneau / Bracelet Z, IA, aura de boss.
-static func battle_opts(opts: Dictionary, wild: bool, enemy_parties: Array) -> Dictionary:
+static func battle_opts(opts: Dictionary, wild: bool, enemy_parties: Array, trainers: Array = []) -> Dictionary:
+	var aura: String = opts.get("aura", "")
+	for t in trainers:
+		if aura == "" and t is Dictionary:
+			aura = t.get("aura", "")
 	return {"double": opts.get("double", false), "wild_double": wild and enemy_parties.size() > 1, "boss": opts.get("boss", false),
 		"mega": Game.item_count("mega-ring") > 0, "zmove": Game.item_count("z-ring") > 0,
-		"ai": opts.get("ai", 0 if wild else 1), "aura": opts.get("aura", "")}
+		"ai": opts.get("ai", 0 if wild else 1), "aura": aura}
 
 
 static func _battle_music(wild: bool, trainers: Array, opts: Dictionary) -> String:
@@ -1100,6 +1177,51 @@ static func hatch(egg: Pokemon) -> void:
 		egg.nickname = "" if nick == egg.data()["name"] else nick
 	Game.set_quest("pension", 2)
 	await Profile.announce()
+
+
+## Maître des Capacités (Centres Pokémon) : réapprend gratuitement une capacité apprise par niveau
+## (jusqu'au niveau actuel) ou une capacité Œuf de la famille.
+static func relearn() -> void:
+	await ui().say("Maître des Capacités : Je peux faire réapprendre une capacité à un de tes Pokémon. C'est gratuit !")
+	var ps := PartyScreen.new()
+	ps.mode = "select"
+	ps.title = "Quel Pokémon ?"
+	var idx = await ui().open(ps)
+	if idx == null or idx < 0:
+		return
+	var mon: Pokemon = Game.party[idx]
+	if mon.is_egg:
+		await ui().say("Maître des Capacités : Un Œuf ? Reviens quand il aura éclos !")
+		return
+	var ids := relearnable(mon)
+	if ids.is_empty():
+		await ui().say("Maître des Capacités : %s n'a rien à réapprendre pour l'instant." % mon.name())
+		return
+	var rows: Array = ids.map(func(m): return Data.move_name(m))
+	var rights: Array = ids.map(func(m): return Data.type_name(Data.moves[m]["type"]))
+	var descs: Array = ids.map(func(m): return "%s — Puissance %s, Précision %s, PP %d. %s" % [
+		{"physical": "Physique", "special": "Spéciale"}.get(Data.moves[m]["cat"], "Statut"),
+		str(Data.moves[m]["power"]) if Data.moves[m]["power"] else "—", str(Data.moves[m]["acc"]) if Data.moves[m]["acc"] else "—",
+		Data.moves[m]["pp"], Data.moves[m].get("desc", "")])
+	var pick = await ListPick.pick("CAPACITÉS DE %s" % mon.name().to_upper(), rows, rights, descs)
+	if not pick is int or pick < 0:
+		return
+	await learn_move(mon, ids[pick])
+
+
+## Capacités qu'un Pokémon peut réapprendre : par niveau (≤ niveau actuel) et capacités Œuf de sa famille.
+static func relearnable(mon: Pokemon) -> Array:
+	var out := []
+	for e in mon.data()["learn"]:
+		if e[0] <= mon.level and not mon.knows(e[1]) and not out.has(e[1]) and Data.moves.has(e[1]):
+			out.append(e[1])
+	var sid := mon.species
+	while sid > 0:
+		for m in Data.pokemon[sid].get("egg", []):
+			if not mon.knows(m) and not out.has(m) and Data.moves.has(m):
+				out.append(m)
+		sid = int(Data.pokemon[sid].get("evolves_from", 0))
+	return out
 
 
 static func learn_move(mon: Pokemon, mid: int) -> bool:

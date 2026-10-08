@@ -242,14 +242,35 @@ def make_bridge_route(mid, name, w, h, exits, seed, theme=""):
         else:
             m.path(sx, sy, sx, cy, "H")
             m.path(sx, cy, cx, cy, "H")
+    spots = []
     for _ in range(4):
         iw, ih = rng.randint(4, 7), rng.randint(3, 5)
         for (x, y, ww, hh) in scatter(m, rng, ".", 1, iw, iw, ih, ih, "~", 1):
             m.rect(x + 1, y + 1, max(1, ww - 2), max(1, hh - 2), '"')
             m.set(x, y, "T")
-    scatter(m, rng, "w", 6, 2, 4, 2, 3, "~", 0)
-    # chaque îlot/marais doit toucher le ponton : on relie par des planches
+            spots.append([(xx, yy) for yy in range(y, y + hh) for xx in range(x, x + ww) if (xx, yy) != (x, y)])
+    for (x, y, ww, hh) in scatter(m, rng, "w", 6, 2, 4, 2, 3, "~", 0):
+        spots.append([(xx, yy) for yy in range(y, y + hh) for xx in range(x, x + ww)])
+    # Chaque îlot et chaque marais touche le ponton : on les relie par des planches.
+    for cells in spots:
+        _plank_to_bridge(m, cells)
     return m
+
+
+def _plank_to_bridge(m, cells):
+    bridge = [(x, y) for y in range(m.h) for x in range(m.w) if m.g[y][x] == "H"]
+    if not bridge or not cells:
+        return
+    _, cx, cy, bx, by = min((abs(bx - cx) + abs(by - cy), cx, cy, bx, by) for cx, cy in cells for bx, by in bridge)
+    x, y = cx, cy
+    while y != by:
+        y += 1 if by > y else -1
+        if m.g[y][x] == "~":
+            m.g[y][x] = "H"
+    while x != bx:
+        x += 1 if bx > x else -1
+        if m.g[y][x] == "~":
+            m.g[y][x] = "H"
 
 
 def make_town(mid, name, w, h, exits, seed, center, music="town"):

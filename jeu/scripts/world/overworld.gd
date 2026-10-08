@@ -17,7 +17,7 @@ const THEME_TINT := {"ice": Color(0.82, 0.95, 1.25), "tower": Color(0.92, 0.82, 
 	"rocket": Color(0.82, 0.82, 0.92), "mansion": Color(1.05, 0.9, 0.8), "forest": Color(0.8, 0.92, 0.82),
 	"rock": Color(1.05, 0.95, 0.85), "water": Color(0.85, 0.95, 1.15), "electric": Color(1.1, 1.08, 0.85),
 	"grass": Color(0.9, 1.1, 0.9), "poison": Color(1.0, 0.88, 1.08), "psychic": Color(1.1, 0.9, 1.0),
-	"fire": Color(1.15, 0.9, 0.85), "ground": Color(1.1, 1.0, 0.85)}
+	"fire": Color(1.15, 0.9, 0.85), "ground": Color(1.1, 1.0, 0.85), "abyss": Color(0.62, 0.5, 0.88)}
 
 
 class Walker:
@@ -341,6 +341,8 @@ func _draw_ground() -> void:
 		for x in row.length():
 			var ch := row[x]
 			var kind: String = TILE_NAMES.get(ch, "grass")
+			if kind == "rock" and map.get("cave", false):
+				kind = "rock_cave"
 			var frame := 0
 			if kind == "water" or kind == "bridge":
 				frame = _water_frame if kind == "water" else 0
@@ -565,8 +567,11 @@ func _after_step() -> void:
 		table = "grass"
 	elif ch == "w":
 		table = "marsh"
-	elif ch in "_u" and map.get("cave", false):
+	elif ch in "_uq" and (map.get("cave", false) or not map.get("outdoor", true)):
+		# Grottes, mais aussi tours, manoirs et repaires : on y croise des Pokémon partout sur le sol.
 		table = "grass" if map["wild"].has("grass") else "cave"
+	if table != "" and map.has("rare") and await Campaign.rare_check(self):
+		return
 	if table != "" and map["wild"].has(table) and randf() < map.get("rate", 0.1):
 		await Events.wild_encounter(self, map["wild"][table])
 

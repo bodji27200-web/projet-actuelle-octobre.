@@ -146,6 +146,9 @@ def evo_from_row(r):
     elif trig == "shed":
         e["level"] = int(r["minimum_level"] or 20)
         e["special"] = "shed"
+    elif trig in ("meltan-candies", "gimmighoul-coins"):
+        # Objets propres au jeu : 400 Bonbons Meltan / 999 pièces réunis en un seul objet.
+        e["item"] = {"meltan-candies": "meltan-candy", "gimmighoul-coins": "gimmighoul-coin"}[trig]
     else:
         e["special"] = trig
         if r["minimum_level"]:
@@ -542,7 +545,9 @@ out_abil = {
 # --- Objets ---------------------------------------------------------------------
 KEY_ITEMS = """oaks-parcel silph-scope poke-flute secret-key helix-fossil dome-fossil old-amber bicycle
 card-key ss-ticket town-map gold-teeth exp-share old-rod good-rod super-rod mega-ring z-ring shiny-charm oval-charm
-reveal-glass gracidea prison-bottle meteorite zygarde-cube scroll-of-darkness scroll-of-waters dna-splicers""".split()
+reveal-glass gracidea prison-bottle meteorite zygarde-cube scroll-of-darkness scroll-of-waters dna-splicers
+rainbow-wing silver-wing clear-bell tidal-bell red-chain member-card oaks-letter azure-flute dark-stone light-stone
+lunar-wing reins-of-unity sparkling-stone magma-emblem jade-orb eon-ticket old-sea-map""".split()
 ITEMS = """nugget big-nugget pearl big-pearl pearl-string stardust star-piece comet-shard rare-bone tiny-mushroom
 big-mushroom balm-mushroom heart-scale bottle-cap gold-bottle-cap ability-capsule honey
 poke-ball great-ball ultra-ball master-ball premier-ball net-ball nest-ball repeat-ball timer-ball luxury-ball dusk-ball
@@ -558,13 +563,16 @@ fossilized-bird fossilized-fish fossilized-drake fossilized-dino odd-keystone"""
 HELD_CATS = {"held-items", "choice", "effort-training", "bad-held-items", "training", "plates", "species-specific",
              "type-enhancement", "jewels", "mega-stones", "memories", "z-crystals", "evolution", "in-a-pinch",
              "picky-healing", "type-protection", "medicine", "other", "effort-drop", "nature-mints"}
-SKIP_ITEMS = {"exp-share", "red-nectar", "yellow-nectar", "pink-nectar", "purple-nectar", "black-augurite", "peat-block",
-              "metal-alloy", "wellspring-mask", "hearthflame-mask", "cornerstone-mask"}
+SKIP_ITEMS = {"exp-share", "red-nectar", "yellow-nectar", "pink-nectar", "purple-nectar", "wellspring-mask", "hearthflame-mask",
+              "cornerstone-mask"}
 for r in items.values():
     if item_cats.get(r["category_id"]) in HELD_CATS and r["identifier"] not in SKIP_ITEMS and r["identifier"] not in ITEMS:
         ITEMS.append(r["identifier"])
 ITEMS += ["red-orb", "blue-orb", "rusted-sword", "rusted-shield", "adamant-crystal", "lustrous-globe", "griseous-core",
           "wellspring-mask", "hearthflame-mask", "cornerstone-mask", "booster-energy"]
+# Objets d'évolution rangés ailleurs dans PokeAPI (Galanoa, Armure de la Fortune...).
+ITEMS += [i for i in ("black-augurite", "peat-block", "metal-alloy", "galarica-cuff", "galarica-wreath", "auspicious-armor")
+          if i not in ITEMS]
 # Prix des objets tenus pour les boutiques de combat (PokeAPI en met souvent 0).
 DEFAULT_HELD_PRICE = {"mega-stones": 0, "z-crystals": 0, "memories": 15000, "plates": 15000, "jewels": 3000,
                       "type-enhancement": 8000, "choice": 25000, "held-items": 15000, "in-a-pinch": 2000,
@@ -586,6 +594,8 @@ for ident in ITEMS:
         price = DEFAULT_HELD_PRICE[cat]
     entry = {"name": item_names.get(r["id"], ident.replace("-", " ").title()), "desc": item_desc.get(r["id"], ""),
              "price": price, "cat": cat}
+    if entry["desc"] == "" and ident in ("black-augurite", "peat-block", "metal-alloy", "auspicious-armor"):
+        entry["desc"] = "Un objet mystérieux qui permet à certains Pokémon d'évoluer."
     if 5 in item_flags[r["id"]] or cat in HELD_CATS or ident in ("red-orb", "blue-orb", "rusted-sword", "rusted-shield",
                                                                   "adamant-crystal", "lustrous-globe", "griseous-core", "booster-energy"):
         entry["held"] = True
@@ -597,12 +607,20 @@ for ident in ITEMS:
         entry["ng"] = [types.get(b["natural_gift_type_id"], "normal"), int(b["natural_gift_power"] or 80)]
     out_items[ident] = entry
 # Objets absents de PokeAPI.
+if not out_items.get("linking-cord", {}).get("desc"):
+    out_items["linking-cord"]["desc"] = "Un cordon mystérieux. Fait évoluer les Pokémon qui évoluent normalement par échange."
 out_items["ability-patch"] = {"name": "Patch Talent", "desc": "Un patch qui donne à un Pokémon son talent caché.",
                               "price": 120000, "cat": "vitamins"}
 out_items["meltan-candy"] = {"name": "Bonbon Meltan", "desc": "Un énorme bonbon. Fait évoluer Meltan en Melmetal.",
                              "price": 20000, "cat": "evolution"}
 out_items["gimmighoul-coin"] = {"name": "Pièce de Mordudor", "desc": "999 pièces réunies. Fait évoluer Mordudor en Gromago.",
                                 "price": 30000, "cat": "evolution"}
+out_items["gs-ball"] = {"name": "GS Ball", "desc": "Une mystérieuse Poké Ball qui intéresse beaucoup Fargas d'Écorcia.",
+                       "price": 0, "key": True}
+out_items["fragment-arc"] = {"name": "Fragment Arc-en-Ciel", "desc": "Un éclat aux sept couleurs, repris à la Team Rainbow Rocket. Il en existe huit.",
+                             "price": 0, "key": True}
+out_items["passe-croisiere"] = {"name": "Passe Croisière", "desc": "Permet de voyager en bateau depuis Carmin-sur-Mer vers les autres régions.",
+                                "price": 0, "key": True}
 out_items["leaders-crest"] = {"name": "Emblème du Général", "desc": "Prouve que trois Scalproie ont été vaincus. Fait évoluer Scalproie en Scalpereur.",
                               "price": 20000, "cat": "evolution"}
 for ident in KEY_ITEMS:

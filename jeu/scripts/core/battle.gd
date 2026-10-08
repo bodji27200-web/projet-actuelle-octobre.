@@ -927,36 +927,79 @@ func start() -> Array:
 	return flush()
 
 
-## Boss à aura : chaque aura donne un avantage permanent au boss.
+## Boss à aura : chaque aura donne un avantage permanent au boss (et, contre un dresseur à aura,
+## à chacun de ses Pokémon dès qu'il entre en combat).
+var _aura_started := false
+
+
 func _apply_aura() -> void:
 	for b: Battler in actives(1):
-		anim(b, "aura_" + aura)
-		match aura:
-			"fire":
-				msg("Une aura brûlante entoure %s ! Ses attaques sont plus puissantes." % nm(b))
-				b.stages["atk"] = mini(6, b.stages["atk"] + 1)
-				b.stages["spa"] = mini(6, b.stages["spa"] + 1)
-			"steel":
-				msg("Une aura d'acier entoure %s ! Il est plus résistant." % nm(b))
-				b.stages["def"] = mini(6, b.stages["def"] + 2)
-				b.stages["spd"] = mini(6, b.stages["spd"] + 2)
-			"electric":
-				msg("Une aura électrique entoure %s ! Il est plus rapide." % nm(b))
-				b.stages["spe"] = mini(6, b.stages["spe"] + 2)
-			"ghost":
-				msg("Une aura spectrale entoure %s ! Il est difficile à toucher." % nm(b))
-				b.stages["eva"] = mini(6, b.stages["eva"] + 1)
-			"dragon":
-				msg("Une aura draconique entoure %s ! Toutes ses stats augmentent." % nm(b))
-				for k in ["atk", "def", "spa", "spd", "spe"]:
-					b.stages[k] = mini(6, b.stages[k] + 1)
-			"grass":
-				msg("Une aura végétale entoure %s ! Il régénère ses PV." % nm(b))
-				b.ingrain = true
-				b.aqua_ring = true
-			"dark":
-				msg("Une aura ténébreuse entoure %s ! Ses coups critiques sont fréquents." % nm(b))
-				b.crit_bonus += 2
+		_aura_on(b)
+	_aura_started = true
+
+
+func _aura_on(b: Battler) -> void:
+	anim(b, "aura_" + aura)
+	match aura:
+		"fire":
+			msg("Une aura brûlante entoure %s ! Ses attaques sont plus puissantes." % nm(b))
+			b.stages["atk"] = mini(6, b.stages["atk"] + 1)
+			b.stages["spa"] = mini(6, b.stages["spa"] + 1)
+		"steel":
+			msg("Une aura d'acier entoure %s ! Il est plus résistant." % nm(b))
+			b.stages["def"] = mini(6, b.stages["def"] + 2)
+			b.stages["spd"] = mini(6, b.stages["spd"] + 2)
+		"electric":
+			msg("Une aura électrique entoure %s ! Il est plus rapide." % nm(b))
+			b.stages["spe"] = mini(6, b.stages["spe"] + 2)
+		"ghost":
+			msg("Une aura spectrale entoure %s ! Il est difficile à toucher." % nm(b))
+			b.stages["eva"] = mini(6, b.stages["eva"] + 1)
+		"dragon":
+			msg("Une aura draconique entoure %s ! Toutes ses stats augmentent." % nm(b))
+			for k in ["atk", "def", "spa", "spd", "spe"]:
+				b.stages[k] = mini(6, b.stages[k] + 1)
+		"grass":
+			msg("Une aura végétale entoure %s ! Il régénère ses PV." % nm(b))
+			b.ingrain = true
+			b.aqua_ring = true
+		"dark":
+			msg("Une aura ténébreuse entoure %s ! Ses coups critiques sont fréquents." % nm(b))
+			b.crit_bonus += 2
+		"water":
+			msg("Une aura aquatique entoure %s ! L'eau le protège et le soigne." % nm(b))
+			b.aqua_ring = true
+			b.stages["def"] = mini(6, b.stages["def"] + 1)
+			b.stages["spd"] = mini(6, b.stages["spd"] + 1)
+		"ice":
+			msg("Une aura glaciale entoure %s ! Il devient vif et coriace." % nm(b))
+			b.stages["spe"] = mini(6, b.stages["spe"] + 1)
+			b.stages["def"] = mini(6, b.stages["def"] + 1)
+		"psychic":
+			msg("Une aura psychique entoure %s ! Ses pouvoirs décuplent." % nm(b))
+			b.stages["spa"] = mini(6, b.stages["spa"] + 2)
+			b.stages["acc"] = mini(6, b.stages["acc"] + 1)
+		"fairy":
+			msg("Une aura féerique entoure %s ! Son équipe est protégée des statuts." % nm(b))
+			sides[1].safeguard = 999
+			b.stages["spd"] = mini(6, b.stages["spd"] + 1)
+		"fighting":
+			msg("Une aura combative entoure %s ! Sa force explose." % nm(b))
+			b.stages["atk"] = mini(6, b.stages["atk"] + 2)
+		"rock":
+			msg("Une aura minérale entoure %s ! Il devient dur comme la pierre." % nm(b))
+			b.stages["def"] = mini(6, b.stages["def"] + 2)
+			b.stages["atk"] = mini(6, b.stages["atk"] + 1)
+		"ground":
+			msg("Une aura tellurique entoure %s ! Le sol tremble sous sa force." % nm(b))
+			b.stages["atk"] = mini(6, b.stages["atk"] + 1)
+			b.stages["def"] = mini(6, b.stages["def"] + 1)
+			b.stages["spd"] = mini(6, b.stages["spd"] + 1)
+		"flying":
+			msg("Une aura de tempête entoure %s ! Il fend l'air à toute vitesse." % nm(b))
+			b.stages["spe"] = mini(6, b.stages["spe"] + 1)
+			b.stages["eva"] = mini(6, b.stages["eva"] + 1)
+			b.stages["atk"] = mini(6, b.stages["atk"] + 1)
 
 
 func _next_for_slot(side_i: int, slot: int) -> int:
@@ -1090,6 +1133,8 @@ func _send(side_i: int, slot: int, idx: int, announce := true, keep_stages := fa
 	events.append({"t": "send", "side": side_i, "slot": slot, "mon": b.mon, "index": idx, "owner": b.owner})
 	# Formes à l'entrée (Primo-Résurgence, Zacian Roi du Combat, Giratina Originel...).
 	_entry_form(b)
+	if side_i == 1 and aura != "" and _aura_started:
+		_aura_on(b)
 	if side.healing_wish:
 		side.healing_wish = false
 		if b.mon.hp < b.mon.max_hp() or b.mon.status != "":

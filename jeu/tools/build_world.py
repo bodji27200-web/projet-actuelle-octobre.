@@ -3,6 +3,7 @@
 Usage : python3 build_world.py <dossier_data>
 """
 import json
+import os
 import random
 import sys
 
@@ -12,6 +13,11 @@ from world_lib import (Map, WALK, connect_door, decorate_town, interior, make_br
 DATA = sys.argv[1]
 POKE = {int(k): v for k, v in json.load(open(f"{DATA}/pokemon.json", encoding="utf-8")).items()}
 ENC = json.load(open(f"{DATA}/encounters.json", encoding="utf-8"))
+ITEMS_JSON = json.load(open(f"{DATA}/items.json", encoding="utf-8"))
+TOOLS = os.path.dirname(os.path.abspath(__file__))
+# Tables de rencontre officielles de toutes les versions et noms français des lieux (campagne d'après-Ligue).
+ENC_ALL = json.load(open(f"{TOOLS}/encounters_all.json", encoding="utf-8"))
+NAMES_FR = json.load(open(f"{TOOLS}/location_names_fr.json", encoding="utf-8"))
 maps = {}
 trainers = {}
 quests = {}
@@ -47,6 +53,22 @@ def special(name, *args): return ["special", name] + list(args)
 def choice(q, opts, branches): return ["choice", q, opts, branches]
 def warpc(mid, x, y, d="down"): return ["warp", mid, x, y, d]
 def F(f): return {"flag": f}
+
+
+def _flat(cmds):
+    """Toutes les commandes d'un script, y compris dans les conditions et les choix."""
+    out = []
+    for c in cmds if isinstance(cmds, list) else []:
+        if isinstance(c, list):
+            out.append(c)
+            for sub in c[1:]:
+                if isinstance(sub, list) and sub and isinstance(sub[0], list):
+                    out.extend(_flat(sub))
+                elif isinstance(sub, list):
+                    for x in sub:
+                        if isinstance(x, list):
+                            out.extend(_flat(x))
+    return out
 def NF(f): return {"not": f}
 def BADGES(n): return {"badges": n}
 
@@ -75,11 +97,15 @@ CLASSES = {
     "Jongleur": {"look": "clerk", "money": 35, "pool": [63, 64, 96, 97, 100, 101, 122]},
     "Gentleman": {"look": "oldman", "money": 70, "pool": [58, 25, 26, 128, 52, 53]},
     "Disciple": {"look": "ace", "money": 50, "pool": []},
+    "Sbire Rainbow": {"look": "rocket", "money": 60, "pool": [19, 20, 41, 42, 88, 89, 109, 110]},
+    "Admin Rainbow": {"look": "rocket", "money": 120, "pool": []},
     "Dresseur": {"look": "ace", "money": 40, "pool": [17, 20, 22, 24, 26, 28, 33, 30]},
 }
+# Pokémon par type (Champions de Kanto : coéquipiers en coop, revanches) : espèces ordinaires de Kanto seulement,
+# sans formes, Méga-Évolutions, légendaires ni Fabuleux.
 TYPE_POOL = {}
 for sid, p in POKE.items():
-    if not p["legendary"]:
+    if sid <= 151 and not p["legendary"] and not p["mythical"]:
         for t in p["types"]:
             TYPE_POOL.setdefault(t, []).append(sid)
 
@@ -328,6 +354,7 @@ def center_for(t, door, label):
     m.npc("arene_classee", "ace", 9, 2, "down", kind="social", what="ranked")
     m.npc("guichet_guildes", "scientist", 1, 6, "right", kind="social", what="guild")
     m.npc("hotesse_bases", "lass", 11, 6, "left", kind="social", what="base")
+    m.npc("maitre_capacites", "oldman", 3, 2, "down", kind="relearn")
     return cid
 
 
@@ -396,6 +423,9 @@ def gym(t, n, typ, leader, label, team, tm, badge_name, quote, post, trainer_spe
         trainer_npc(m, tid, x, y, ["left", "right", "down"][i % 3], sight=3)
     m.npc("guide", "clerk", 4, 12, "up", text=[f"Yo, futur Champion ! L'Arène de {label} utilise des Pokémon de type {typ_fr(typ)}.",
                                               "Prépare des Pokémon efficaces contre eux. Tu peux le faire !"])
+    # Après la Ligue : revanches au niveau 75+ (équipes aux builds compétitifs), autant de fois qu'on veut.
+    m.npc("revanche", "ace", 8, 12, "up", kind="script", hide_if={"not": "champion"},
+          script=[say(f"Assistant : Le Champion de {label} accepte les revanches des Maîtres de la Ligue !"), special("rematch", n)])
     return gid
 
 
@@ -906,7 +936,7 @@ ms = add(interior("magasin", "Magasin de Céladopole", fit_rows(["WWWWWWWWWWWWWW
                                                                   "WqqqBBqqqBBqqqW", "WqqqqqqqqqqqqqW", "WpqqqqqqqqqqqpW", "WqqqqqqqqqqqqqW", "WWWWWWWmWWWWWWW"]), "mart"))
 ms.region = "celadopole"
 ms.warp(7, 9, "celadopole", d_store[0], d_store[1], "down")
-ms.npc("vendeur_objets", "clerk", 2, 2, kind="shop", stock=MARTS["high"] + ["fire-stone", "water-stone", "thunder-stone", "leaf-stone", "moon-stone",
+ms.npc("vendeur_objets", "clerk", 2, 2, kind="shop", stock=MARTS["high"] + ["fire-stone", "water-stone", "thunder-stone", "leaf-stone", "moon-stone", "linking-cord",
                                                                             "x-attack", "x-defense", "x-speed", "x-sp-atk", "x-sp-def", "x-accuracy", "dire-hit", "guard-spec",
                                                                             "hp-up", "protein", "iron", "calcium", "zinc", "carbos", "fresh-water", "soda-pop", "lemonade"])
 ms.npc("vendeur_ct", "clerk", 12, 2, kind="shop", stock=[f"tm{n:02d}" for n in range(1, 51)])
@@ -1432,6 +1462,16 @@ for b in maps["r10"].buildings:
 ex2, ey2 = cc[-1]
 cm2.npc("electhor", "legend", ex2, ey2, kind="legend", species=145, level=50, flag="leg_145",
         text=["L'air crépite d'électricité... Électhor, l'oiseau de foudre légendaire !"])
+# Meltan : Pokémon de métal liquide, très rare dans la Centrale après la Ligue. Le chercheur donne le Bonbon Meltan.
+cm2.extra["rare"] = [[808, 55, 250, "leg_808", {"flag": "champion"}]]
+mx2, my2 = cc[len(cc) // 2]
+cm2.npc("chercheur_meltan", "scientist", mx2 + 1, my2, kind="script", script=[
+    iff(F("leg_808"),
+        [iff(F("got_meltan_candy"), [say("Chercheur : Meltan se nourrit de métal. Avec assez de bonbons, il devient Melmetal !")],
+             [say("Chercheur : Tu as attrapé un Meltan ?! Incroyable !", "Prends ce Bonbon Meltan : il en contient 400 d'un coup. Ton Meltan deviendra Melmetal !"),
+              give("meltan-candy"), setf("got_meltan_candy")])],
+        [say("Chercheur : J'étudie les Pokémon faits de métal liquide qui se cachent dans la Centrale. On les appelle Meltan.",
+             "Ils ne se montrent qu'aux Maîtres de la Ligue... et très rarement. Marche dans la Centrale et sois patient !")])])
 place_items(cm2, [("thunder-stone", 1), ("max-elixir", 1), ("tm25", 1)], 171, "q")
 add(cm2)
 
@@ -1469,9 +1509,11 @@ def has_water(m):
     return any(c in row for row in m.g for c in "~w")
 
 
-def add_pond(m, seed):
+def add_pond(m, seed, floor='."', start=None):
+    """Étang (bord peu profond « w », eau profonde au milieu) posé sans couper aucun passage."""
     rng = random.Random(seed)
-    start = next(((x, y) for y in range(m.h) for x in range(m.w) if m.g[y][x] == ","), None)
+    if start is None:
+        start = next(((x, y) for y in range(m.h) for x in range(m.w) if m.g[y][x] == ","), None)
     if start is None:
         return False
     before = reachable(m, start)
@@ -1480,7 +1522,7 @@ def add_pond(m, seed):
         for y in range(1, m.h - ph):
             for x in range(1, m.w - pw):
                 cells = [(xx, yy) for yy in range(y, y + ph) for xx in range(x, x + pw)]
-                if any(m.g[yy][xx] not in '."' or (xx, yy) in m.protected for xx, yy in cells):
+                if any(m.g[yy][xx] not in floor or (xx, yy) in m.protected for xx, yy in cells):
                     continue
                 ring = [(xx, yy) for yy in range(y - 1, y + ph + 1) for xx in range(x - 1, x + pw + 1) if (xx, yy) not in cells]
                 if any(m.get(xx, yy) in ",S" for xx, yy in ring):
@@ -1510,6 +1552,19 @@ for mid, mm in maps.items():
     if mm.outdoor and mid in RECT and not has_water(mm) and any(rk in mm.wild for rk in RODS):
         if not add_pond(mm, sum(map(ord, mid)) + 7):
             print("pas de place pour un étang :", mid)
+# Pokémon des marais sans eau peu profonde : le bord des étangs devient un marais.
+for mid, mm in maps.items():
+    if mm.outdoor and "marsh" in mm.wild and not any("w" in row for row in mm.g):
+        for y in range(mm.h):
+            for x in range(mm.w):
+                if mm.g[y][x] == "~" and any(mm.get(x + dx, y + dy) in WALK and mm.get(x + dx, y + dy) != "w"
+                                             for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+                    mm.g[y][x] = "w"
+# Grottes avec des Pokémon aquatiques (Grotte Azurée, Îles Écume) : un lac souterrain pour pêcher et surfer.
+for mid, mm in maps.items():
+    if not mm.outdoor and mm.warps and not has_water(mm) and any(rk in mm.wild for rk in RODS + ("marsh",)):
+        if not add_pond(mm, sum(map(ord, mid)) + 7, floor="_", start=(mm.warps[0]["x"], mm.warps[0]["y"])):
+            print("pas de place pour un lac souterrain :", mid)
 
 # Pêche : chaque point d'eau a ses tables Canne / Super Canne / Méga Canne.
 wild(maps["bourg"], "pallet-town", kinds=())
@@ -1543,6 +1598,15 @@ for mid, mm in maps.items():
                 table.append([sid, lo, hi, max(1, round(total * pct / 100))])
 
 # ---------------------------------------------------------------------------
+# Campagne d'après-Ligue : les autres régions (voir regions.py et region_data.py)
+# ---------------------------------------------------------------------------
+import region_data
+import regions as regions_mod
+
+W = sys.modules[__name__]
+REGIONS = regions_mod.build(W, [f(W) for f in region_data.ALL], ENC_ALL, NAMES_FR)
+
+# ---------------------------------------------------------------------------
 # Base secrète (modèle) : chaque joueur en a une instance « base:<id> », créée par le jeu.
 # La sortie ramène au Centre Pokémon d'où l'on vient (« @return »).
 # ---------------------------------------------------------------------------
@@ -1557,6 +1621,16 @@ bs.extra["entry"] = [7, 9]
 # Finitions : connexions, panneaux, vérifications
 # ---------------------------------------------------------------------------
 apply_links()
+for R in REGIONS:
+    regions_mod.finish_region(W, R, POKE)
+# Port de Carmin-sur-Mer : départ des bateaux vers les autres régions (avec le Passe Croisière).
+cm = maps["carmin"]
+cells = [(x, y) for y in range(cm.h - 3, 2, -1) for x in range(3, cm.w - 3) if cm.g[y][x] == "," and cm.g[y][x + 1] in ".f"]
+px, py = cells[0]
+cm.extra["port"] = [px, py]
+cm.npc("capitaine", "oldman", px + 1, py, "left", kind="script", script=[special("travel")])
+quests["suite"] = {"title": "La Team Rainbow Rocket", "main": True, "stages": ["",
+    "Le Prof. Chen t'a donné un Passe Croisière. Prends le bateau à Carmin-sur-Mer : la Team Rainbow Rocket rôde dans le monde entier !"]}
 for mid in RECT:
     mm = maps[mid]
     if mid.startswith("r") and mid[1:].isdigit():
@@ -1613,13 +1687,52 @@ for mid, mm in maps.items():
         near = [(n["x"] + dx, n["y"] + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1), (0, 2), (2, 0), (-2, 0))]
         if not any(p in reach for p in near):
             problems.append(f"{mid} : PNJ inaccessible {n['id']}")
+# Objets : tout ce qui est posé au sol, vendu ou donné doit exister dans les données.
+for mid, mm in maps.items():
+    for n in mm.npcs:
+        names = []
+        if n.get("kind") in ("item", "gift"):
+            names.append(n.get("item"))
+        if n.get("kind") == "shop":
+            names += list(n.get("stock", []))
+        for c in _flat(n.get("script", [])):
+            if isinstance(c, list) and c and c[0] == "give":
+                names.append(c[1])
+        for it in names:
+            if it not in ITEMS_JSON:
+                problems.append(f"{mid} : objet inconnu {it!r} ({n['id']})")
 for p in problems:
     print("PROBLÈME", p)
 
 # Couverture du Pokédex
+# Une table de rencontre ne compte que si on peut la déclencher en jeu (mêmes règles que overworld.gd).
+def usable_tables(mm):
+    tiles = {c for row in mm.g for c in row}
+    floor = (mm.cave or not mm.outdoor) and bool(tiles & set("_uq"))
+    out = {}
+    for meth, lst in mm.wild.items():
+        if meth == "grass":
+            ok = '"' in tiles or floor
+        elif meth == "marsh":
+            ok = "w" in tiles
+        elif meth.endswith("-rod"):
+            ok = bool(tiles & set("~w"))
+        else:
+            ok = floor and "grass" not in mm.wild
+        if ok:
+            out[meth] = lst
+        elif (mm.id, meth) not in _warned:
+            _warned.add((mm.id, meth))
+            print(f"ATTENTION {mm.id} : table « {meth} » impossible à déclencher")
+    return out
+
+
+_warned = set()
+
+
 obtainable = set()
 for mm in maps.values():
-    for lst in mm.wild.values():
+    for lst in usable_tables(mm).values():
         obtainable |= {e[0] for e in lst}
     for n in mm.npcs:
         if n.get("kind") in ("legend", "starter") and n.get("species"):
@@ -1641,6 +1754,43 @@ for sid in list(obtainable):
         obtainable.add(pre)
 missing = [f"{s} {POKE[s]['name']}" for s in range(1, 152) if s not in obtainable]
 print("Pokémon introuvables :", missing)
+# Couverture des 1025 espèces (campagne comprise) : sauvages, légendaires, starters, fossiles, dons.
+# On suit les formes (Canarticho de Galar évolue en Palarticho, pas celui de Kanto). Les boss ne comptent pas :
+# ils ne se capturent pas.
+got = set(obtainable)
+for mm in maps.values():
+    usable = usable_tables(mm)
+    mm.wild = usable  # les tables impossibles à déclencher sont retirées
+    for r in (mm.extra.get("rare", []) if usable else []):
+        got.add(r[0])
+    for n in mm.npcs:
+        if n.get("kind") == "legend" and n.get("species"):
+            got.add(n["species"])
+        for c in _flat(n.get("script", [])):
+            if isinstance(c, list) and c and c[0] == "special" and len(c) > 2 and c[1] in ("starter_pick", "starter_rest"):
+                got |= set(c[2])
+            if isinstance(c, list) and c and c[0] in ("mon", "egg", "legend") and len(c) > 1 and isinstance(c[1], int):
+                got.add(c[1])
+    for lst in usable.values():
+        got |= {e[0] for e in lst}
+got |= {345, 347, 408, 410, 564, 566, 696, 698, 880, 881, 882, 883}
+changed = True
+while changed:
+    changed = False
+    for pid in list(got):
+        for e in POKE[pid]["evos"]:
+            t = e.get("to_form", e["to"])
+            if t not in got:
+                got.add(t)
+                changed = True
+        # Reproduction : l'œuf donne la pré-évolution (sauf Pokémon qui ne se reproduisent pas).
+        pre = POKE[pid]["evolves_from"]
+        if pre and pre not in got and POKE[pid]["egg_groups"] != ["no-eggs"]:
+            got.add(pre)
+            changed = True
+obtainable = {POKE[pid]["species"] for pid in got}
+all_missing = [s for s in range(1, 1026) if s not in obtainable]
+print(f"Pokédex national : {1025 - len(all_missing)} / 1025 obtenables ; manquants :", [f"{s} {POKE[s]['name']}" for s in all_missing][:400])
 
 out = {"maps": {k: v.to_json() for k, v in maps.items()}, "trainers": trainers, "quests": quests,
        "classes": CLASSES, "type_pool": TYPE_POOL, "world": {k: list(v) for k, v in RECT.items()}}

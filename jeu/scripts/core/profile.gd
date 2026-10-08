@@ -29,6 +29,7 @@ const TITLES := {
 	"marchand": ["Négociant", "Vendre 10 fois à l'Hôtel des Ventes", "gts_sold", 10],
 	"guilde": ["Chef de Guilde", "Fonder une guilde", "guild_leader", 1],
 	"heros_sevii": ["Héros des Îles Sevii", "Terminer la campagne des Îles Sevii", "sevii", 1],
+	"fleau_rainbow": ["Fléau de la Team Rainbow", "Vaincre Giovanni au Château Rocket", "rainbow", 1],
 	"survivant_abime": ["Survivant de l'Abîme", "Vaincre le Gardien de l'Abîme", "abyss", 1],
 	"conquerant": ["Conquérant des Régions", "Battre les Maîtres des 8 autres régions", "region_champions", 8],
 }
@@ -75,6 +76,8 @@ static func value(key: String) -> int:
 			return 1 if Game.flag("sevii_done") else 0
 		"abyss":
 			return 1 if Game.flag("abyss_done") else 0
+		"rainbow":
+			return 1 if Game.flag("rainbow_done") else 0
 		"region_champions":
 			var n := 0
 			for r in ["johto", "hoenn", "sinnoh", "unys", "kalos", "alola", "galar", "paldea"]:

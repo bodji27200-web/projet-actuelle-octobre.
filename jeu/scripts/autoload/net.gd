@@ -295,7 +295,7 @@ func host_coop_battle(enemy_parties: Array, wild: bool, trainers: Array, opts: D
 	send_state()
 	Audio.play_music(Events._battle_music(wild, trainers, opts))
 	await Game.ui.battle_intro()
-	var bopts := Events.battle_opts(opts, wild, enemy_parties)
+	var bopts := Events.battle_opts(opts, wild, enemy_parties, trainers)
 	bopts["double"] = false
 	bopts["player_names"] = [Game.player_name, guest_name]
 	bopts["mega_owners"] = [Game.item_count("mega-ring") > 0, reply.get("mega", false)]

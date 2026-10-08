@@ -6,8 +6,13 @@ const C := {".": Color("88d070"), ",": Color("e8d8a0"), '"': Color("308838"), "T
 	"f": Color("f07878"), "=": Color("f0f0f0"), "S": Color("b48c50"), "v": Color("50a03c"), ":": Color("f0e4b0"), "R": Color("968c78"),
 	"w": Color("6ea0d2"), "H": Color("aa7846")}
 
-static var _tex_cache: Texture2D
+const KANTO_TOWNS := ["bourg", "jadielle", "argenta", "azuria", "safrania", "carmin", "lavanville", "celadopole", "parmanie", "cramois", "plateau"]
+const REALM_NAMES := {"kanto": "Kanto", "sevii": "Îles Sevii", "johto": "Johto", "hoenn": "Hoenn", "sinnoh": "Sinnoh", "hisui": "Hisui",
+	"unys": "Unys", "kalos": "Kalos", "alola": "Alola", "galar": "Galar", "paldea": "Paldea", "rainbow": "Château Rocket"}
+static var _tex_cache := {}
+static var _origins := {}
 static var _origin := Vector2i.ZERO
+var _realm := "kanto"
 
 var _map: TextureRect
 var _dot: ColorRect
@@ -23,20 +28,24 @@ func _ready() -> void:
 	bg.color = Color("182848")
 	bg.size = size
 	add_child(bg)
-	if _tex_cache == null:
-		_tex_cache = _build_texture()
+	_realm = realm_of(Game.map_id)
+	if not _tex_cache.has(_realm):
+		_tex_cache[_realm] = _build_texture(_realm)
+		_origins[_realm] = _origin
+	_origin = _origins[_realm]
+	var tex: Texture2D = _tex_cache[_realm]
 	_map = TextureRect.new()
-	_map.texture = _tex_cache
+	_map.texture = tex
 	_map.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_map.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	var sz := Vector2(_tex_cache.get_size())
+	var sz := Vector2(tex.get_size())
 	_scale = minf(460.0 / sz.x, 290.0 / sz.y)
 	_map.size = sz * _scale
 	_map.position = Vector2((480 - _map.size.x) / 2, 8)
 	add_child(_map)
 	for mid in Game.maps:
 		var m: Dictionary = Game.maps[mid]
-		if m.get("wx") == null or not (mid in ["bourg", "jadielle", "argenta", "azuria", "safrania", "carmin", "lavanville", "celadopole", "parmanie", "cramois", "plateau"]):
+		if m.get("wx") == null or m.get("realm", "kanto") != _realm or not (mid in KANTO_TOWNS or m.get("town", false)):
 			continue
 		var l := Kit.label(self, m["name"], _map.position + Vector2(m["wx"] - _origin.x, m["wy"] - _origin.y) * _scale + Vector2(0, -12), 10, Color.WHITE, false)
 		l.add_theme_color_override("font_outline_color", Color.BLACK)
@@ -55,14 +64,23 @@ func _ready() -> void:
 	_place()
 
 
-static func _build_texture() -> Texture2D:
-	var minx := 9999
-	var miny := 9999
-	var maxx := 0
-	var maxy := 0
+## Royaume (région) d'une carte : celui de la carte elle-même ou de la zone extérieure qui la contient.
+static func realm_of(map_id: String) -> String:
+	var m: Dictionary = Game.maps.get(map_id, {})
+	if m.has("realm") and m.get("wx") != null:
+		return m["realm"]
+	var reg: Dictionary = Game.maps.get(m.get("region", ""), {})
+	return reg.get("realm", m.get("realm", "kanto"))
+
+
+static func _build_texture(realm: String) -> Texture2D:
+	var minx := 999999
+	var miny := 999999
+	var maxx := -999999
+	var maxy := -999999
 	for mid in Game.maps:
 		var m: Dictionary = Game.maps[mid]
-		if m.get("wx") == null:
+		if m.get("wx") == null or m.get("realm", "kanto") != realm:
 			continue
 		minx = mini(minx, m["wx"])
 		miny = mini(miny, m["wy"])
@@ -72,7 +90,7 @@ static func _build_texture() -> Texture2D:
 	var img := Image.create(maxx - minx, maxy - miny, false, Image.FORMAT_RGBA8)
 	for mid in Game.maps:
 		var m: Dictionary = Game.maps[mid]
-		if m.get("wx") == null:
+		if m.get("wx") == null or m.get("realm", "kanto") != realm:
 			continue
 		for y in m["h"]:
 			var row: String = m["rows"][y]
@@ -91,6 +109,8 @@ func _world_pos(map_id: String, tile: Vector2i) -> Vector2:
 	if m.get("wx") == null:
 		var reg: String = m.get("region", Game.last_outdoor)
 		var r: Dictionary = Game.maps.get(reg, Game.maps["bourg"])
+		if r.get("wx") == null:
+			r = Game.maps["bourg"]
 		return Vector2(r["wx"] + r["w"] / 2.0, r["wy"] + r["h"] / 2.0)
 	return Vector2(m["wx"] + tile.x, m["wy"] + tile.y)
 
@@ -98,8 +118,8 @@ func _world_pos(map_id: String, tile: Vector2i) -> Vector2:
 func _place() -> void:
 	var p := _world_pos(Game.map_id, Game.pos)
 	_dot.position = _map.position + (p - Vector2(_origin)) * _scale - Vector2(2, 2)
-	_label.text = "Tu es ici : %s" % Game.maps[Game.map_id]["name"]
-	if Net.in_group():
+	_label.text = "%s — Tu es ici : %s" % [REALM_NAMES.get(_realm, _realm.capitalize()), Game.maps[Game.map_id]["name"]]
+	if Net.in_group() and realm_of(Net.players[Net.partner].get("map", "bourg")) == _realm:
 		var st: Dictionary = Net.players[Net.partner]
 		var q := _world_pos(st.get("map", "bourg"), Vector2i(st.get("x", 0), st.get("y", 0)))
 		_pdot.position = _map.position + (q - Vector2(_origin)) * _scale - Vector2(2, 2)

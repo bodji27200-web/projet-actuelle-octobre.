@@ -74,7 +74,7 @@ func _battle(i: int) -> Array:
 	var wild := randi() % 4 == 0 and not double
 	var trainer := {} if wild else {"name": "Test", "ai": randi_range(1, 3)}
 	var b := Battle.new([a], [e], wild, trainer, {"double": double, "mega": true, "zmove": true, "boss": wild and randi() % 5 == 0,
-		"aura": ["", "", "fire", "dragon", "ghost", "grass", "dark", "steel", "electric"][randi() % 9]})
+		"aura": ["", "", "fire", "dragon", "ghost", "grass", "dark", "steel", "electric", "water", "ice", "psychic", "fairy", "fighting", "rock", "ground", "flying"][randi() % 17]})
 	b.start()
 	var turns := 0
 	var megas := 0
