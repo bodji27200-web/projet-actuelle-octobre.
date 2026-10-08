@@ -38,16 +38,40 @@ func _ready() -> void:
 	for k in 240:
 		await get_tree().process_frame
 	await _shot("01_titre", TitleScreen.new(), ui)
+	var mm := Control.new()
+	mm.set_script(load("res://scripts/ui/minimap.gd"))
+	layer.add_child(mm)
+	Game.set_flag("has_dex")
+	Game.give_badge(1)
+	Game.give_badge(2)
+	Game.quests = {"main": 5, "rattata": 1, "pension": 2}
+	for o in ["rocket", "champion", "rose_bonbon"]:
+		Game.give_outfit(o)
+	Game.outfit = "rocket"
 	world.load_map("bourg", Vector2i(10, 6), "down")
 	await _snap("02_bourg")
 	world.load_map("labo", Vector2i(8, 4), "up")
 	await _snap("03_labo")
 	world.load_map("jadielle", Vector2i(10, 8), "down")
 	await _snap("04_jadielle")
-	world.load_map("plaine", Vector2i(18, 22), "up")
-	await _snap("05_plaine")
-	world.load_map("grotte", Vector2i(14, 20), "up")
-	await _snap("06_grotte")
+	world.load_map("safrania", Vector2i(16, 12), "up")
+	await _snap("05_safrania")
+	world.load_map("ecume_1", Vector2i(10, 10), "up")
+	for y in Game.maps["ecume_1"]["h"]:
+		var row: String = Game.maps["ecume_1"]["rows"][y]
+		var x := row.find("_")
+		if x >= 0:
+			world.load_map("ecume_1", Vector2i(x, y), "up")
+			break
+	await _snap("06_iles_ecume")
+	world.load_map("tour_2", Vector2i(5, 5), "up")
+	for y in Game.maps["tour_2"]["h"]:
+		var row2: String = Game.maps["tour_2"]["rows"][y]
+		var x2 := row2.find("u")
+		if x2 >= 0:
+			world.load_map("tour_2", Vector2i(x2, y), "up")
+			break
+	await _snap("06b_tour")
 	world.load_map("centre_jadielle", Vector2i(6, 4), "up")
 	ui.say("Bienvenue au Centre Pokémon ! Nous soignons vos Pokémon gratuitement. Voulez-vous que je soigne vos Pokémon ?")
 	for k in 200:
@@ -56,7 +80,7 @@ func _ready() -> void:
 	Game._stack[-1].finish()
 	printerr("combat...")
 	var bs := BattleScreen.new()
-	bs.battle = Battle.new(Game.party, [Pokemon.create(9, 34)], false, {"name": "Topdresseur Hugo"})
+	bs.battle = Battle.new([Game.party, [Pokemon.create(130, 30)]], [[Pokemon.create(9, 34)], [Pokemon.create(65, 34)]], false, [{"name": "Topdresseur Hugo"}, {"name": "Disciple"}], {"player_names": ["Sacha", "Ondine"]})
 	ui.add_child(bs)
 	for k in 200:
 		await get_tree().process_frame
@@ -95,6 +119,13 @@ func _ready() -> void:
 	var shop := ShopScreen.new()
 	shop.stock = Game.maps["boutique_jadielle"]["npcs"][0]["stock"]
 	await _shot("16_boutique", shop, ui)
+	await _shot("18_menu", StartMenu.new(), ui)
+	await _shot("19_parametres", SettingsScreen.new(), ui)
+	await _shot("20_touches", KeysScreen.new(), ui)
+	await _shot("21_tenues", WardrobeScreen.new(), ui)
+	await _shot("22_journal", JournalScreen.new(), ui)
+	await _shot("23_carte", WorldMapScreen.new(), ui)
+	await _shot("24_multijoueur", OnlineScreen.new(), ui)
 	var ev := EvolutionScreen.new()
 	ev.mon = Pokemon.create(25, 30)
 	ev.to = 26

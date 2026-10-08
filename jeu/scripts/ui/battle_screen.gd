@@ -163,9 +163,9 @@ func _make_box(side: int, slot: int) -> void:
 	if mon.gender < 2:
 		Kit.label(p, mon.gender_symbol(), Vector2(rect.size.x - 74, 0 if small else 2), 13 if small else 15, Color("3068d8") if mon.gender == 0 else Color("e05878"))
 	Kit.label(p, "N.%d" % mon.level, Vector2(rect.size.x - 54, 0 if small else 2), 13 if small else 15)
-	Kit.label(p, "PV", Vector2(40, 19 if small else 22), 11, Color("e0a020"), false)
+	Kit.label(p, "PV", Vector2(40, 14 if small else 22), 11, Color("e0a020"), false)
 	var bar_w := rect.size.x - 82
-	_bars[k] = Kit.hp_bar(p, Vector2(62, 23 if small else 26), bar_w, float(mon.hp) / mon.max_hp())
+	_bars[k] = Kit.hp_bar(p, Vector2(62, 19 if small else 26), bar_w, float(mon.hp) / mon.max_hp())
 	_shown_hp[k] = mon.hp
 	Kit.status_tag(p, mon.status, Vector2(4, 21 if small else 24))
 	if side == 1 and Game.caught.has(mon.species) and not mon.boss:
@@ -179,14 +179,14 @@ func _make_box(side: int, slot: int) -> void:
 	if side == 0:
 		if small:
 			if not mine:
-				Kit.label(p, battle.owner_name(0, b.owner), Vector2(10, 28), 10, Color("406080"), false)
-			_hp_labels[k] = Kit.label(p, "%d/%d" % [mon.hp, mon.max_hp()], Vector2(rect.size.x - 74, 28), 11)
+				Kit.label(p, battle.owner_name(0, b.owner), Vector2(10, 26), 10, Color("406080"), false)
+			_hp_labels[k] = Kit.label(p, "%d/%d" % [mon.hp, mon.max_hp()], Vector2(rect.size.x - 70, 25), 10)
 		else:
 			_hp_labels[k] = Kit.label(p, "%d/%d" % [mon.hp, mon.max_hp()], Vector2(120, 34), 15)
 		if mine:
 			var bg2 := ColorRect.new()
-			bg2.position = Vector2(30, rect.size.y - 8 if small else 58)
-			bg2.size = Vector2(rect.size.x - 46, 4 if small else 5)
+			bg2.position = Vector2(30, rect.size.y - 6 if small else 58)
+			bg2.size = Vector2(rect.size.x - 110 if small else rect.size.x - 46, 3 if small else 5)
 			bg2.color = Color("404848")
 			p.add_child(bg2)
 			var e := ColorRect.new()

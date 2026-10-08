@@ -28,7 +28,7 @@ func _ready() -> void:
 	_info = Kit.label(pv, "", Vector2(10, 158), 14)
 	var help := Kit.panel(self, Rect2(4, 256, 472, 60))
 	Kit.label(help, "A : porter   B : retour   %d / %d tenues obtenues" % [Game.outfits.size(), Game.OUTFITS.size()], Vector2(10, 4), 14)
-	Kit.label(help, "Obtiens-en d'autres en boutique (Céladopole), en quête ou en battant des boss !", Vector2(10, 26), 13, Color("707070"))
+	Kit.label(help, "Autres tenues : Magasin de Céladopole, quêtes et boss.", Vector2(10, 26), 13, Color("707070"))
 	_index = maxi(0, Game.outfits.find(Game.outfit))
 	_build()
 

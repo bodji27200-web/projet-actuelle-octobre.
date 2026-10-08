@@ -1,38 +1,72 @@
 # Pokémon Kanto (Godot 4)
 
-Fan-game Pokémon pour jouer à deux à la maison. Usage privé uniquement : les sprites et les noms Pokémon appartiennent à Nintendo / Game Freak.
+Fan-game Pokémon pour jouer seul ou à deux, en coop. Usage privé uniquement : les sprites, les cris et les noms Pokémon appartiennent à Nintendo / Game Freak.
 
 ## Lancer le jeu
 
 1. Récupère le projet :
-   - soit en ZIP : https://github.com/bodji27200-web/projet-actuelle-octobre./archive/refs/heads/claude/godot-game-desktop-folder-yfw8m3.zip (clic droit → Extraire tout) ;
-   - soit avec git : `git clone -b claude/godot-game-desktop-folder-yfw8m3 https://github.com/bodji27200-web/projet-actuelle-octobre..git`
-2. Ouvre **Godot 4.3 ou plus récent** → **Importer** → choisis `jeu/project.godot` → **Importer et modifier**.
+   - en ZIP : https://github.com/bodji27200-web/projet-actuelle-octobre./archive/refs/heads/claude/godot-game-desktop-folder-yfw8m3.zip (clic droit → Extraire tout) ;
+   - ou avec git : `git clone -b claude/godot-game-desktop-folder-yfw8m3 https://github.com/bodji27200-web/projet-actuelle-octobre..git`
+2. Ouvre **Godot 4.3 ou plus récent** → **Importer** → `jeu/project.godot` → **Importer et modifier**.
 3. Appuie sur **F5**.
 
-**Internet est nécessaire au premier lancement** : les sprites officiels des Pokémon (faces, dos, chromatiques, icônes, objets) sont téléchargés depuis PokeAPI, puis gardés sur ton PC. Tant qu'un sprite n'est pas arrivé, une silhouette grise s'affiche.
+**Internet est nécessaire au premier lancement** : les sprites officiels et les cris des Pokémon sont téléchargés depuis PokeAPI, puis gardés sur le PC.
 
-## Touches
+> Ancienne sauvegarde : le monde a été entièrement refait, il faut commencer une **nouvelle partie**.
 
-| Action | Touche |
+## Touches (modifiables dans PARAMÈTRES → Touches)
+
+| Action | Touche par défaut |
 |---|---|
 | Se déplacer | Flèches ou ZQSD |
-| A (valider, parler) | Entrée, Espace ou E |
-| B (retour) | Échap, Retour arrière ou X |
-| Menu (Pokédex, Pokémon, Sac, Sauver…) | Tab ou M |
+| A (valider, parler) | Entrée ou Espace |
+| B (retour) | Échap ou Retour arrière |
+| Menu | Tab ou M |
 | Courir | Maj |
+| Vélo | V |
+| Carte de Kanto | C |
+| Message aux autres joueurs | T |
+
+## Jouer à deux (multijoueur et coop)
+
+1. Les deux lancent le jeu et chargent leur propre partie (chacun garde sa sauvegarde).
+2. Le premier ouvre **Menu → MULTIJOUEUR → HÉBERGER**. Le jeu affiche son adresse (ex. `192.168.1.20`).
+3. Le second fait **MULTIJOUEUR → REJOINDRE** et tape cette adresse.
+4. Vous vous voyez sur la carte. Pour faire équipe : **MULTIJOUEUR → INVITER DANS LE GROUPE** (ou parle à l'autre joueur).
+
+**En groupe et sur la même carte, tous les combats deviennent des 2 contre 2** :
+- dans les hautes herbes, **deux Pokémon sauvages** apparaissent ;
+- chaque Dresseur appelle **un camarade de la même catégorie** (un Sbire Rocket appelle un autre Sbire Rocket, un Champion appelle son Disciple) ;
+- les **Arènes** se font aussi en duo, et les deux joueurs gagnent le Badge ;
+- les **boss** des donjons (Antres, Tour Pokémon, Manoir) se combattent à deux contre un.
+
+Si vous n'êtes pas dans le même groupe, chacun joue normalement, même sur la même carte.
+
+**Connexion :**
+- **Même Wi-Fi / même box** : ça marche directement.
+- **À distance** : installez tous les deux un VPN gratuit comme **Radmin VPN** ou **ZeroTier**, rejoignez le même réseau, puis utilisez l'adresse affichée par le VPN. Sinon, l'hôte doit ouvrir le port **24680 (UDP)** sur sa box.
 
 ## Contenu
 
-- **Les 151 Pokémon de Kanto**, avec leurs vraies stats, types, talents, apprentissages par niveau, CT et évolutions (niveau, pierres, Fil de Liaison pour les évolutions par échange).
-- **303 capacités** avec leurs effets : statuts, changements de stats, météo, attaques en deux tours, multi-coups, Vampigraine, Clonage, Abri, Morphing, Métronome…
-- **IV (0-31), EV (252/510), 25 natures, talents, shiny (1/4096), sexe, bonheur.** Tout est visible dans le résumé (page STATS).
-- **Vraie formule de capture** (PV restants, statut, taux de l'espèce) et **20 types de Balls** avec leurs effets (Filet, Faiblo, Chrono, Sombre, Rapide, Bis, Niveau, Lune, Masse, Speed, Love, Soin, Copain, Luxe, Honor, Master…).
-- Combats sauvages et contre des dresseurs (IA qui choisit ses attaques), expérience, montée de niveau, apprentissage de capacités, évolution (annulable avec B).
-- Début de l'aventure : intro du Prof. Chen, choix du starter, combat contre le rival, Pokédex. Ensuite : Route 1, Jadielle (Centre Pokémon, Boutique), Route 22, Route 2, Forêt de Jade, **Plaine Sauvage** (toutes les formes de base sauvages, marais pour les Pokémon Eau, dresseurs forts) et **Grotte Céleste** (Artikodin, Électhor, Sulfura, Mewtwo, Mew, fossiles, Master Ball).
-- PC de stockage, boutiques (Balls, soins, pierres, vitamines, CT), sauvegarde.
+- **Tout Kanto** : 11 villes, 25 routes, Forêt de Jade, Mont Sélénite, Tour Pokémon, Repaire Rocket, Sylphe SARL, Parc Safari, Îles Écume, Manoir Pokémon, Centrale, Route Victoire, Grotte Azurée, Cave Taupiqueur, 3 Antres à boss (112 cartes).
+- **Histoire complète** : Prof. Chen, ton rival **Régis** (7 combats, son équipe évolue avec lui), la Team Rocket et son Admin Corbeau, Giovanni, M. Fuji, Léo, les Jumelles Lila et Lou… Le **JOURNAL** indique toujours la prochaine étape.
+- **8 Arènes et 8 Badges**, **Conseil 4** et Maître de la Ligue, Panthéon.
+- **Quêtes secondaires** courtes : le Rattata perdu, le Défi du Pont Pépite, le dentier du Gardien, la Pension, les fossiles, les récompenses du Pokédex…
+- **Légendaires en fin de jeu** : Artikodin, Électhor, Sulfura, Ronflex, Mewtwo (après la Ligue), Mew (Pokédex à 150).
+- **Les 151 Pokémon**, tous obtenables, avec les vraies listes de Pokémon sauvages de Rouge Feu.
+- **303 capacités**, talents, IV, EV, 25 natures, shiny (1/4096), formule de capture officielle et **20 types de Balls**, **niveau maximum 100**.
+- **Œufs** : Pension de la Route 5 (groupes d'œufs, IV hérités), Œuf de Léo. Ils éclosent en marchant, comme dans les jeux.
+- **15 tenues** : garçon ou fille au choix, tenues en boutique (Céladopole), en récompense de quêtes et de boss. Changement depuis le menu TENUES ou la penderie de ta chambre.
+- **Mini-carte** en haut à droite et **carte de Kanto** (touche C) avec ta position et celle de ton partenaire.
+- **Paramètres** : vitesse du texte, volumes, cris, animations, mini-carte, taille de la fenêtre, **difficulté** (Normale / Difficile / Extrême : Champions avec IV parfaits et EV optimisés) et **touches modifiables**.
+- **Expérience des jeux récents** : moins d'expérience quand ton Pokémon est déjà plus fort. **Multi Exp** offert par l'assistant du Prof. Chen.
+- **Sons** : cris officiels des Pokémon (téléchargés) ; musiques et jingles **originaux** dans le style 8 bits (soin, capture, badge, évolution…). Les musiques officielles de Nintendo ne sont pas incluses.
 
 ## Pour les développeurs
 
-- `jeu/tools/build_data.py` régénère `jeu/data/*.json` depuis les CSV de PokeAPI ; `jeu/tools/build_maps.py` régénère les cartes et vérifie qu'elles sont toutes accessibles.
-- `jeu/tests/smoke_test.tscn` (combats et écrans) et `jeu/tests/play_test.tscn` (robot qui joue le début du jeu) se lancent avec `godot --headless`.
+- `jeu/tools/build_data.py` : données Pokémon depuis les CSV de PokeAPI. `jeu/tools/build_world.py` : génère et vérifie toute la région. `jeu/tools/build_audio.py` : compose et synthétise la musique.
+- Tests (`godot --headless res://tests/...`) :
+  - `systems_test.tscn` : plus de 1 000 vérifications (Balls, capture, évolutions, expérience, rythme de progression, PP, effet de chaque capacité, K.O., tenues, œufs, rival, données du monde) ;
+  - `smoke_test.tscn` : combats aléatoires simples, doubles, coop et boss, et tous les écrans ;
+  - `play_test.tscn` : un robot joue le début du jeu ;
+  - `net_test.tscn` : lancer deux fois (`-- host` puis `-- client`), un combat coop sauvage, dresseurs et boss.

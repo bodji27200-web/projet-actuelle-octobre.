@@ -118,7 +118,7 @@ func _path(from: Vector2i, to: Vector2i) -> Array:
 			var n: Vector2i = c + dirs[d]
 			if prev.has(n):
 				continue
-			var ok: bool = w.can_enter(n, d) or (n == to and (w._doors.has(n) or w.tile_at(n) in ",m_."))
+			var ok: bool = w.can_enter(n, d) or (n == to and (w._doors.has(n) or w.tile_at(n) in ",m_.H"))
 			if w.tile_at(n) == "v":
 				ok = false
 			if ok:
@@ -132,6 +132,21 @@ func _path(from: Vector2i, to: Vector2i) -> Array:
 		out.push_front(prev[c2][1])
 		c2 = prev[c2][0]
 	return out
+
+
+func _find_tile(ch: String) -> Vector2i:
+	var rows: Array = Game.world.rows
+	var p: Vector2i = Game.world.player.tile
+	var best := Vector2i(-1, -1)
+	var bd := 99999
+	for y in rows.size():
+		for x in rows[y].length():
+			if rows[y][x] == ch and rows[y].length() > x + 1 and rows[y][x + 1] == ch:
+				var d := absi(x - p.x) + absi(y - p.y)
+				if d < bd and not _path(p, Vector2i(x, y)).is_empty():
+					bd = d
+					best = Vector2i(x, y)
+	return best
 
 
 func _where() -> String:
@@ -164,17 +179,32 @@ func _run() -> void:
 	print("5. route 1 et hautes herbes")
 	await _goto(Vector2i(6, 10))
 	print("   -> ", _where())
+	var r1: Dictionary = Game.maps["r1"]
 	await _goto(Vector2i(10, 0))
 	print("   -> ", _where())
+	var grass := _find_tile('"')
 	var seen0 := Game.seen.size()
-	for i in 25:
-		await _goto(Vector2i(3, 24))
-		await _goto(Vector2i(6, 25))
+	for i in 20:
+		await _goto(grass)
+		await _goto(grass + Vector2i(1, 0))
 	print("   -> ", _where(), " vus=", Game.seen.size() - seen0, " nouveaux, équipe=", Game.party.map(func(m): return "%s N.%d PV %d/%d" % [m.name(), m.level, m.hp, m.max_hp()]))
 	print("5b. Jadielle et Centre Pokémon")
-	await _goto(Vector2i(10, 0))
+	if Game.world.map_id != "r1":
+		await _goto(Vector2i(10, 0))
+	for k in 3:
+		if Game.world.map_id == "jadielle":
+			break
+		var top := Vector2i(-1, -1)
+		for wp in Game.world.map["warps"]:
+			if wp["to"] == "jadielle":
+				top = Vector2i(wp["x"], wp["y"])
+		await _goto(top)
 	print("   -> ", _where())
-	await _goto(Vector2i(10, 6))
+	var door := Vector2i.ZERO
+	for b in Game.maps["jadielle"]["buildings"]:
+		if b["to"] == "centre_jadielle":
+			door = Vector2i(b["x"] + b["w"] / 2, b["y"] + b["h"] - 1)
+	await _goto(door)
 	print("   -> ", _where())
 	await _goto(Vector2i(6, 4))
 	await _walk("up", 1)
@@ -183,6 +213,17 @@ func _run() -> void:
 	print("   soigné : ", Game.party.map(func(m): return "%d/%d" % [m.hp, m.max_hp()]), " heal=", Game.heal_point)
 	await _goto(Vector2i(6, 7))
 	print("   -> ", _where())
+	print("5c. colis du vendeur")
+	var mart := Vector2i.ZERO
+	for b in Game.maps["jadielle"]["buildings"]:
+		if b["to"] == "boutique_jadielle":
+			mart = Vector2i(b["x"] + b["w"] / 2, b["y"] + b["h"] - 1)
+	await _goto(mart)
+	await _goto(Vector2i(2, 4))
+	await _walk("up", 1)
+	await _tap("a")
+	await _mash(_idle)
+	print("   colis : ", Game.item_count("oaks-parcel"), " quête=", Game.quests.get("main"))
 	print("6. menu Start")
 	await _tap("start")
 	await get_tree().create_timer(0.2).timeout

@@ -11,7 +11,7 @@ func _ready() -> void:
 	_test_random_battles()
 	_test_catch()
 	_test_evolutions()
-	#await _test_world_and_screens()
+	await _test_world_and_screens()
 	print("SMOKE TEST TERMINÉ")
 	get_tree().quit()
 
@@ -157,7 +157,9 @@ func _test_world_and_screens() -> void:
 		world.load_map(id, Vector2i(m["warps"][0]["tx"] if m["warps"].size() > 0 else 1, m["warps"][0]["ty"] if m["warps"].size() > 0 else 1))
 		await get_tree().process_frame
 	print("cartes OK")
-	var screens := [PartyScreen.new(), BagScreen.new(), PokedexScreen.new(), TrainerCard.new(), PCScreen.new()]
+	Game.party.append(Pokemon.create_egg(4))
+	var screens := [PartyScreen.new(), BagScreen.new(), PokedexScreen.new(), TrainerCard.new(), PCScreen.new(), StartMenu.new(),
+		WardrobeScreen.new(), JournalScreen.new(), WorldMapScreen.new(), SettingsScreen.new(), KeysScreen.new(), OnlineScreen.new()]
 	var s2 := SummaryScreen.new()
 	s2.list = Game.party
 	screens.append(s2)
@@ -170,7 +172,7 @@ func _test_world_and_screens() -> void:
 		await get_tree().process_frame
 		s.finish(null)
 	var bs := BattleScreen.new()
-	bs.battle = Battle.new(Game.party, [_mk(16, 5)], true, {})
+	bs.battle = Battle.new([Game.party, [_mk(7, 10)]], [[_mk(16, 5)], [_mk(19, 5)]], true, {}, {"wild_double": true, "player_names": ["A", "B"]})
 	ui.add_child(bs)
 	for i in 30:
 		await get_tree().process_frame

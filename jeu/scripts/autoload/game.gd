@@ -168,6 +168,8 @@ func reset_keys() -> void:
 func key_name(k: int) -> String:
 	if k == 0:
 		return "—"
+	if DisplayServer.get_name() == "headless":
+		return OS.get_keycode_string(k)
 	return OS.get_keycode_string(DisplayServer.keyboard_get_keycode_from_physical(k))
 
 
