@@ -202,7 +202,13 @@ func _autopilot(done: Array) -> void:
 			t.finish(0)
 			await get_tree().process_frame
 		elif t is PartyScreen:
-			t.finish(0)
+			# Le premier Pokémon en forme (après un K.O., il faut en envoyer un autre).
+			var pick := 0
+			for i in Game.party.size():
+				if Game.party[i].hp > 0 and not Game.party[i].is_egg:
+					pick = i
+					break
+			t.finish(pick)
 			await get_tree().process_frame
 		elif t is BattleScreen:
 			# En combat : surtout A (attaquer), parfois changer de capacité ou de cible.
