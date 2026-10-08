@@ -66,6 +66,61 @@ var _doors := {}
 var _turn_t := 0.0
 var _tint := Color.WHITE
 var _bobber: Sprite2D
+## Pokémon suiveur (1er Pokémon de l'équipe) : case et direction.
+var follower: Follower
+var _follow_species := -1
+
+
+## Petit Pokémon en pixel art qui suit un dresseur (icône officielle, sautille en marchant).
+class Follower:
+	extends Sprite2D
+	var tile := Vector2i.ZERO
+	var dir := "down"
+	var sid := 0
+	var shiny := false
+	var _t := 0.0
+	var _hop := 0.0
+
+	func setup(p_sid: int, p_shiny: bool) -> void:
+		sid = p_sid
+		shiny = p_shiny
+		centered = true
+		texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		Sprites.apply(self, "icon", sid, false, null)
+		_fit()
+		if not Sprites.loaded.is_connected(_on_loaded):
+			Sprites.loaded.connect(_on_loaded)
+
+	func _on_loaded(_k: String) -> void:
+		_fit()
+
+	func _fit() -> void:
+		if texture == null:
+			return
+		var w := texture.get_width()
+		scale = Vector2.ONE * (1.0 if w <= 40 else 0.5 if w <= 72 else 0.34)
+
+	func place(t: Vector2i) -> void:
+		tile = t
+		position = Vector2(t * 16) + Vector2(8, 4)
+
+	func face(d: String) -> void:
+		dir = d
+		flip_h = d == "right"
+
+	func _process(delta: float) -> void:
+		_t += delta
+		# Sautille doucement sur place, et plus fort en marchant.
+		var bob := -1.0 if int(_t * 3.0) % 2 == 0 else 0.0
+		offset.y = (bob - _hop) / maxf(scale.y, 0.01)
+		_hop = maxf(0.0, _hop - delta * 20.0)
+		if shiny and randi() % 90 == 0:
+			modulate = Color(1.4, 1.4, 1.1)
+		else:
+			modulate = modulate.lerp(Color.WHITE, 0.2)
+
+	func hop() -> void:
+		_hop = 3.0
 
 
 func _ready() -> void:
@@ -140,6 +195,13 @@ func load_map(id: String, at: Vector2i, facing := "down") -> void:
 	player.place(at)
 	player.face(facing)
 	_actors.add_child(player)
+	follower = null
+	_follow_species = -1
+	refresh_player_look()
+	if follower != null:
+		var back: Vector2i = at - DIRS[facing]
+		follower.place(back if can_enter(back, facing) else at)
+		follower.face(facing)
 	Game.pos = at
 	Game.facing = facing
 	_ground.queue_redraw()
@@ -161,9 +223,92 @@ func npc_hidden(n: Dictionary) -> bool:
 
 
 func refresh_player_look() -> void:
-	if player != null:
-		player.look = Game.look()
-		player.refresh(0)
+	if player == null:
+		return
+	player.look = Game.look()
+	player.refresh(0)
+	set_name_tag(player, Game.player_name, Game.title)
+	_update_follower()
+
+
+## Nom du dresseur et, juste en dessous, son titre (au-dessus de la tête).
+func set_name_tag(w: Node2D, pname: String, title_id: String) -> void:
+	var tag: Node2D = w.get_node_or_null("Tag")
+	if not Game.settings.get("names", true):
+		if tag != null:
+			tag.queue_free()
+		return
+	if tag == null:
+		tag = Node2D.new()
+		tag.name = "Tag"
+		tag.z_index = 5
+		for k in 2:
+			var lbl := Label.new()
+			lbl.name = ["Nom", "Titre"][k]
+			lbl.position = Vector2(-52, -25 + k * 9)
+			lbl.size = Vector2(120, 10)
+			lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			lbl.add_theme_font_size_override("font_size", 10)
+			lbl.add_theme_color_override("font_color", Color.WHITE if k == 0 else Color("f8d048"))
+			lbl.add_theme_color_override("font_outline_color", Color.BLACK)
+			lbl.add_theme_constant_override("outline_size", 3)
+			tag.add_child(lbl)
+		w.add_child(tag)
+	tag.get_node("Nom").text = pname
+	tag.get_node("Titre").text = Profile.title_name(title_id) if title_id != "" else ""
+
+
+## Le Pokémon suiveur : le premier Pokémon de l'équipe encore debout (pas un Œuf).
+func lead_follower() -> Pokemon:
+	if not Game.settings.get("follower", true):
+		return null
+	for m in Game.party:
+		if not m.is_egg and m.hp > 0:
+			return m
+	return null
+
+
+func _update_follower() -> void:
+	var m := lead_follower()
+	var sid := -1 if m == null else m.sprite_id() * (2 if m.shiny else 1)
+	if sid == _follow_species and (follower != null) == (m != null):
+		return
+	_follow_species = sid
+	var at: Vector2i = player.tile - DIRS[player.dir]
+	var d := player.dir
+	if follower != null:
+		at = follower.tile
+		d = follower.dir
+		follower.queue_free()
+		follower = null
+	if m == null:
+		Net.send_state()
+		return
+	follower = Follower.new()
+	follower.setup(m.sprite_id(), m.shiny)
+	follower.place(at if can_enter(at, d) or at == player.tile else player.tile)
+	follower.face(d)
+	_actors.add_child(follower)
+	Net.send_state()
+
+
+## Le suiveur prend la place que le joueur vient de quitter.
+func _follow(from: Vector2i, time: float) -> void:
+	if follower == null:
+		return
+	var d := follower.dir
+	var delta := from - follower.tile
+	for k in DIRS:
+		if DIRS[k] == delta:
+			d = k
+	follower.face(d)
+	follower.hop()
+	if absi(delta.x) + absi(delta.y) > 1:
+		follower.place(from)
+		return
+	follower.tile = from
+	var tw := create_tween()
+	tw.tween_property(follower, "position", Vector2(from * T) + Vector2(8, 4), time)
 
 
 func remove_walker(w: Walker) -> void:
@@ -252,6 +397,8 @@ func _process(delta: float) -> void:
 		_ground.queue_redraw()
 	_update_camera()
 	_update_remotes(delta)
+	if player != null and not moving:
+		_update_follower()
 	if busy or moving or frozen or Game.ui_busy() or player == null:
 		return
 	if Input.is_action_just_pressed("start"):
@@ -328,6 +475,7 @@ func _step(dir: String, target: Vector2i) -> void:
 		time = BIKE_TIME
 	elif Input.is_action_pressed("run"):
 		time = RUN_TIME
+	_follow(player.tile, time)
 	await walk(player, dir, target, time)
 	moving = false
 	Game.pos = player.tile
@@ -356,6 +504,9 @@ func _jump(land: Vector2i) -> void:
 	Audio.sfx("jump")
 	var start := player.position
 	var end := Vector2(land * T)
+	if follower != null:
+		follower.place(land - Vector2i(0, 1))
+		follower.face("down")
 	player.tile = land
 	var tw := create_tween()
 	tw.tween_method(func(t: float):
@@ -436,6 +587,9 @@ func _interact() -> void:
 		if remotes[pid].tile == front:
 			_run(func(): await Events.talk_player(pid))
 			return
+	if follower != null and follower.tile == front and lead_follower() != null:
+		_run(func(): await Events.talk_follower(lead_follower()))
+		return
 	var key := "%d,%d" % [front.x, front.y]
 	if map["signs"].has(key):
 		_run(func(): await Events.sign(self, map["signs"][key]))
@@ -509,40 +663,55 @@ func remote_update(pid: int, st: Dictionary) -> void:
 	if player == null:
 		return
 	if st.get("map", "") != map_id:
-		if remotes.has(pid):
-			remotes[pid].queue_free()
-			remotes.erase(pid)
+		remote_leave(pid)
 		return
 	var w: Walker
 	if not remotes.has(pid):
 		w = Walker.new()
 		w.centered = false
 		w.place(Vector2i(st["x"], st["y"]))
-		var lbl := Label.new()
-		lbl.text = st.get("name", "?")
-		lbl.position = Vector2(-16, -14)
-		lbl.size = Vector2(48, 10)
-		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		lbl.add_theme_font_size_override("font_size", 10)
-		lbl.add_theme_color_override("font_color", Color.WHITE)
-		lbl.add_theme_color_override("font_outline_color", Color.BLACK)
-		lbl.add_theme_constant_override("outline_size", 3)
-		lbl.name = "Nom"
-		w.add_child(lbl)
 		_actors.add_child(w)
 		remotes[pid] = w
 	w = remotes[pid]
+	var old_tile := w.tile
 	w.look = st.get("look", "boy_classique")
 	w.dir = st.get("dir", "down")
 	w.tile = Vector2i(st["x"], st["y"])
 	w.set_meta("target", Vector2(w.tile * T))
 	w.refresh(0)
-	if w.has_node("Nom"):
-		w.get_node("Nom").text = st.get("name", "?") + (" ★" if st.get("group", false) else "")
+	set_name_tag(w, st.get("name", "?") + (" ★" if st.get("group", false) else ""), st.get("title", ""))
+	# Son Pokémon suiveur.
+	var fl: Array = st.get("follow", [])
+	var rf: Follower = w.get_meta("follower") if w.has_meta("follower") else null
+	if rf != null and (fl.is_empty() or rf.sid != int(fl[0]) or rf.shiny != bool(fl[1]) or not Game.settings.get("follower", true)):
+		rf.queue_free()
+		rf = null
+		w.remove_meta("follower")
+	if rf == null and not fl.is_empty() and Game.settings.get("follower", true):
+		rf = Follower.new()
+		rf.setup(int(fl[0]), bool(fl[1]))
+		rf.place(w.tile - DIRS.get(w.dir, Vector2i.ZERO))
+		rf.face(w.dir)
+		_actors.add_child(rf)
+		w.set_meta("follower", rf)
+	if rf != null and old_tile != w.tile:
+		var gap: Vector2i = old_tile - rf.tile
+		for k in DIRS:
+			if DIRS[k] == gap:
+				rf.face(k)
+		rf.hop()
+		if (w.tile - old_tile).length() > 1.5:
+			rf.place(w.tile - DIRS.get(w.dir, Vector2i.ZERO))
+		else:
+			rf.tile = old_tile
+			var tw := rf.create_tween()
+			tw.tween_property(rf, "position", Vector2(old_tile * T) + Vector2(8, 4), 0.18)
 
 
 func remote_leave(pid: int) -> void:
 	if remotes.has(pid):
+		if remotes[pid].has_meta("follower"):
+			remotes[pid].get_meta("follower").queue_free()
 		remotes[pid].queue_free()
 		remotes.erase(pid)
 

@@ -331,6 +331,8 @@ var can_z := [false, false]
 var mega_owners := []
 var z_owners := []
 var aura := ""
+## Plus gros coup infligé par chaque dresseur du camp du joueur : {dmg, move, target}.
+var best_hit := [{}, {}]
 
 
 ## p_parties / e_parties : une équipe par dresseur du camp.
@@ -3097,6 +3099,9 @@ func _damage_move(u: Battler, t: Battler, m: Dictionary) -> void:
 			msg("Ce n'est pas très efficace...")
 	if hits > 1 and landed > 0:
 		msg("Touché %d fois !" % landed)
+	# Plus gros coup du joueur (carte de profil).
+	if u.side == 0 and t.side == 1 and total > int(best_hit[u.owner].get("dmg", 0)):
+		best_hit[u.owner] = {"dmg": total, "move": m.get("name", "?"), "target": nm(t)}
 	_after_damage(u, t, m, typ, total, landed, subst_hit, sheer, eff)
 
 

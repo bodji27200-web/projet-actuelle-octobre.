@@ -32,6 +32,7 @@ func _ready() -> void:
 	_fishing()
 	_builds()
 	_display()
+	_profile()
 	print("\n=== RÉSULTAT : %d vérifications OK, %d échecs ===" % [ok, fail])
 	for f in failures.slice(0, 60):
 		print("  ÉCHEC : ", f)
@@ -851,6 +852,47 @@ func _display() -> void:
 	var level_x := 200 - 12 - Kit.text_width("N.100", 13)
 	check(worst + 2 <= level_x, "Nom + ♀ + ★ ne chevauche pas le niveau (fin %d, niveau à %d)" % [worst, level_x])
 	holder.queue_free()
+
+
+func _profile() -> void:
+	print("Profil, titres, Ramassage...")
+	# Ramassage : chaque tirage, à chaque niveau, donne un objet qui existe.
+	for lvl in range(1, 101):
+		for k in 30:
+			var it := Events.pickup_item(lvl)
+			check(Data.items.has(it), "Ramassage N.%d : objet inconnu %s" % [lvl, it])
+	# Titres : conditions et sauvegarde.
+	Game.new_game()
+	check(Game.titles == ["debutant"] and Game.title == "debutant", "Nouveau jeu : titre de départ")
+	Profile.add("shinies", 5)
+	Profile.add("fish", 9)
+	var fresh := Profile.check_titles()
+	check(fresh.has("collectionneur_shiny") and fresh.has("chasseur_shiny"), "5 chromatiques : titres débloqués")
+	check(not fresh.has("pecheur"), "9 Pokémon pêchés : pas encore Pêcheur")
+	Profile.add("fish")
+	check(Profile.check_titles().has("pecheur"), "10 Pokémon pêchés : Pêcheur du Dimanche")
+	Profile.record_hit({"dmg": 500, "move": "Séisme", "target": "Onix"})
+	Profile.record_hit({"dmg": 300, "move": "Charge", "target": "Rattata"})
+	check(int(Game.stats["best_damage"]) == 500 and str(Game.stats["best_hit"]).contains("Séisme"), "Plus gros coup gardé")
+	Game.title = "pecheur"
+	var d := Game.save_dict()
+	Game.new_game()
+	var restored = Data._intify(JSON.parse_string(JSON.stringify(d)))
+	check(restored["title"] == "pecheur" and restored["titles"].has("collectionneur_shiny") and int(restored["stats"]["fish"]) == 10,
+		"Titres et statistiques dans la sauvegarde")
+	for id in Profile.TITLES:
+		var t: Array = Profile.TITLES[id]
+		check(t.size() == 4 and Kit.text_width(t[1], 9) <= 206, "Titre %s bien défini et lisible" % id)
+	# Le plus gros coup est suivi par le moteur.
+	var me := Pokemon.create(6, 80)
+	me.moves = [Pokemon.make_move(53)]
+	var foe := Pokemon.create(143, 80)
+	foe.moves = [Pokemon.make_move(150)]
+	var b := _battle1(me, foe)
+	b.always_hit = true
+	b.play_turn({0: {"type": "move", "slot": 0}})
+	check(int(b.best_hit[0].get("dmg", 0)) > 0 and b.best_hit[0].get("target", "") != "", "Le moteur note le plus gros coup du joueur")
+	Game.new_game()
 
 
 func _flatten(cmds: Variant) -> Array:

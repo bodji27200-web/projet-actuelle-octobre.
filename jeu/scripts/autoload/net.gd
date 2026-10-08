@@ -89,7 +89,10 @@ func local_ips() -> Array:
 func my_state() -> Dictionary:
 	var w = Game.world
 	var st := {"name": Game.player_name, "look": Game.look(), "map": Game.map_id, "x": Game.pos.x, "y": Game.pos.y,
-		"dir": Game.facing, "battle": in_battle, "group": partner != 0, "badges": Game.badge_count()}
+		"dir": Game.facing, "battle": in_battle, "group": partner != 0, "badges": Game.badge_count(), "title": Game.title,
+		"guild": Game.stats.get("guild", ""), "elo": int(Game.stats.get("elo", 1000)), "follow": []}
+	if w != null and w.follower != null:
+		st["follow"] = [w.follower.sid, w.follower.shiny]
 	if w != null and w.player != null:
 		st["x"] = w.player.tile.x
 		st["y"] = w.player.tile.y
@@ -158,6 +161,38 @@ func _add_chat(name: String, text: String) -> void:
 	if chat_log.size() > 30:
 		chat_log.pop_front()
 	message.emit("%s : %s" % [name, text])
+
+
+# ---------------------------------------------------------------------------
+# Profils (carte de dresseur des autres joueurs)
+# ---------------------------------------------------------------------------
+
+signal _profile_in
+var _profiles := {}
+
+
+## Demande la carte d'un joueur ; renvoie {} s'il ne répond pas.
+func request_profile(pid: int) -> Dictionary:
+	if not players.has(pid):
+		return {}
+	_profiles.erase(pid)
+	_req_profile.rpc_id(pid)
+	var waited := 0.0
+	while not _profiles.has(pid) and waited < 5.0 and players.has(pid):
+		await get_tree().create_timer(0.1).timeout
+		waited += 0.1
+	return _profiles.get(pid, {})
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _req_profile() -> void:
+	_send_profile.rpc_id(multiplayer.get_remote_sender_id(), Profile.card())
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _send_profile(card: Dictionary) -> void:
+	_profiles[multiplayer.get_remote_sender_id()] = card
+	_profile_in.emit()
 
 
 # ---------------------------------------------------------------------------
@@ -290,7 +325,7 @@ func host_coop_battle(enemy_parties: Array, wild: bool, trainers: Array, opts: D
 			leveled.append(i - n_host)
 	var end := {"result": result, "party": guest_after, "leveled": leveled, "pay_day": battle.pay_day,
 		"caught": battle.caught.to_dict() if battle.caught != null and battle.caught_owner == 1 else {},
-		"trainers": trainers, "wild": wild}
+		"trainers": trainers, "wild": wild, "best_hit": battle.best_hit[1], "boss": opts.get("boss", false), "fishing": battle.fishing}
 	if players.has(partner):
 		_coop_to_guest.rpc_id(partner, bid, "end", end)
 	in_battle = false
@@ -404,8 +439,25 @@ func _join_coop(bid: int, pid: int, setup: Dictionary) -> void:
 							Audio.jingle("badge")
 							await Game.ui.say("Grâce au combat en duo, %s obtient aussi le Badge !" % Game.player_name)
 		Game.money += int(end.get("pay_day", 0))
+		Profile.record_hit(end.get("best_hit", {}))
+		if result == "win":
+			Profile.add("wins")
+			if not end["wild"]:
+				Profile.add("trainers", end["trainers"].size())
+				for t in end["trainers"]:
+					if str(t.get("id", "")).begins_with("leader_"):
+						Profile.add("leaders")
+			if end.get("boss", false):
+				Profile.add("bosses")
 		if not end["caught"].is_empty():
 			var mon := Pokemon.from_dict(end["caught"])
+			Profile.add("caught_total")
+			if mon.shiny:
+				Profile.add("shinies")
+			if Data.pokemon.get(mon.species, {}).get("legendary", false) or Data.pokemon.get(mon.species, {}).get("mythical", false):
+				Profile.add("legends")
+			if end.get("fishing", false):
+				Profile.add("fish")
 			Game.give_pokemon(mon)
 			Audio.jingle("catch")
 			await Game.ui.say("%s est ajouté à ta collection !" % mon.name())
@@ -420,6 +472,7 @@ func _join_coop(bid: int, pid: int, setup: Dictionary) -> void:
 					var to := m2.level_evolution()
 					if to != 0 and not m2.is_fainted():
 						await Events.evolve(m2, to)
+	await Profile.announce()
 	Audio.play_music(Game.world.map.get("music", "route"))
 	in_battle = false
 	Game.world.busy = false

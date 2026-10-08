@@ -48,7 +48,7 @@ func _menu() -> void:
 		if not Net.online():
 			opts = ["HÉBERGER", "REJOINDRE", "RETOUR"]
 		else:
-			opts = ["INVITER DANS LE GROUPE", "QUITTER LE GROUPE", "ENVOYER UN MESSAGE", "SE DÉCONNECTER", "RETOUR"]
+			opts = ["INVITER DANS LE GROUPE", "QUITTER LE GROUPE", "PROFIL D'UN JOUEUR", "ENVOYER UN MESSAGE", "SE DÉCONNECTER", "RETOUR"]
 		var i: int = await Game.ui.choose(opts, Vector2(250, 244 - opts.size() * 22), true)
 		var choice: String = opts[i] if i >= 0 else "RETOUR"
 		match choice:
@@ -79,6 +79,14 @@ func _menu() -> void:
 				if j >= 0:
 					Net.invite(pids[j])
 					await Game.ui.say("Invitation envoyée !")
+			"PROFIL D'UN JOUEUR":
+				var pids2 := Net.players.keys()
+				if pids2.is_empty():
+					await Game.ui.say("Personne n'est connecté.")
+					continue
+				var j2: int = await Game.ui.ask("Voir le profil de qui ?", pids2.map(func(p): return Net.players[p]["name"]))
+				if j2 >= 0:
+					await Events.show_profile(pids2[j2])
 			"QUITTER LE GROUPE":
 				Net.leave_group()
 				await Game.ui.say("Tu n'es plus dans un groupe.")

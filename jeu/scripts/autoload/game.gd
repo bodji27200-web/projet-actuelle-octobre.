@@ -61,10 +61,14 @@ var daycare_egg := false
 var steps := 0
 var on_bike := false
 var last_outdoor := "bourg"
+## Statistiques du dresseur (voir Profile.STAT_LABELS), titres débloqués et titre affiché.
+var stats := {}
+var titles: Array = ["debutant"]
+var title := "debutant"
 
 var settings := {
 	"text_speed": 1, "music": 0.7, "sfx": 0.8, "cries": true, "animations": true, "difficulty": 0,
-	"minimap": true, "window": 1, "keys": {},
+	"minimap": true, "window": 1, "keys": {}, "follower": true, "names": true,
 }
 
 var maps := {}
@@ -507,7 +511,7 @@ func save_dict() -> Dictionary:
 		"repel": repel_steps, "time": play_time, "starter": starter, "return": return_point,
 		"badges": badges, "quests": quests, "outfits": outfits, "outfit": outfit,
 		"daycare": daycare.map(func(m): return m.to_dict()), "daycare_steps": daycare_steps, "daycare_egg": daycare_egg,
-		"steps": steps, "last_outdoor": last_outdoor,
+		"steps": steps, "last_outdoor": last_outdoor, "stats": stats, "titles": titles, "title": title,
 	}
 
 
@@ -555,6 +559,11 @@ func load_game() -> bool:
 	daycare_egg = d.get("daycare_egg", false)
 	steps = d.get("steps", 0)
 	last_outdoor = d.get("last_outdoor", "bourg")
+	stats = d.get("stats", {})
+	titles = d.get("titles", ["debutant"])
+	title = d.get("title", "debutant")
+	if not Profile.TITLES.has(title):
+		title = "debutant"
 	rival_name = RIVAL_NAME
 	return true
 
@@ -583,6 +592,9 @@ func new_game() -> void:
 	steps = 0
 	rival_name = RIVAL_NAME
 	last_outdoor = "bourg"
+	stats = {}
+	titles = ["debutant"]
+	title = "debutant"
 
 
 func time_text() -> String:

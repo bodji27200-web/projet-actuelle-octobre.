@@ -10,6 +10,8 @@ const ITEMS := [
 	["animations", "Animations de combat", ["Non", "Oui"]],
 	["difficulty", "Difficulté", ["Normale", "Difficile", "Extrême"]],
 	["minimap", "Mini-carte", ["Non", "Oui"]],
+	["follower", "Pokémon qui te suit", ["Non", "Oui"]],
+	["names", "Noms et titres sur la carte", ["Non", "Oui"]],
 	["window", "Fenêtre", ["x2", "x3", "x4", "Plein écran"]],
 	["keys", "Touches", []],
 	["back", "Retour", []],
@@ -58,8 +60,8 @@ func _build() -> void:
 	for i in ITEMS.size():
 		var it: Array = ITEMS[i]
 		var col := Color("c03030") if i == _index else Kit.INK
-		_labels.append(Kit.label(_panel, ("▶ " if i == _index else "   ") + it[1], Vector2(10, 4 + i * 22), 15, col))
-		_labels.append(Kit.label(_panel, _value_text(it[0], it[2]), Vector2(240, 4 + i * 22), 15, col))
+		_labels.append(Kit.label(_panel, ("▶ " if i == _index else "   ") + it[1], Vector2(10, 3 + i * 19), 15, col))
+		_labels.append(Kit.label(_panel, _value_text(it[0], it[2]), Vector2(240, 3 + i * 19), 15, col))
 	var key: String = ITEMS[_index][0]
 	_desc.text = DIFF_DESC[Game.difficulty()] if key == "difficulty" else "Gauche / Droite pour modifier. A pour ouvrir. B pour revenir." if key != "keys" else "Change les touches du clavier à ta guise."
 
@@ -71,8 +73,10 @@ func _change(d: int) -> void:
 		"music", "sfx":
 			Game.settings[key] = clampf(float(Game.settings[key]) + d * 0.1, 0.0, 1.0)
 			Audio.apply_volume()
-		"cries", "animations", "minimap":
+		"cries", "animations", "minimap", "follower", "names":
 			Game.settings[key] = not Game.settings[key]
+			if key in ["follower", "names"] and Game.world != null:
+				Game.world.refresh_player_look()
 		"text_speed", "difficulty", "window":
 			Game.settings[key] = (int(Game.settings[key]) + d + it[2].size()) % it[2].size()
 			if key == "window":

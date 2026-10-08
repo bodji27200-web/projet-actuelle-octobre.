@@ -908,6 +908,7 @@ static func after_battle(battle: Battle, result: String, wild: bool, trainers: A
 	elif result in ["win", "caught"] and wild:
 		Audio.play_music("victory_wild")
 	Game.money += battle.pay_day
+	_battle_stats(battle, result, wild, trainers, opts, owner)
 	if result == "caught" and battle.caught != null and battle.caught_owner == owner:
 		var mon := battle.caught
 		var new := not Game.caught.has(mon.species)
@@ -921,11 +922,7 @@ static func after_battle(battle: Battle, result: String, wild: bool, trainers: A
 		if where == "pc":
 			await ui().say("%s est envoyé dans le PC." % mon.name())
 	if result == "win":
-		for m in Game.party:
-			if not m.is_egg and Data.ability_ident(m.ability) == "pickup" and randi() % 10 == 0:
-				var found: String = ["potion", "super-potion", "great-ball", "ultra-ball", "rare-candy", "full-heal", "ether", "revive"][randi() % 8]
-				Game.add_item(found)
-				await ui().say("%s a ramassé %s !" % [m.name(), Data.item_name(found)])
+		await pickup()
 	Audio.play_music(Game.world.map.get("music", "route") if Game.world != null and not Game.world.map.is_empty() else "route")
 	if result == "lose":
 		if opts.get("no_blackout", false):
@@ -936,6 +933,7 @@ static func after_battle(battle: Battle, result: String, wild: bool, trainers: A
 		Game.heal_party()
 		var hp: Dictionary = Game.heal_point
 		await Game.world.warp_to(hp["map"], Vector2i(hp["x"], hp["y"]), "down")
+		await Profile.announce()
 		return result
 	# Pokérus : contamination rare après un combat sauvage, puis propagation aux voisins d'équipe.
 	if wild and randi() % 3000 == 0 and Game.party.size() > 0:
@@ -969,7 +967,64 @@ static func after_battle(battle: Battle, result: String, wild: bool, trainers: A
 		mon3.counters.erase("crits_battle")
 		if mon3.hp <= 0:
 			mon3.counters.erase("damage")
+	await Profile.announce()
 	return result
+
+
+## Statistiques de la carte de profil après un combat.
+static func _battle_stats(battle: Battle, result: String, wild: bool, trainers: Array, opts: Dictionary, owner: int) -> void:
+	Profile.record_hit(battle.best_hit[owner] if owner < battle.best_hit.size() else {})
+	if result == "win":
+		Profile.add("wins")
+		if not wild:
+			Profile.add("trainers", trainers.size())
+			for t in trainers:
+				if t.get("kind", "") == "leader" or str(t.get("id", "")).begins_with("leader_"):
+					Profile.add("leaders")
+		if opts.get("boss", false):
+			Profile.add("bosses")
+	if result == "caught" and battle.caught != null and battle.caught_owner == owner:
+		var mon := battle.caught
+		Profile.add("caught_total")
+		if mon.shiny:
+			Profile.add("shinies")
+		var d: Dictionary = Data.pokemon.get(mon.species, {})
+		if d.get("legendary", false) or d.get("mythical", false):
+			Profile.add("legends")
+		if battle.fishing:
+			Profile.add("fish")
+
+
+## Ramassage : après un combat gagné, un Pokémon qui ne tient rien peut trouver un objet (table de la 4e génération,
+## qui dépend du niveau). L'objet est tenu par le Pokémon, comme dans les jeux officiels.
+const PICKUP_COMMON := ["potion", "antidote", "super-potion", "great-ball", "repel", "escape-rope", "full-heal", "hyper-potion",
+	"ultra-ball", "revive", "rare-candy", "dusk-stone", "shiny-stone", "dawn-stone", "full-restore", "max-revive", "pp-up", "max-elixir"]
+const PICKUP_RARE := ["hyper-potion", "nugget", "kings-rock", "full-restore", "ether", "white-herb", "tm44", "elixir", "tm01", "leftovers", "tm26"]
+const PICKUP_ODDS := [30, 10, 10, 10, 10, 10, 10, 4, 4]
+
+
+static func pickup_item(level: int) -> String:
+	var k := clampi((level - 1) / 10, 0, 9)
+	var r := randi() % 100
+	if r >= 98:
+		return PICKUP_RARE[k + (r - 98)]
+	var acc := 0
+	for i in PICKUP_ODDS.size():
+		acc += PICKUP_ODDS[i]
+		if r < acc:
+			return PICKUP_COMMON[k + i]
+	return PICKUP_COMMON[k]
+
+
+static func pickup() -> void:
+	for m in Game.party:
+		if m.is_egg or m.held_item != "" or Data.ability_ident(m.ability) != "pickup" or randi() % 10 != 0:
+			continue
+		var found := pickup_item(m.level)
+		if not Data.items.has(found):
+			continue
+		m.held_item = found
+		await ui().say("%s a ramassé : %s !" % [m.name(), Data.item_name(found)])
 
 
 static func evolve(mon: Pokemon, to: int) -> bool:
@@ -981,6 +1036,7 @@ static func evolve(mon: Pokemon, to: int) -> bool:
 		await ui().say("%s n'a pas évolué." % mon.name())
 		return false
 	Game.catch_register(Data.pokemon[to].get("species", to))
+	Profile.add("evolutions")
 	for mid in mon.evolution_moves():
 		await learn_move(mon, mid)
 	for mid in mon.moves_at(mon.level):
@@ -1010,10 +1066,14 @@ static func hatch(egg: Pokemon) -> void:
 	egg.hp = egg.max_hp()
 	egg.ot = Game.player_name
 	Game.catch_register(egg.species)
+	Profile.add("eggs")
+	if egg.shiny:
+		Profile.add("shinies")
 	if await ui().confirm("Donner un surnom à %s ?" % egg.data()["name"]):
 		var nick: String = await ui().enter_name("Surnom :", egg.data()["name"], 10)
 		egg.nickname = "" if nick == egg.data()["name"] else nick
 	Game.set_quest("pension", 2)
+	await Profile.announce()
 
 
 static func learn_move(mon: Pokemon, mid: int) -> bool:
@@ -1054,17 +1114,50 @@ static func chat() -> void:
 		Net.send_chat(text)
 
 
+## Parler à son Pokémon suiveur.
+static func talk_follower(m: Pokemon) -> void:
+	Audio.cry(m.sprite_id())
+	var lines := []
+	if m.happiness >= 220:
+		lines = ["%s te regarde avec des yeux pleins d'amour !", "%s se blottit contre toi. Vous êtes inséparables !", "%s saute de joie en te voyant !"]
+	elif m.happiness >= 150:
+		lines = ["%s a l'air très content de marcher avec toi.", "%s fredonne gaiement.", "%s te fait un grand sourire !"]
+	elif m.happiness >= 70:
+		lines = ["%s regarde autour de lui avec curiosité.", "%s suit tes pas tranquillement.", "%s renifle le sol..."]
+	else:
+		lines = ["%s détourne le regard...", "%s ne semble pas très à l'aise.", "%s te fixe d'un air méfiant."]
+	if m.hp < m.max_hp() / 3:
+		lines = ["%s a l'air épuisé... Il faudrait le soigner."]
+	elif m.status != "":
+		lines = ["%s ne se sent pas bien... Son statut le gêne."]
+	await ui().say(lines[randi() % lines.size()] % m.name())
+
+
 static func talk_player(pid: int) -> void:
 	var name: String = Net.players.get(pid, {}).get("name", "?")
-	var opts := ["INVITER DANS LE GROUPE" if not Net.in_group() else "QUITTER LE GROUPE", "ANNULER"]
+	var opts := ["VOIR SON PROFIL", "INVITER DANS LE GROUPE" if not Net.in_group() else "QUITTER LE GROUPE", "ANNULER"]
 	var i: int = await ui().ask("C'est %s !" % name, opts)
-	if i == 0:
-		if Net.in_group():
-			Net.leave_group()
-			await ui().say("Tu as quitté le groupe.")
-		else:
-			Net.invite(pid)
-			await ui().say("Invitation envoyée à %s !" % name)
+	match i:
+		0:
+			await show_profile(pid)
+		1:
+			if Net.in_group():
+				Net.leave_group()
+				await ui().say("Tu as quitté le groupe.")
+			else:
+				Net.invite(pid)
+				await ui().say("Invitation envoyée à %s !" % name)
+
+
+## Ouvre la carte de dresseur d'un autre joueur.
+static func show_profile(pid: int) -> void:
+	var card: Dictionary = await Net.request_profile(pid)
+	if card.is_empty():
+		await ui().say("Impossible d'obtenir le profil de ce joueur.")
+		return
+	var tc := TrainerCard.new()
+	tc.profile = card
+	await ui().open(tc)
 
 
 # ---------------------------------------------------------------------------
