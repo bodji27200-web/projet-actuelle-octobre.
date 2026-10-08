@@ -150,7 +150,7 @@ func _ready() -> void:
 	s.list = Game.party
 	s._page = 2
 	await _shot("13_resume_capacites", s, ui)
-	BagScreen.last_pocket = 2
+	BagScreen.last_pocket = 4
 	await _shot("14_sac", BagScreen.new(), ui)
 	await _shot("15_pokedex", PokedexScreen.new(), ui)
 	var shop := ShopScreen.new()

@@ -11,6 +11,7 @@ var _tex := {}
 var _queue: Array = []
 var _active := 0
 var _failed := {}
+var _attempt := {}
 
 
 func _ready() -> void:
@@ -28,20 +29,39 @@ func key(kind: String, id: Variant, shiny: bool) -> String:
 	return "%s_%s%s" % [kind, str(id), "_s" if shiny else ""]
 
 
-func _url(k: String) -> String:
+## Adresse du sprite. `attempt` > 0 : sources de secours (le style Noir/Blanc couvre les 1025 Pokémon,
+## mais pas toutes les formes ; les icônes s'arrêtent à la 8e génération).
+func _url(k: String, attempt := 0) -> String:
 	var parts := k.split("_")
 	var kind := parts[0]
 	var id := parts[1]
 	var shiny := parts.size() > 2
+	var sh := "shiny/" if shiny else ""
 	match kind:
 		"front":
-			return BASE + "pokemon/versions/generation-v/black-white/%s%s.png" % ["shiny/" if shiny else "", id]
+			if attempt == 0:
+				return BASE + "pokemon/versions/generation-v/black-white/%s%s.png" % [sh, id]
+			if attempt == 1:
+				return BASE + "pokemon/%s%s.png" % [sh, id]
 		"back":
-			return BASE + "pokemon/versions/generation-v/black-white/back/%s%s.png" % ["shiny/" if shiny else "", id]
+			if attempt == 0:
+				return BASE + "pokemon/versions/generation-v/black-white/back/%s%s.png" % [sh, id]
+			if attempt == 1:
+				return BASE + "pokemon/back/%s%s.png" % [sh, id]
 		"icon":
-			return BASE + "pokemon/versions/generation-vii/icons/%s.png" % id
+			var n := int(id)
+			var sources := []
+			if n <= 809 or n > 10000:
+				sources.append(BASE + "pokemon/versions/generation-vii/icons/%s.png" % id)
+			if n <= 898 or n > 10000:
+				sources.append(BASE + "pokemon/versions/generation-viii/icons/%s.png" % id)
+			sources.append(BASE + "pokemon/versions/generation-v/black-white/%s.png" % id)
+			sources.append(BASE + "pokemon/%s.png" % id)
+			if attempt < sources.size():
+				return sources[attempt]
 		"item":
-			return BASE + "items/%s.png" % id
+			if attempt == 0:
+				return BASE + "items/%s.png" % id
 	return ""
 
 
@@ -105,7 +125,7 @@ func _pump() -> void:
 		req.timeout = 20.0
 		add_child(req)
 		req.request_completed.connect(_on_done.bind(k, req))
-		if req.request(_url(k)) != OK:
+		if req.request(_url(k, _attempt.get(k, 0))) != OK:
 			_on_done(HTTPRequest.RESULT_CANT_CONNECT, 0, PackedStringArray(), PackedByteArray(), k, req)
 
 
@@ -119,5 +139,11 @@ func _on_done(result: int, code: int, _h: PackedStringArray, body: PackedByteArr
 			_tex[k] = ImageTexture.create_from_image(img)
 			loaded.emit(k)
 	else:
-		_failed[k] = true
+		# Source suivante, s'il y en a une.
+		var nxt: int = _attempt.get(k, 0) + 1
+		if _url(k, nxt) != "":
+			_attempt[k] = nxt
+			_queue.push_front(k)
+		else:
+			_failed[k] = true
 	_pump()

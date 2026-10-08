@@ -61,7 +61,7 @@ func on_change(i: int) -> void:
 		_info.text = "Vide."
 		return
 	var m: Pokemon = _list()[i]
-	Sprites.apply(_icon, "front", m.species, m.shiny, PixelArt.placeholder())
+	Sprites.apply(_icon, "front", m.sprite_id(), m.shiny, PixelArt.placeholder())
 	_info.text = "%s  %s\n%s" % [m.data()["name"], m.gender_symbol(), " / ".join(m.types().map(func(t): return Data.type_name(t)))]
 
 

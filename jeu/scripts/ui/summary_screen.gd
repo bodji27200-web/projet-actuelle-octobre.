@@ -81,7 +81,7 @@ func _draw_page() -> void:
 	spr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	spr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	Sprites.apply(spr, "front", mon.species, mon.shiny, PixelArt.placeholder())
+	Sprites.apply(spr, "front", mon.sprite_id(), mon.shiny, PixelArt.placeholder())
 	left.add_child(spr)
 	Kit.name_line(left, mon, Vector2(10, 6), 16)
 	Kit.label(left, "N.%d" % mon.level, Vector2(10, 24), 14)
@@ -128,11 +128,7 @@ func _info(p: Control, mon: Pokemon, d: Dictionary) -> void:
 	desc.text = Data.abilities.get(mon.ability, {}).get("desc", "")
 	var evo := ""
 	for e in d["evos"]:
-		var to: String = Data.pokemon[e["to"]]["name"]
-		if e.has("level"):
-			evo += "%s au N.%d. " % [to, e["level"]]
-		else:
-			evo += "%s avec %s. " % [to, Data.item_name(e["item"])]
+		evo += Pokemon.evo_text(e) + ". "
 	var ev := Kit.label(p, "", Vector2(10, 238), 13, Color("406080"))
 	ev.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	ev.size = Vector2(270, 50)

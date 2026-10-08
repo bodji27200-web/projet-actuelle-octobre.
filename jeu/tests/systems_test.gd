@@ -190,23 +190,92 @@ func _evolutions() -> void:
 	print("Évolutions...")
 	var n_level := 0
 	var n_item := 0
+	var n_other := 0
+	var type_move := {}
+	for id in Data.moves:
+		if not type_move.has(Data.moves[id]["type"]):
+			type_move[Data.moves[id]["type"]] = id
 	for sid in Data.pokemon:
 		for e in Data.pokemon[sid]["evos"]:
-			if e.has("level"):
-				var m := Pokemon.create(sid, maxi(1, e["level"] - 1))
-				check(m.level_evolution() == 0, "%s n'évolue pas avant le niveau %d" % [m.name(), e["level"]])
-				m.add_exp(m.exp_to_next())
-				check(m.level_evolution() == e["to"], "%s évolue au niveau %d" % [Data.pokemon[sid]["name"], e["level"]])
-				var hp_before := m.hp
-				m.evolve(e["to"])
-				check(m.species == e["to"] and m.hp >= hp_before, "%s devient %s" % [Data.pokemon[sid]["name"], Data.pokemon[e["to"]]["name"]])
-				n_level += 1
-			else:
-				var m2 := Pokemon.create(sid, 20)
-				check(m2.item_evolution(e["item"]) == e["to"], "%s + %s" % [m2.name(), e["item"]])
-				check(m2.item_evolution("poke-ball") == 0, "%s ne réagit pas à un autre objet" % m2.name())
+			var target: int = e.get("to_form", e["to"])
+			var lvl: int = e.get("level", 20)
+			var m := Pokemon.create(sid, lvl)
+			# Évolution au hasard (Chenipotte) : on cherche un Pokémon dont la « personnalité » mène à cette branche.
+			if e.has("chance"):
+				for k in 300:
+					var lo := 0
+					for o in Data.pokemon[sid]["evos"]:
+						if o == e:
+							break
+						lo += int(o.get("chance", 0))
+					if m.stable_roll() >= lo and m.stable_roll() < lo + int(e["chance"]):
+						break
+					m = Pokemon.create(sid, lvl)
+			var ctx := {"party": [m], "region": e.get("region", "kanto"), "time": e.get("time", "day"),
+				"group": e.get("group", false), "terrain": e.get("terrain", "grass")}
+			if e.has("natures"):
+				m.nature = Pokemon.nature_index(e["natures"][0])
+			if e.has("steps"):
+				m.counters["steps"] = e["steps"]
+			if e.has("held"):
+				m.held_item = e["held"]
+			if e.has("happiness"):
+				m.happiness = 255
+				# Évoli connaît parfois une capacité Fée (Nymphali passerait avant Mentali/Noctali, comme dans les jeux).
+				if not e.has("move_type"):
+					m.moves = [Pokemon.make_move(33)]
+			if e.has("gender"):
+				m.gender = e["gender"]
+			if e.has("move"):
+				m.moves = [Pokemon.make_move(e["move"])]
+			if e.has("move_type"):
+				m.moves = [Pokemon.make_move(type_move[e["move_type"]])]
+			if e.has("party"):
+				ctx["party"].append(Pokemon.create(e["party"], 10))
+			if e.has("party_type"):
+				for id2 in Data.pokemon:
+					if Data.pokemon[id2]["types"].has(e["party_type"]) and not Data.pokemon[id2].has("form"):
+						ctx["party"].append(Pokemon.create(id2, 10))
+						break
+			if e.has("stats"):
+				m.stats[1] = 50 + e["stats"] * 10
+				m.stats[2] = 50
+			var got := 0
+			if e.has("item"):
+				got = m.evolution_target("item", e["item"], ctx)
+				check(m.evolution_target("item", "poke-ball", ctx) == 0, "%s ne réagit pas à une Poké Ball" % m.name())
 				n_item += 1
-	print("  %d évolutions par niveau, %d par objet vérifiées" % [n_level, n_item])
+			elif e.get("trade", false):
+				got = m.evolution_target("trade", "", ctx.merged({"trade_with": e.get("trade_with", 0)}))
+				var cord := m.evolution_target("item", "linking-cord", ctx)
+				check(cord == target or e.has("trade_with"), "%s évolue aussi avec le Fil de Liaison" % m.name())
+				n_other += 1
+			elif e.has("special") and e["special"] not in ["shed", "spin"]:
+				got = m.evolution_target(e["special"], "", ctx)
+				n_other += 1
+			else:
+				got = m.evolution_target("level", "", ctx)
+				if e.has("level"):
+					var young := Pokemon.create(sid, maxi(1, e["level"] - 1))
+					young.held_item = m.held_item
+					young.happiness = m.happiness
+					young.gender = m.gender
+					young.moves = m.moves
+					young.stats = m.stats
+					check(young.evolution_target("level", "", ctx) != target or e["level"] <= 1, "%s n'évolue pas avant le niveau %d" % [m.name(), e["level"]])
+				n_level += 1
+			if e.get("special", "") == "shed":
+				continue
+			check(got == target, "%s -> %s (%s)" % [Data.pokemon[sid]["name"], Pokemon.evo_text(e), JSON.stringify(e)])
+			var hp_before := m.hp
+			m.evolve(target)
+			check(m.sprite_id() == target and m.hp >= hp_before, "%s devient %s" % [Data.pokemon[sid]["name"], Data.pokemon[target]["name"]])
+			# La Pierre Stase bloque les évolutions (sauf par objet).
+			if not e.has("item") and not e.has("held"):
+				var st := Pokemon.create(sid, lvl)
+				st.held_item = "everstone"
+				check(st.evolution_target("level", "", ctx) != target or e.size() > 2, "Pierre Stase bloque %s" % st.name())
+	print("  %d évolutions par niveau, %d par objet, %d autres (échange, spéciales) vérifiées" % [n_level, n_item, n_other])
 
 
 func _experience() -> void:
@@ -298,7 +367,9 @@ func _pp() -> void:
 	print("PP...")
 	var p := Pokemon.create(4, 20)
 	p.moves = [Pokemon.make_move(10)]
-	var b := _battle1(p, Pokemon.create(143, 50))
+	var sno := Pokemon.create(143, 50)
+	sno.moves = [Pokemon.make_move(150)]
+	var b := _battle1(p, sno)
 	var before: int = p.moves[0]["pp"]
 	b.play_turn({"type": "move", "slot": 0})
 	check(p.moves[0]["pp"] == before - 1, "Une attaque consomme 1 PP")
@@ -311,6 +382,7 @@ func _pp() -> void:
 	p2.moves = [Pokemon.make_move(10)]
 	var press := Pokemon.create(144, 50)
 	press.ability = 46
+	press.moves = [Pokemon.make_move(150)]
 	var b2 := _battle1(p2, press)
 	var bp: int = p2.moves[0]["pp"]
 	b2.play_turn({"type": "move", "slot": 0})
@@ -511,7 +583,7 @@ func _eggs() -> void:
 	d.gender = 1
 	Game.daycare = [a, d]
 	var e := Game.daycare_make_egg()
-	check(e.species == 25 and e.is_egg, "L'Œuf d'un Raichu femelle est un Pikachu")
+	check(e.species == 172 and e.is_egg, "L'Œuf d'un Raichu femelle est un Pichu")
 	Game.daycare = []
 
 

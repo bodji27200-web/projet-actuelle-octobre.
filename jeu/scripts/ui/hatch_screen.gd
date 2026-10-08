@@ -34,8 +34,8 @@ func _run() -> void:
 		await tw.finished
 		await get_tree().create_timer(0.5 - k * 0.1).timeout
 	await Game.ui.flash(2)
-	Sprites.apply(_spr, "front", mon.species, mon.shiny, PixelArt.placeholder())
+	Sprites.apply(_spr, "front", mon.sprite_id(), mon.shiny, PixelArt.placeholder())
 	Audio.jingle("evolve")
-	Audio.cry(mon.species)
+	Audio.cry(mon.sprite_id())
 	await Game.ui.say("%s est sorti de l'Œuf !" % Data.pokemon[mon.species]["name"])
 	finish(true)

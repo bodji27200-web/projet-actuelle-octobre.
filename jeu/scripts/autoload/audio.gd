@@ -1,7 +1,9 @@
 extends Node
 ## Musique (boucles), jingles, bruitages, et cris officiels des Pokémon (téléchargés via PokeAPI puis gardés en cache).
 
+## Cris « rétro » jusqu'à la 5e génération, cris récents ensuite (et pour les formes).
 const CRY_URL := "https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/legacy/%d.ogg"
+const CRY_URL_LATEST := "https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/%d.ogg"
 const ALIASES := {"gym_battle": "gym_battle"}
 
 var _music: AudioStreamPlayer
@@ -123,7 +125,7 @@ func cry(species: int) -> void:
 			var st2 := AudioStreamOggVorbis.load_from_buffer(body)
 			if st2 != null:
 				_cries[species] = st2)
-	req.request(CRY_URL % species)
+	req.request((CRY_URL if species <= 649 else CRY_URL_LATEST) % species)
 
 
 func _play_cry(st: AudioStream) -> void:

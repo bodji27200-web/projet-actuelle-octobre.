@@ -275,6 +275,11 @@ func alive_count() -> int:
 	return n
 
 
+## Région de la carte actuelle (kanto, johto, alola...) : formes régionales, évolutions.
+func current_region() -> String:
+	return maps.get(map_id, {}).get("realm", "kanto")
+
+
 func lead() -> Pokemon:
 	for m in party:
 		if m.can_battle():
@@ -367,6 +372,8 @@ func on_step() -> Array:
 				m.add_exp(1)
 		if daycare_steps % 256 == 0 and not daycare_egg:
 			var c := daycare_compat()
+			if item_count("oval-charm") > 0:
+				c = mini(88, c + (c / 2 if c >= 50 else c))
 			if c > 0 and randi() % 100 < c:
 				daycare_egg = true
 	return hatched
@@ -396,18 +403,78 @@ func daycare_compat() -> int:
 	return 0
 
 
+## Bébés qui ne naissent que si un parent tient l'Encens adapté (sinon l'Œuf donne l'évolution).
+const INCENSE_BABIES := {298: "sea-incense", 360: "lax-incense", 406: "rose-incense", 433: "pure-incense",
+	438: "rock-incense", 439: "odd-incense", 440: "luck-incense", 446: "full-incense", 458: "wave-incense"}
+## Objets Pouvoir : l'IV de cette stat est transmis par le parent qui le tient.
+const POWER_ITEMS := {"power-weight": 0, "power-bracer": 1, "power-belt": 2, "power-lens": 3, "power-band": 4, "power-anklet": 5}
+
+
+## Œuf de la pension, règles des jeux récents :
+## Nœud Destin = 5 IV hérités (3 sinon), objets Pouvoir, Pierre Stase = nature transmise,
+## talent caché transmis (60 %), Ball de la mère, capacités Œuf des deux parents, forme régionale, Encens.
 func daycare_make_egg() -> Pokemon:
 	var a: Pokemon = daycare[0]
 	var b: Pokemon = daycare[1]
 	var mother := a
 	if a.species == 132 or (b.gender == 1 and b.species != 132):
 		mother = b
-	var egg := Pokemon.create_egg(mother.species)
-	# 3 IV hérités au hasard des parents.
+	var father := b if mother == a else a
+	var parents := [a, b]
+	var base := Pokemon.base_species(mother.species)
+	if INCENSE_BABIES.has(base) and not (a.held_item == INCENSE_BABIES[base] or b.held_item == INCENSE_BABIES[base]):
+		for e in Data.pokemon[base]["evos"]:
+			if not e.has("region"):
+				base = e["to"]
+				break
+	if base in [29, 32]:
+		base = [29, 32][randi() % 2]
+	elif base in [313, 314]:
+		base = [313, 314][randi() % 2]
+	elif base == 489:
+		base = 490
+	# Forme régionale de la mère (Goupix d'Alola donne des Goupix d'Alola).
+	var egg_id := base
+	var region: String = mother.data().get("regional", "")
+	if region != "":
+		for f in Data.pokemon[base].get("forms", []):
+			if Data.pokemon[f].get("regional", "") == region:
+				egg_id = f
+	var egg := Pokemon.create_egg(egg_id)
+	# IV : 3 hérités (5 avec un Nœud Destin), dont celui imposé par un objet Pouvoir.
+	var n := 5 if a.held_item == "destiny-knot" or b.held_item == "destiny-knot" else 3
 	var idx := [0, 1, 2, 3, 4, 5]
 	idx.shuffle()
-	for i in 3:
-		egg.ivs[idx[i]] = [a, b][randi() % 2].ivs[idx[i]]
+	var forced := []
+	for p in parents:
+		if POWER_ITEMS.has(p.held_item):
+			forced.append([POWER_ITEMS[p.held_item], p])
+	if forced.size() > 0:
+		var f: Array = forced[randi() % forced.size()]
+		egg.ivs[f[0]] = f[1].ivs[f[0]]
+		idx.erase(f[0])
+		n -= 1
+	for i in n:
+		egg.ivs[idx[i]] = parents[randi() % 2].ivs[idx[i]]
+	# Nature : Pierre Stase.
+	var stones := parents.filter(func(p): return p.held_item == "everstone")
+	if stones.size() > 0:
+		egg.nature = stones[randi() % stones.size()].nature
+	# Talent caché : transmis par la mère (ou le parent qui n'est pas Métamorph).
+	var carrier: Pokemon = mother if mother.species != 132 else father
+	if carrier.has_hidden_ability() and randf() < 0.6 and egg.data().get("ha", 0) != 0:
+		egg.ability = egg.data()["ha"]
+	# Ball de la mère.
+	if mother.species != 132 and mother.ball not in ["master-ball", "cherish-ball"]:
+		egg.ball = mother.ball
+	# Capacités Œuf connues par l'un des parents.
+	var egg_moves: Array = egg.data().get("egg", [])
+	for p in parents:
+		for m in p.moves:
+			if egg_moves.has(m["id"]) and not egg.knows(m["id"]):
+				if egg.moves.size() >= 4:
+					egg.moves.pop_front()
+				egg.moves.append(Pokemon.make_move(m["id"]))
 	egg.recalc_stats()
 	egg.hp = egg.max_hp()
 	return egg

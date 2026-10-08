@@ -1711,7 +1711,7 @@ func _special_move(u: Battler, t: Battler, m: Dictionary) -> bool:
 			u.t_moves = []
 			for mv in t.moves():
 				u.t_moves.append({"id": mv["id"], "pp": 5, "max": 5, "ups": 0})
-			events.append({"t": "transform", "side": u.side, "slot": u.slot, "species": t.mon.species, "shiny": t.mon.shiny})
+			events.append({"t": "transform", "side": u.side, "slot": u.slot, "species": t.mon.sprite_id(), "shiny": t.mon.shiny})
 			msg("%s se transforme en %s !" % [nm(u), t.mon.data()["name"]])
 		"conversion":
 			var typ: String = move_data(u.moves()[0]["id"])["type"]

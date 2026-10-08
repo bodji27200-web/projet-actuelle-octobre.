@@ -202,7 +202,7 @@ func _make_box(side: int, slot: int) -> void:
 func _set_sprite(side: int, slot: int, mon: Pokemon, species := 0, shiny := false) -> void:
 	var k := _key(side, slot)
 	var tr: TextureRect = _sprites[k]
-	var sid := species if species != 0 else mon.species
+	var sid := species if species != 0 else mon.sprite_id()
 	var sh := shiny if species != 0 else mon.shiny
 	Sprites.apply(tr, "back" if side == 0 else "front", sid, sh, PixelArt.placeholder())
 	tr.modulate = Color.WHITE
@@ -357,7 +357,7 @@ func _play(events: Array) -> void:
 				_set_sprite(e["side"], e["slot"], mon)
 				_make_box(e["side"], e["slot"])
 				if Game.settings.get("cries", true):
-					Audio.cry(mon.species)
+					Audio.cry(mon.sprite_id())
 				await _appear(k, mon)
 			"recall":
 				if _sprites.has(k):
@@ -743,7 +743,7 @@ func _item_action(item: String, b: Battle.Battler) -> Variant:
 	if item in ItemUse.BATTLE_ONLY:
 		Game.remove_item(item)
 		return {"type": "item", "item": item}
-	if not ItemUse.targets_pokemon(item) or ItemUse.is_tm(item) or item in ItemUse.STONES or item == "rare-candy" or ItemUse.field_only(item):
+	if not ItemUse.targets_pokemon(item) or ItemUse.is_tm(item) or ItemUse.is_evo_item(item) or item == "rare-candy" or ItemUse.field_only(item):
 		await _say("Ce n'est pas le moment d'utiliser ça !")
 		return null
 	var ps := PartyScreen.new()

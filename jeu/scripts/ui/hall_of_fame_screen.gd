@@ -20,7 +20,7 @@ func _ready() -> void:
 		tr.size = Vector2(96, 96)
 		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		Sprites.apply(tr, "front", m.species, m.shiny, PixelArt.placeholder())
+		Sprites.apply(tr, "front", m.sprite_id(), m.shiny, PixelArt.placeholder())
 		add_child(tr)
 		Kit.label(self, "%s N.%d" % [m.name(), m.level], tr.position + Vector2(-4, 96), 13, Color.WHITE, false)
 	_run.call_deferred()

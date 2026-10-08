@@ -13,7 +13,23 @@ const CURE := {"antidote": ["psn", "tox"], "paralyze-heal": ["par"], "awakening"
 const VITAMINS := {"hp-up": 0, "protein": 1, "iron": 2, "calcium": 3, "zinc": 4, "carbos": 5}
 ## Baies qui baissent les EV d'une stat de 10 (et rendent le Pokémon plus amical).
 const EV_BERRIES := {"pomeg-berry": 0, "kelpsy-berry": 1, "qualot-berry": 2, "hondew-berry": 3, "grepa-berry": 4, "tamato-berry": 5}
-const STONES := ["fire-stone", "water-stone", "thunder-stone", "leaf-stone", "moon-stone", "linking-cord"]
+## Objets qui font évoluer quand on les utilise (pierres, Fil de Liaison, pommes, tasses...), calculés depuis les données.
+static var _evo_items := {}
+
+
+static func is_evo_item(item: String) -> bool:
+	if _evo_items.is_empty():
+		_evo_items["linking-cord"] = true
+		for id in Data.pokemon:
+			for e in Data.pokemon[id]["evos"]:
+				if e.has("item"):
+					_evo_items[e["item"]] = true
+	return _evo_items.has(item)
+
+
+## Objet qu'un Pokémon peut tenir.
+static func is_holdable(item: String) -> bool:
+	return Data.items.get(item, {}).get("held", false)
 const BATTLE_ONLY := ["x-attack", "x-defense", "x-sp-atk", "x-sp-def", "x-speed", "x-accuracy", "dire-hit", "guard-spec"]
 const PP_ITEMS := ["ether", "max-ether", "pp-up", "pp-max"]
 
@@ -43,9 +59,16 @@ static func category(item: String) -> String:
 		return "ct"
 	if Data.items.get(item, {}).get("key", false):
 		return "rares"
-	if BATTLE_ONLY.has(item) or STONES.has(item) or item.ends_with("repel") or item == "escape-rope" or item == "rare-candy" or field_only(item):
+	if Data.items.get(item, {}).get("berry", false):
+		return "baies"
+	if BATTLE_ONLY.has(item) or is_evo_item(item) or item.ends_with("repel") or item == "escape-rope" or item == "rare-candy" or field_only(item) \
+			or item.begins_with("exp-candy") or item in ["ability-capsule", "ability-patch", "bottle-cap", "gold-bottle-cap"]:
 		return "objets"
-	return "soins"
+	if HEAL.has(item) or CURE.has(item) or PP_ITEMS.has(item) or item in ["revive", "max-revive", "elixir", "max-elixir"]:
+		return "soins"
+	if is_holdable(item):
+		return "tenus"
+	return "objets"
 
 
 ## Faut-il choisir une capacité (Huile, PP Plus) ?
@@ -55,7 +78,7 @@ static func needs_move(item: String) -> bool:
 
 ## Objet utilisable sur un Pokémon de l'équipe ?
 static func targets_pokemon(item: String) -> bool:
-	return HEAL.has(item) or CURE.has(item) or field_only(item) or STONES.has(item) \
+	return HEAL.has(item) or CURE.has(item) or field_only(item) or is_evo_item(item) \
 		or PP_ITEMS.has(item) or item in ["revive", "max-revive", "elixir", "max-elixir", "rare-candy"] or is_tm(item)
 
 

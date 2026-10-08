@@ -52,7 +52,7 @@ func _build() -> void:
 		if mon.is_egg:
 			icon.texture = PixelArt.egg()
 		else:
-			Sprites.apply(icon, "icon", mon.species)
+			Sprites.apply(icon, "icon", mon.sprite_id())
 		p.add_child(icon)
 		if mon.is_egg:
 			Kit.label(p, "ŒUF", Vector2(64, 4), 15)
@@ -66,7 +66,7 @@ func _build() -> void:
 		if mode == "select" and ItemUse.is_tm(item):
 			var ok := mon.can_learn_tm(Data.items[item]["move"])
 			Kit.label(p, "APTE" if ok else "PAS APTE", Vector2(150, 24), 13, Color("3080e0") if ok else Color("c04040"))
-		if mode == "select" and item in ItemUse.STONES:
+		if mode == "select" and ItemUse.is_evo_item(item):
 			var ok2 := mon.item_evolution(item) != 0
 			Kit.label(p, "APTE" if ok2 else "PAS APTE", Vector2(150, 24), 13, Color("3080e0") if ok2 else Color("c04040"))
 

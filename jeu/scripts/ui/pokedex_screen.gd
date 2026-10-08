@@ -1,6 +1,9 @@
 class_name PokedexScreen
 extends ItemList2
-## Pokédex : 151 Pokémon, vus / capturés, fiche détaillée.
+## Pokédex national : 1025 Pokémon, vus / capturés, fiche détaillée. ◀▶ : génération précédente / suivante.
+
+const GEN_START := [1, 152, 252, 387, 494, 650, 722, 810, 906]
+const TOTAL := 1025
 
 var _sprite: TextureRect
 var _name: Label
@@ -25,18 +28,33 @@ func _ready() -> void:
 	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	sp.add_child(_sprite)
 	_name = Kit.label(self, "", Vector2(14, 266), 15, Color.WHITE, false)
-	Kit.label(self, "A : fiche   B : retour", Vector2(14, 296), 12, Color("f8d0d0"), false)
+	Kit.label(self, "A : fiche   ◀▶ : génération   B : retour", Vector2(14, 296), 12, Color("f8d0d0"), false)
 	build_list(Rect2(214, 8, 260, 228))
 
 
 func row_count() -> int:
-	return 151
+	return TOTAL
+
+
+func on_side(d: int) -> void:
+	var sid := _index + 1
+	var g := 0
+	for k in GEN_START.size():
+		if sid >= GEN_START[k]:
+			g = k
+	if d > 0:
+		g = mini(g + 1, GEN_START.size() - 1)
+	elif sid == GEN_START[g]:
+		g = maxi(0, g - 1)
+	_index = GEN_START[g] - 1
+	refresh_list()
+	on_change(_index)
 
 
 func row_text(i: int) -> String:
 	var sid := i + 1
 	var mark := "● " if Game.caught.has(sid) else "   "
-	return "%s%03d %s" % [mark, sid, Data.pokemon[sid]["name"] if Game.seen.has(sid) else "----------"]
+	return "%s%04d %s" % [mark, sid, Data.pokemon[sid]["name"] if Game.seen.has(sid) else "----------"]
 
 
 func on_change(i: int) -> void:
@@ -73,7 +91,7 @@ func on_select(i: int) -> void:
 	spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	Sprites.apply(spr, "front", sid, false, PixelArt.placeholder())
 	_detail.add_child(spr)
-	Kit.label(_detail, "N°%03d  %s" % [sid, d["name"]], Vector2(160, 8), 18)
+	Kit.label(_detail, "N°%04d  %s" % [sid, d["name"]], Vector2(160, 8), 18)
 	Kit.label(_detail, "Pokémon %s" % d["genus"].replace("Pokémon ", ""), Vector2(160, 32), 14)
 	var x := 160
 	for t in d["types"]:
@@ -85,9 +103,27 @@ func on_select(i: int) -> void:
 		var names := ["PV", "Atq", "Déf", "AtqS", "DéfS", "Vit"]
 		for k in 6:
 			Kit.label(_detail, "%s %d" % [names[k], d["base"][k]], Vector2(160 + (k % 3) * 96, 104 + (k / 3) * 20), 13, Color("806040"))
-		var txt := Kit.label(_detail, "", Vector2(10, 160), 15)
+		var abil: Array = d["abilities"].map(func(a): return Data.ability_name(a))
+		if d.get("ha", 0) != 0:
+			abil.append(Data.ability_name(d["ha"]) + " (caché)")
+		var ab := Kit.label(_detail, "", Vector2(160, 146), 12, Color("c04040"))
+		ab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		ab.size = Vector2(290, 30)
+		ab.text = "Talents : " + ", ".join(abil)
+		var txt := Kit.label(_detail, "", Vector2(10, 178), 14)
 		txt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		txt.size = Vector2(436, 120)
+		txt.size = Vector2(436, 70)
 		txt.text = d["dex"]
+		var evo := ""
+		for e in d["evos"]:
+			evo += Pokemon.evo_text(e) + ". "
+		var forms := []
+		for f in d.get("forms", []):
+			if Data.pokemon[f].get("form_name", "") != "":
+				forms.append(Data.pokemon[f]["form_name"])
+		var ev := Kit.label(_detail, "", Vector2(10, 252), 12, Color("406080"))
+		ev.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		ev.size = Vector2(436, 44)
+		ev.text = ("Évolution : " + evo if evo != "" else "") + ("Formes : " + ", ".join(forms) if forms.size() > 0 else "")
 	else:
 		Kit.label(_detail, "Capture ce Pokémon pour en savoir plus.", Vector2(10, 170), 15, Color("808080"))

@@ -24,7 +24,7 @@ func _ready() -> void:
 	_spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	add_child(_spr)
 	Sprites.get_tex("front", to, mon.shiny)
-	Sprites.apply(_spr, "front", mon.species, mon.shiny, PixelArt.placeholder())
+	Sprites.apply(_spr, "front", mon.sprite_id(), mon.shiny, PixelArt.placeholder())
 	_run.call_deferred()
 
 

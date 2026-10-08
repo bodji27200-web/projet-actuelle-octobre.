@@ -1,9 +1,9 @@
 class_name BagScreen
 extends ItemList2
-## Sac : poches OBJETS / SOINS / BALLS / CT. Renvoie l'objet choisi (ou null).
+## Sac : poches OBJETS / SOINS / BAIES / OBJETS TENUS / BALLS / CT / RARES. Renvoie l'objet choisi (ou null).
 
-const POCKETS := ["objets", "soins", "balls", "ct", "rares"]
-const POCKET_NAMES := ["OBJETS", "SOINS", "BALLS", "CT / CS", "OBJ. RARES"]
+const POCKETS := ["objets", "soins", "baies", "tenus", "balls", "ct", "rares"]
+const POCKET_NAMES := ["OBJETS", "SOINS", "BAIES", "OBJETS TENUS", "BALLS", "CT / CS", "OBJ. RARES"]
 
 static var last_pocket := 1
 

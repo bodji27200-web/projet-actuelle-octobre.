@@ -372,7 +372,7 @@ static func _cmd(ow: Node, w: Node, c: Array) -> bool:
 			var lm := Pokemon.create(int(c[1]), int(c[2]))
 			await ui().say("%s : Kyaaah !" % lm.name())
 			if lm.species > 0:
-				Audio.cry(lm.species)
+				Audio.cry(lm.sprite_id())
 			var r: String = await run_battle([[lm]], true, [], {"legend": true, "cave": ow.map.get("cave", false)})
 			if r in ["win", "caught"]:
 				Game.set_flag(c[3])
@@ -501,11 +501,17 @@ static func evolve_to_level(sid: int, lvl: int) -> int:
 	for i in 3:
 		var nxt := 0
 		for e in Data.pokemon[s]["evos"]:
-			if e.has("level") and lvl >= e["level"]:
-				nxt = e["to"]
-			elif e.get("item", "") != "" and e["item"] != "linking-cord" and lvl >= 32 and nxt == 0 and s != 133:
-				nxt = e["to"]
-			elif e.get("item", "") == "linking-cord" and lvl >= 38:
+			if e.has("region") or e.has("to_form"):
+				continue
+			# Les dresseurs font évoluer leurs Pokémon à un niveau raisonnable, quelle que soit la condition.
+			var need: int = e.get("level", 0)
+			if e.has("item") or e.has("special"):
+				need = maxi(need, 32)
+			elif e.get("trade", false):
+				need = maxi(need, 38)
+			elif need == 0:
+				need = 30
+			if lvl >= need and nxt == 0 and (s != 133 or lvl >= 40):
 				nxt = e["to"]
 		if nxt == 0:
 			break
@@ -1146,7 +1152,7 @@ static func use_item_field(ow: Node, item: String) -> void:
 			return
 		await learn_move(mon, mid)
 		return
-	if item in ItemUse.STONES:
+	if ItemUse.is_evo_item(item):
 		var to := mon.item_evolution(item)
 		if to == 0:
 			await ui().say("Ça n'aura aucun effet.")
