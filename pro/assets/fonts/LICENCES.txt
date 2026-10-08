@@ -1,0 +1,3 @@
+Polices sous licence SIL Open Font License 1.1 (https://openfontlicense.org), récupérées depuis github.com/google/fonts :
+- PixelifySans.ttf : Pixelify Sans, Copyright The Pixelify Sans Project Authors.
+- Arimo.ttf : Arimo, Copyright The Arimo Project Authors.
