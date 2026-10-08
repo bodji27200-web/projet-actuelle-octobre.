@@ -62,7 +62,8 @@ static func start_menu(ow: Node) -> void:
 				ps.mode = "field"
 				await ui().open(ps)
 			"bag":
-				await bag_flow(ow)
+				if await bag_flow(ow):
+					return
 			"outfits":
 				await ui().open(WardrobeScreen.new())
 				ow.refresh_player_look()
@@ -831,6 +832,7 @@ static func run_battle(enemy_parties: Array, wild: bool, trainers: Array, opts :
 	screen.battle = Battle.new([Game.party], enemy_parties, wild, trainers, bopts)
 	screen.battle.player_name = Game.player_name
 	screen.battle.cave = opts.get("cave", false)
+	screen.battle.fishing = opts.get("fishing", false)
 	screen.battle.caught_species = Game.caught.keys()
 	screen.battle.exp_share = [Game.flag("exp_share_on"), false]
 	screen.bg = opts.get("bg", "cave" if opts.get("cave", false) else "grass")
@@ -985,14 +987,77 @@ static func talk_player(pid: int) -> void:
 # Objets hors combat
 # ---------------------------------------------------------------------------
 
-static func bag_flow(ow: Node) -> void:
+## Renvoie true si l'objet utilisé doit fermer les menus (canne à pêche).
+static func bag_flow(ow: Node) -> bool:
 	while true:
 		var bag := BagScreen.new()
 		bag.mode = "field"
 		var item = await ui().open(bag)
 		if item == null:
-			return
+			return false
+		if item in RODS:
+			await fish(ow, item)
+			return true
 		await use_item_field(ow, item)
+	return false
+
+
+# ---------------------------------------------------------------------------
+# Pêche
+# ---------------------------------------------------------------------------
+
+const RODS := ["old-rod", "good-rod", "super-rod"]
+const BITE_CHANCE := 0.75
+
+
+static func water_ahead(ow: Node) -> bool:
+	var ch: String = ow.tile_at(ow.front_tile())
+	return ch == "~" or ch == "w"
+
+
+static func owned_rods() -> Array:
+	return RODS.filter(func(r): return Game.item_count(r) > 0)
+
+
+## A face à l'eau : on choisit la canne (directement s'il n'y en a qu'une).
+static func fish_prompt(ow: Node) -> void:
+	var rods := owned_rods()
+	var rod: String = rods[0]
+	if rods.size() > 1:
+		var i: int = await ui().ask("Avec quelle canne veux-tu pêcher ?", rods.map(func(r): return Data.item_name(r)) + ["Annuler"])
+		if i < 0 or i >= rods.size():
+			return
+		rod = rods[i]
+	elif not await ui().confirm("L'eau est calme. Pêcher avec la %s ?" % Data.item_name(rod)):
+		return
+	await fish(ow, rod)
+
+
+static func fish(ow: Node, rod: String) -> void:
+	if not water_ahead(ow):
+		await ui().say("Il n'y a pas d'eau devant toi !")
+		return
+	var table: Array = ow.map.get("wild", {}).get(rod, [])
+	if table.is_empty():
+		await ui().say("On dirait qu'aucun Pokémon ne vit ici...")
+		return
+	Audio.sfx("throw")
+	ow.fish_bobber("cast")
+	var box: Control = ui()._static_box("%s lance sa ligne..." % Game.player_name)
+	await ow.get_tree().create_timer(randf_range(1.0, 2.6)).timeout
+	box.queue_free()
+	if randf() >= BITE_CHANCE:
+		ow.fish_bobber("")
+		await ui().say("Pas une touche...")
+		return
+	ow.fish_bobber("bite")
+	await ow.show_emote(ow.player)
+	await ui().say("Oh ! Ça mord !")
+	ow.fish_bobber("")
+	var enemies := [[pick_wild(table)]]
+	if Net.coop_ready():
+		enemies.append([pick_wild(table)])
+	await run_battle(enemies, true, [], {"bg": "water", "fishing": true})
 
 
 static func use_item_field(ow: Node, item: String) -> void:

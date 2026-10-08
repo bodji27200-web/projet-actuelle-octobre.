@@ -92,7 +92,7 @@ func _ready() -> void:
 	world_rects = w["world"]
 	load_settings()
 	apply_keys()
-	font = load("res://assets/fonts/Jersey10.ttf")
+	font = load("res://assets/fonts/Jersey10Jeu.ttf")
 	var theme := Theme.new()
 	theme.default_font = font
 	theme.default_font_size = 22

@@ -146,6 +146,8 @@ var escape_attempts := 0
 var participants := {}
 var leveled := {}
 var cave := false
+## Combat contre un Pokémon pêché (Scuba Ball plus efficace).
+var fishing := false
 var ai_potions := 0
 var pay_day := 0
 var caught: Pokemon = null
@@ -2383,6 +2385,8 @@ func ball_bonus(item: String, t: Battler) -> float:
 			return minf(4.0, 1.0 + turn * 1229.0 / 4096.0)
 		"dusk-ball":
 			return 3.5 if cave else 1.0
+		"dive-ball":
+			return 3.5 if fishing else 1.0
 		"quick-ball":
 			return 5.0 if turn <= 1 else 1.0
 		"level-ball":

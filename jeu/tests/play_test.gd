@@ -230,6 +230,27 @@ func _run() -> void:
 	print("   top=", _top())
 	await _tap("b")
 	await _mash(_idle)
+	print("7. pêche à Carmin")
+	await Game.world.warp_to("carmin", Vector2i(6, 17), "down")
+	await _mash(_idle)
+	await _tap("a")
+	await _mash(func(): return _idle() and Game.item_count("old-rod") > 0, 600)
+	print("   canne=", Game.item_count("old-rod"), " quête=", Game.quests.get("peche"))
+	await _walk("right", 1)
+	await _walk("down", 1)
+	print("   face à l'eau : ", Events.water_ahead(Game.world), " ", _where())
+	var fished := ""
+	for i in 8:
+		await _mash(_idle)
+		await _tap("a")
+		await _mash(func(): return _top() is BattleScreen or _idle(), 1500)
+		if _top() is BattleScreen:
+			var bs: BattleScreen = _top()
+			var fish: Pokemon = bs.battle.sides[1].party[0]
+			fished = "%s N.%d (fond %s, pêche=%s)" % [fish.name(), fish.level, bs.bg, bs.battle.fishing]
+			break
+	await _mash(_idle, 6000)
+	print("   ça mord : ", fished, " -> ", _where())
 	Game.save_game()
 	print("FIN DU TEST ", _where())
 	get_tree().quit()

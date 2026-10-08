@@ -65,6 +65,7 @@ var _blocked := {}
 var _doors := {}
 var _turn_t := 0.0
 var _tint := Color.WHITE
+var _bobber: Sprite2D
 
 
 func _ready() -> void:
@@ -441,6 +442,40 @@ func _interact() -> void:
 		return
 	if tile_at(front) == "P":
 		_run(func(): await Events.sign(self, "@pc"))
+	elif Events.water_ahead(self) and not Events.owned_rods().is_empty():
+		_run(func(): await Events.fish_prompt(self))
+
+
+func front_tile() -> Vector2i:
+	return player.tile + DIRS[player.dir]
+
+
+## Bouchon de pêche sur la case d'eau devant le joueur : "cast" (flotte), "bite" (plonge), "" (retiré).
+func fish_bobber(state: String) -> void:
+	if _bobber != null and is_instance_valid(_bobber):
+		_bobber.queue_free()
+	_bobber = null
+	if state == "":
+		return
+	var front := front_tile()
+	_bobber = Sprite2D.new()
+	_bobber.texture = PixelArt.bobber()
+	_bobber.centered = false
+	var base := Vector2(front.x * T + 4, front.y * T + 4)
+	_bobber.position = base + (Vector2(0, 3) if state == "bite" else Vector2.ZERO)
+	_actors.add_child(_bobber)
+	# Ligne tendue entre la main du joueur et le bouchon.
+	var hand: Vector2 = player.position + {"down": Vector2(13, 10), "up": Vector2(3, 6), "left": Vector2(1, 9), "right": Vector2(15, 9)}[player.dir]
+	var line := Line2D.new()
+	line.width = 1.0
+	line.default_color = Color(0.12, 0.12, 0.12, 0.75)
+	line.points = PackedVector2Array([hand - _bobber.position, Vector2(4, 1)])
+	line.show_behind_parent = true
+	_bobber.add_child(line)
+	if state == "cast":
+		var tw := _bobber.create_tween().set_loops()
+		tw.tween_property(_bobber, "position:y", base.y + 1, 0.35)
+		tw.tween_property(_bobber, "position:y", base.y, 0.35)
 
 
 ## Fait marcher un PNJ jusqu'à côté du joueur (dresseurs).
@@ -458,7 +493,8 @@ func show_emote(w: Node2D) -> void:
 	w.add_child(e)
 	Audio.sfx("alert")
 	await get_tree().create_timer(0.6).timeout
-	e.queue_free()
+	if is_instance_valid(e):
+		e.queue_free()
 
 
 static func opposite(d: String) -> String:

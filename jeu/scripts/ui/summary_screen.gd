@@ -83,10 +83,8 @@ func _draw_page() -> void:
 	spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	Sprites.apply(spr, "front", mon.species, mon.shiny, PixelArt.placeholder())
 	left.add_child(spr)
-	Kit.label(left, mon.name(), Vector2(10, 6), 16)
+	Kit.name_line(left, mon, Vector2(10, 6), 16)
 	Kit.label(left, "N.%d" % mon.level, Vector2(10, 24), 14)
-	if mon.gender < 2:
-		Kit.label(left, mon.gender_symbol(), Vector2(140, 6), 16, Color("3068d8") if mon.gender == 0 else Color("e05878"))
 	if mon.shiny:
 		Kit.label(left, "★ CHROMATIQUE", Vector2(10, 190), 13, Color("e0a000"))
 	var y := 210

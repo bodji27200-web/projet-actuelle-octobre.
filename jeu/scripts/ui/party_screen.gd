@@ -58,9 +58,7 @@ func _build() -> void:
 			Kit.label(p, "ŒUF", Vector2(64, 4), 15)
 			Kit.label(p, "Il éclora en marchant.", Vector2(64, 30), 12, Color("707070"))
 			continue
-		Kit.label(p, mon.name() + (" ★" if mon.shiny else ""), Vector2(64, 4), 15)
-		if mon.gender < 2:
-			Kit.label(p, mon.gender_symbol(), Vector2(196, 4), 15, Color("3068d8") if mon.gender == 0 else Color("e05878"))
+		Kit.name_line(p, mon, Vector2(64, 4), 15)
 		Kit.label(p, "N.%d" % mon.level, Vector2(64, 24), 14)
 		Kit.status_tag(p, mon.status, Vector2(116, 28))
 		Kit.hp_bar(p, Vector2(64, 48), 140, float(mon.hp) / mon.max_hp())

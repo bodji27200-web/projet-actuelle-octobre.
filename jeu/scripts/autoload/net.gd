@@ -265,6 +265,7 @@ func host_coop_battle(enemy_parties: Array, wild: bool, trainers: Array, opts: D
 	var battle := Battle.new([Game.party, guest_party], enemy_parties, wild, trainers, bopts)
 	battle.player_name = Game.player_name
 	battle.cave = opts.get("cave", false)
+	battle.fishing = opts.get("fishing", false)
 	battle.caught_species = Game.caught.keys()
 	battle.exp_share = [Game.flag("exp_share_on"), reply.get("exp_share", false)]
 	var screen := BattleScreen.new()

@@ -72,6 +72,13 @@ func _ready() -> void:
 			world.load_map("tour_2", Vector2i(x2, y), "up")
 			break
 	await _snap("06b_tour")
+	world.load_map("carmin", Vector2i(7, 18), "down")
+	world.fish_bobber("cast")
+	await _snap("25_peche")
+	world.fish_bobber("bite")
+	world.show_emote(world.player)
+	await _snap("26_peche_touche")
+	world.fish_bobber("")
 	world.load_map("centre_jadielle", Vector2i(6, 4), "up")
 	ui.say("Bienvenue au Centre Pokémon ! Nous soignons vos Pokémon gratuitement. Voulez-vous que je soigne vos Pokémon ?")
 	for k in 200:
@@ -95,6 +102,29 @@ func _ready() -> void:
 		await get_tree().process_frame
 	await _snap("09_combat_attaques")
 	bs.queue_free()
+	Game._stack.clear()
+	for c2 in ui.get_children():
+		if c2 is Screen:
+			c2.queue_free()
+	await get_tree().process_frame
+	# Combat simple : le symbole ♂/♀ suit le nom, loin du niveau.
+	var me := Pokemon.create(34, 52)
+	me.gender = 0
+	var foe := Pokemon.create(45, 47)
+	foe.gender = 1
+	foe.shiny = true
+	var bs2 := BattleScreen.new()
+	bs2.battle = Battle.new([[me]], [[foe]], true, [], {"player_names": ["Sacha"]})
+	bs2.bg = "water"
+	ui.add_child(bs2)
+	for k in 200:
+		await get_tree().process_frame
+		if bs2._menu_active:
+			break
+		if Game._stack.size() > 0 and Game._stack[-1] is TextBox:
+			Game._stack[-1].finish()
+	await _snap("08b_combat_simple")
+	bs2.queue_free()
 	Game._stack.clear()
 	for c2 in ui.get_children():
 		if c2 is Screen:

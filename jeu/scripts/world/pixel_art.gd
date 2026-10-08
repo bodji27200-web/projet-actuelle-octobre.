@@ -372,6 +372,7 @@ const LOOKS := {
 	"lass": {"h": "e09040", "H": "b06820", "w": "e09040", "g": "e09040", "c": "e04870", "C": "b03050", "p": "4060c0", "b": "604030"},
 	"hiker": {"h": "805030", "H": "603818", "w": "805030", "g": "403020", "c": "c09048", "C": "906830", "p": "604828", "b": "403020"},
 	"ace": {"h": "303030", "H": "181818", "w": "f0d040", "g": "303030", "c": "303848", "C": "202838", "p": "202020", "b": "a02020"},
+	"fisher": {"h": "b8a860", "H": "887838", "w": "507040", "g": "604030", "c": "609048", "C": "406830", "p": "486078", "b": "303030"},
 	"oldman": {"h": "e0e0e0", "H": "b0b0b0", "w": "e0e0e0", "g": "e0e0e0", "c": "a08060", "C": "806040", "p": "605040", "b": "403020"},
 	"girl": {"h": "402818", "H": "301808", "w": "402818", "g": "402818", "c": "f0d040", "C": "c0a020", "p": "e05050", "b": "604030"},
 	"scientist": {"h": "607080", "H": "405060", "w": "607080", "g": "607080", "c": "f8f8f8", "C": "c8c8d0", "p": "404858", "b": "303030"},
@@ -484,6 +485,17 @@ static func ball(open := false) -> Texture2D:
 		{"k": OUTLINE, "r": Color("e83838"), "w": Color("f8f8f8")})
 	var tex := _tex(img)
 	_cache[key] = tex
+	return tex
+
+
+static func bobber() -> Texture2D:
+	if _cache.has("bobber"):
+		return _cache["bobber"]
+	var img := _img(8, 8)
+	_stamp(img, ["...kk...", "..krrk..", ".krrrrk.", ".kwwwwk.", "..kwwk..", "...kk...", "bbbbbbbb", ".bbbbbb."],
+		{"k": OUTLINE, "r": Color("e83838"), "w": Color("f8f8f8"), "b": Color(1, 1, 1, 0.45)})
+	var tex := _tex(img)
+	_cache["bobber"] = tex
 	return tex
 
 

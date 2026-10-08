@@ -29,6 +29,8 @@ func _ready() -> void:
 	_eggs()
 	_rival()
 	_world_data()
+	_fishing()
+	_display()
 	print("\n=== RÉSULTAT : %d vérifications OK, %d échecs ===" % [ok, fail])
 	for f in failures.slice(0, 60):
 		print("  ÉCHEC : ", f)
@@ -555,6 +557,63 @@ func _world_data() -> void:
 			check(Game.maps.has(w["to"]), "Passage %s -> %s" % [mid, w["to"]])
 	check(leaders == 8, "8 Champions d'Arène donnent un Badge (%d)" % leaders)
 	check(Game.maps.size() > 100, "Plus de 100 cartes (%d)" % Game.maps.size())
+
+
+func _fishing() -> void:
+	print("Pêche...")
+	for rod in Events.RODS:
+		check(Data.items.has(rod) and Data.items[rod].get("key", false), "Canne %s = objet rare" % rod)
+	var givers := {}
+	for mid in Game.maps:
+		var m: Dictionary = Game.maps[mid]
+		var has_water := false
+		for row in m["rows"]:
+			if "~" in row or "w" in row:
+				has_water = true
+				break
+		if has_water:
+			for rod in Events.RODS:
+				var t: Array = m["wild"].get(rod, [])
+				check(not t.is_empty(), "%s : table de pêche %s" % [mid, rod])
+				for e in t:
+					check(Data.pokemon.has(int(e[0])) and e[1] <= e[2] and e[2] <= 100, "%s/%s : entrée valide %s" % [mid, rod, e])
+		for n in m["npcs"]:
+			for cmd in _flatten(n.get("script", [])):
+				if cmd is Array and cmd.size() > 1 and cmd[0] is String and cmd[0] == "give" and cmd[1] in Events.RODS:
+					givers[cmd[1]] = mid
+	for rod in Events.RODS:
+		check(givers.has(rod), "Un PNJ donne la %s" % Data.item_name(rod))
+	check(PixelArt.LOOKS.has("fisher"), "Apparence du pêcheur")
+	# Canne : Magicarpe ; Méga Canne : Pokémon plus forts.
+	var old: Array = Game.maps["carmin"]["wild"]["old-rod"]
+	var sup: Array = Game.maps["carmin"]["wild"]["super-rod"]
+	check(old.size() == 1 and int(old[0][0]) == 129, "Canne de Carmin = Magicarpe")
+	check(sup.any(func(e): return e[2] >= 30), "Méga Canne : Pokémon jusqu'au N.30+")
+	check(Game.maps["safari"]["wild"]["super-rod"].any(func(e): return int(e[0]) == 147), "Minidraco pêchable au Parc Safari")
+	# Scuba Ball efficace sur un Pokémon pêché.
+	var b := _battle1(Pokemon.create(25, 30), Pokemon.create(129, 20))
+	check(b.ball_bonus("dive-ball", b.battler(1, 0)) == 1.0, "Scuba Ball x1 hors pêche")
+	b.fishing = true
+	check(b.ball_bonus("dive-ball", b.battler(1, 0)) == 3.5, "Scuba Ball x3,5 à la pêche")
+
+
+func _display() -> void:
+	print("Affichage...")
+	for c in "♂♀★▶◀▼▲₽✓■□●":
+		check(Game.font.has_char(c.unicode_at(0)), "La police contient %s" % c)
+	# Le nom + sexe + étoile ne doit jamais toucher le niveau, même en combat double (cadre de 200 px).
+	var holder := Control.new()
+	add_child(holder)
+	var worst := 0.0
+	for sid in Data.pokemon:
+		var mon := Pokemon.create(int(sid), 100)
+		mon.gender = 1
+		mon.shiny = true
+		var end := Kit.name_line(holder, mon, Vector2(10, 0), 13)
+		worst = maxf(worst, end)
+	var level_x := 200 - 12 - Kit.text_width("N.100", 13)
+	check(worst + 2 <= level_x, "Nom + ♀ + ★ ne chevauche pas le niveau (fin %d, niveau à %d)" % [worst, level_x])
+	holder.queue_free()
 
 
 func _flatten(cmds: Variant) -> Array:

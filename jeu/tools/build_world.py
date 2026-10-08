@@ -60,7 +60,7 @@ CLASSES = {
     "Fillette": {"look": "lass", "money": 16, "pool": [35, 39, 29, 43, 16, 25, 52]},
     "Scout": {"look": "bugcatcher", "money": 10, "pool": [10, 11, 13, 14, 46, 48, 123, 127]},
     "Montagnard": {"look": "hiker", "money": 36, "pool": [74, 75, 95, 66, 67, 104, 111, 27]},
-    "Pêcheur": {"look": "hiker", "money": 35, "pool": [129, 118, 119, 72, 60, 61, 98, 116]},
+    "Pêcheur": {"look": "fisher", "money": 35, "pool": [129, 118, 119, 72, 60, 61, 98, 116]},
     "Nageuse": {"look": "girl", "money": 5, "pool": [72, 120, 116, 118, 86, 90, 54]},
     "Topdresseur": {"look": "ace", "money": 60, "pool": [17, 20, 22, 24, 26, 28, 33, 30, 36, 59, 62, 65, 68, 76, 78, 80, 82, 85, 91, 97, 99, 101, 103, 105, 110, 112, 115, 119, 121, 124, 125, 126, 127, 128, 130, 131, 134, 135, 136, 143]},
     "Sbire Rocket": {"look": "rocket", "money": 30, "pool": [19, 20, 23, 24, 41, 42, 109, 110, 88, 89, 52, 53, 96]},
@@ -166,11 +166,17 @@ def place_items(m, items, seed, allowed='."_'):
                 break
 
 
+RODS = ("old-rod", "good-rod", "super-rod")
+
+
 def wild(m, key, kinds=("grass", "water"), rate=None):
     src = ENC.get(key, {})
     for k in kinds:
         if k in src:
             m.wild["grass" if k == "grass" else "marsh"] = src[k]
+    for k in RODS:
+        if k in src:
+            m.wild[k] = src[k]
     if rate:
         m.rate = rate
 
@@ -721,6 +727,14 @@ house_for(t, 0, d, [("club", "oldman", 5, 3, "down", {"kind": "script", "script"
             "Elle galope si vite ! Sa crinière de feu est si belle ! ... Et patati et patata...",
             "Tu m'as écouté jusqu'au bout ! Tiens, prends cette Bicyclette !"),
         give("bicycle"), setf("bike"), say("Appuie sur la touche VÉLO (V par défaut) pour l'enfourcher !")])]})])
+t.npc("pecheur_carmin", "fisher", 6, 18, "down", kind="script", script=[
+    iff(F("canne_got"), [say("Maître Pêcheur : Face à l'eau, appuie sur A pour pêcher !",
+                             "Mes frères pêchent à Parmanie et sur la Route 12. Ils ont de meilleures cannes que moi !")],
+        [say("Maître Pêcheur : Salut ! Je suis le Maître Pêcheur de Carmin ! La pêche, c'est toute ma vie !",
+             "Tu as l'air de t'ennuyer... Tiens, prends cette Canne et essaie !"),
+         give("old-rod"), setf("canne_got"), quest("peche", 1),
+         say("Mets-toi face à l'eau et appuie sur A. Tu peux aussi l'utiliser depuis le Sac, dans les OBJETS RARES.",
+             "Avec cette vieille Canne, ça mord souvent... mais surtout des Magicarpe !")])])
 decorate_town(t, 6, 2, 1)
 
 r = route("r11", "Route 11", 11, "kanto-route-11", grass=0.22)
@@ -738,6 +752,14 @@ r.npc("ronflex_r12", "legend", 6, 30, "down", kind="script", species=143, ghost=
                                  legend(143, 30, "ronflex_12"), quest("main", 13)],
         [say("Un Pokémon énorme dort sur la route et bloque le passage. Rien ne le réveille...")])])
 r.npc("ronflex_r12b", "legend", 7, 30, "down", kind="script", species=0, ghost=True, hide_if=F("ronflex_12"), script=[say("Ronflex ronfle bruyamment...")])
+r.rect(9, 37, 3, 3, "~", True)
+r.npc("pecheur_r12", "fisher", 10, 36, "down", kind="script", script=[
+    iff(F("mega_canne_got"), [say("Pêcheur : Avec la Méga Canne, même les Pokémon les plus rares mordent. Bonne pêche !")],
+        [iff(F("super_canne_got"), [say("Pêcheur : Mes deux frères t'ont donné leurs cannes ? Alors tu es digne de la mienne !",
+                                         "Voici la Méga Canne, la meilleure de toutes !"),
+                                     give("super-rod"), setf("mega_canne_got"), quest("peche", 3),
+                                     say("Avec elle, tu pêcheras des Pokémon bien plus forts. On dit même qu'un dragon vit dans le Parc Safari...")],
+             [say("Pêcheur : Chut... tu vas faire fuir les poissons.", "Reviens quand mon frère de Parmanie t'aura donné sa Super Canne.")])])])
 
 # ===========================================================================
 # LAVANVILLE, TOUR POKÉMON
@@ -972,6 +994,15 @@ house_for(t, 0, d, [("gardien", "oldman", 5, 3, "down", {"kind": "script", "scri
              [say("Gardien : J'ai perdu mon dentier en or dans le Parc Safari... Tu pourrais le chercher ?"), quest("dentier", 1)])])]})])
 decorate_town(t, 10, 4, 2)
 t.npc("garde_saf_info", "youngster", 18, 12, "down", text=["Le Parc Safari regorge de Pokémon rares !", "Certains ne vivent que là-bas."])
+t.rect(26, 15, 4, 3, "~", True)
+wild(t, "fuchsia-city", kinds=())
+t.npc("pecheur_parmanie", "fisher", 25, 16, "right", kind="script", script=[
+    iff(F("super_canne_got"), [say("Pêcheur : Avec la Super Canne, tu pêcheras des Poissirène, des Ptitard, des Hypotrempe...",
+                                   "Mon grand frère de la Route 12 a une canne encore meilleure !")],
+        [iff(F("canne_got"), [say("Pêcheur : Tiens, la Canne de mon frère de Carmin ! Elle n'attrape que des Magicarpe...",
+                                  "Prends plutôt ma Super Canne !"),
+                              give("good-rod"), setf("super_canne_got"), quest("peche", 2)],
+             [say("Pêcheur : Mon frère, le Maître Pêcheur de Carmin, distribue des cannes à pêche. Va le voir !")])])])
 
 # Parc Safari : grande zone sauvage
 sf = make_route("safari", "Parc Safari", 42, 36, [(20, 34)], 77, grass=0.35, water=True, trees=0.1)
@@ -992,6 +1023,8 @@ for key in ["kanto-safari-zone/middle", "kanto-safari-zone/area-1-east", "kanto-
             else:
                 merged[k2] = list(e)
 sf.wild = {"grass": [v for (k, _), v in merged.items() if k == "grass"], "marsh": [v for (k, _), v in merged.items() if k == "water"]}
+for rk in RODS:
+    sf.wild[rk] = [v for (k, _), v in merged.items() if k == rk]
 sf.rate = 0.16
 place_items(sf, [("gold-teeth", 1), ("ultra-ball", 3), ("max-revive", 1), ("tm32", 1)], 78, '."')
 add(sf)
@@ -1304,6 +1337,9 @@ quests = {
     "dentier": {"title": "Le dentier du Gardien", "stages": ["", "Trouve le dentier en or du Gardien dans le Parc Safari.", "Terminé ! Le Gardien t'a offert sa tenue."]},
     "pension": {"title": "La Pension", "stages": ["", "Laisse deux Pokémon compatibles à la Pension de la Route 5 pour obtenir un Œuf.", "Tu as obtenu un Œuf de la Pension !"]},
     "fossile": {"title": "Le fossile", "stages": ["", "Apporte ton fossile au Labo de Cramois'Île.", "Ton fossile a été ressuscité !"]},
+    "peche": {"title": "Les frères pêcheurs", "stages": ["", "Va voir le frère du Maître Pêcheur à Parmanie, près de l'étang.",
+                                                          "Le dernier frère pêche au bord d'un étang sur la Route 12.",
+                                                          "Terminé ! Tu as la Méga Canne, la meilleure canne à pêche."]},
 }
 
 # ===========================================================================
@@ -1409,6 +1445,14 @@ for mid, extra in EXTRA.items():
     maps[mid].wild.setdefault("grass", []).extend(extra)
 for mid, extra in MARSH_EXTRA.items():
     maps[mid].wild.setdefault("marsh", []).extend(extra)
+
+# Pêche : chaque point d'eau a ses tables Canne / Super Canne / Méga Canne.
+wild(maps["bourg"], "pallet-town", kinds=())
+wild(maps["carmin"], "vermilion-city", kinds=())
+for mid, mm in maps.items():
+    if any(c in row for row in mm.g for c in "~w"):
+        for rk in RODS:
+            mm.wild.setdefault(rk, ENC["pallet-town"][rk])
 
 # ---------------------------------------------------------------------------
 # Finitions : connexions, panneaux, vérifications

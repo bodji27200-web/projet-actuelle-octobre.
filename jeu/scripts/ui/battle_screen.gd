@@ -159,10 +159,11 @@ func _make_box(side: int, slot: int) -> void:
 	move_child(p, _bottom.get_index())
 	_boxes[k] = p
 	var small := _layout_double
-	Kit.label(p, mon.name() + (" ★" if mon.shiny else ""), Vector2(10, 0 if small else 2), 13 if small else 15)
-	if mon.gender < 2:
-		Kit.label(p, mon.gender_symbol(), Vector2(rect.size.x - 74, 0 if small else 2), 13 if small else 15, Color("3068d8") if mon.gender == 0 else Color("e05878"))
-	Kit.label(p, "N.%d" % mon.level, Vector2(rect.size.x - 54, 0 if small else 2), 13 if small else 15)
+	var fs := 13 if small else 15
+	var ty := 0 if small else 2
+	Kit.name_line(p, mon, Vector2(10, ty), fs)
+	var lv := "N.%d" % mon.level
+	Kit.label(p, lv, Vector2(rect.size.x - 12 - Kit.text_width(lv, fs), ty), fs)
 	Kit.label(p, "PV", Vector2(40, 14 if small else 22), 11, Color("e0a020"), false)
 	var bar_w := rect.size.x - 82
 	_bars[k] = Kit.hp_bar(p, Vector2(62, 19 if small else 26), bar_w, float(mon.hp) / mon.max_hp())

@@ -209,7 +209,7 @@ out_abil = {
 
 # --- Objets ------------------------------------------------------------------
 KEY_ITEMS = """oaks-parcel silph-scope poke-flute secret-key helix-fossil dome-fossil old-amber bicycle
-card-key ss-ticket town-map gold-teeth exp-share""".split()
+card-key ss-ticket town-map gold-teeth exp-share old-rod good-rod super-rod""".split()
 ITEMS = """nugget poke-ball great-ball ultra-ball master-ball premier-ball net-ball nest-ball repeat-ball
 timer-ball luxury-ball dusk-ball heal-ball quick-ball level-ball moon-ball heavy-ball fast-ball
 friend-ball love-ball dive-ball
@@ -274,7 +274,11 @@ for r in rows("encounters"):
     kind = "grass" if m == "walk" else "water" if m in ("surf", "super-rod", "good-rod", "old-rod") else None
     if kind is None:
         continue
-    enc[key][kind].append([int(r["pokemon_id"]), int(r["min_level"]), int(r["max_level"]), int(slots[r["encounter_slot_id"]]["rarity"])])
+    entry = [int(r["pokemon_id"]), int(r["min_level"]), int(r["max_level"]), int(slots[r["encounter_slot_id"]]["rarity"])]
+    enc[key][kind].append(entry)
+    # Tables de pêche séparées, une par canne (Canne, Super Canne, Méga Canne).
+    if m.endswith("-rod"):
+        enc[key][m].append(list(entry))
 out_enc = {}
 for key, kinds in enc.items():
     out_enc[key] = {}

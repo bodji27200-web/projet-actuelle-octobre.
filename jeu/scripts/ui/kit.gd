@@ -45,6 +45,31 @@ static func label(parent: Node, text: String, pos: Vector2, size := 16, color :=
 	return l
 
 
+## Largeur en pixels d'un texte écrit avec Kit.label à cette taille.
+static func text_width(text: String, size := 16) -> float:
+	return Game.font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, int(round(size * FONT_SCALE))).x
+
+
+static func gender_color(gender: int) -> Color:
+	return Color("3068d8") if gender == 0 else Color("e05878")
+
+
+## Nom du Pokémon suivi de son sexe (♂/♀) et d'une étoile s'il est chromatique,
+## collés au nom quelle que soit sa longueur. Renvoie l'abscisse de fin.
+static func name_line(parent: Node, mon: Pokemon, pos: Vector2, size := 16) -> float:
+	var name := mon.name()
+	label(parent, name, pos, size)
+	var x := pos.x + text_width(name, size) + 3
+	# Nidoran♀/♂ porte déjà le symbole dans son nom.
+	if mon.gender < 2 and not (name.ends_with("♂") or name.ends_with("♀")):
+		label(parent, mon.gender_symbol(), Vector2(x, pos.y), size, gender_color(mon.gender))
+		x += text_width(mon.gender_symbol(), size) + 3
+	if mon.shiny:
+		label(parent, "★", Vector2(x, pos.y), size, Color("e0a000"))
+		x += text_width("★", size) + 3
+	return x
+
+
 static func hp_color(ratio: float) -> Color:
 	if ratio > 0.5:
 		return Color("58d080")

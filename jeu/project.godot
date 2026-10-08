@@ -26,7 +26,7 @@ window/stretch/aspect="keep"
 
 [gui]
 
-theme/custom_font="res://assets/fonts/Jersey10.ttf"
+theme/custom_font="res://assets/fonts/Jersey10Jeu.ttf"
 theme/default_font_antialiasing=0
 theme/default_font_size=22
 
