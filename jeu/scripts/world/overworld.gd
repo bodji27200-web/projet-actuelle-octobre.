@@ -339,7 +339,9 @@ func _safe_spot(at: Vector2i) -> Vector2i:
 
 func remove_walker(w: Walker) -> void:
 	walkers.erase(w)
-	w.queue_free()
+	# Caché tout de suite, libéré au prochain changement de carte : le script qui le retire (boss vaincu,
+	# légendaire capturé...) continue après et y fait encore référence.
+	w.visible = false
 
 
 func find_walker(id: String) -> Walker:

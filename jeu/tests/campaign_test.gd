@@ -72,7 +72,14 @@ func _run() -> void:
 	check(Game.titles.has("fleau_rainbow"), "Titre « Fléau de la Team Rainbow » débloqué")
 
 	print("3. Gardien de l'Abîme")
+	# Ici on vérifie l'enchaînement (combat, fin de campagne, titre), pas la difficulté :
+	# le pilote joue au hasard, le Gardien est donc ramené au niveau 60 (l'équilibre est mesuré par balance_test).
+	var gt: Dictionary = Game.trainers["gardien_abime"]
+	var real_team: Array = gt["team"].duplicate(true)
+	for e in gt["team"]:
+		e[1] = 60
 	await _fight_npc("cr_abime_10", "gardien", "abyss_done")
+	gt["team"] = real_team
 	check(Game.flag("abyss_done"), "Gardien de l'Abîme vaincu")
 	check(Game.titles.has("survivant_abime"), "Titre « Survivant de l'Abîme » débloqué")
 
@@ -96,18 +103,24 @@ func _run() -> void:
 
 	print("6. Starter de Paldea")
 	want = ""
+	Game.flags.erase("champion_paldea")
 	world.load_map("labo_paldea", Vector2i(6, 4), "up")
 	await _settle()
 	var n0 := Game.party.size() + Game.pc.size()
 	await _talk("professeur")
 	check(Game.flag("starter_paldea"), "Le Directeur Clavel confie un starter")
-	var got := Game.party + Game.pc
-	check(Game.party.size() + Game.pc.size() == n0 + 1 and [906, 909, 912].has(got.back().species if Game.pc.size() == 0 else Game.pc.back().species),
-		"Le starter est Poussacha, Chochodile ou Coiffeton")
+	var got: Array = (Game.party + Game.pc).slice(n0)
+	check(got.size() == 1 and [906, 909, 912].has(got[0].species), "Le starter est Poussacha, Chochodile ou Coiffeton")
+	Game.set_flag("champion_paldea")
+	await _talk("professeur")
+	var rest: Array = (Game.party + Game.pc).slice(n0)
+	check(rest.size() == 3 and rest.map(func(m): return m.species).all(func(x): return [906, 909, 912].has(x)), "Après le Maître, les deux autres starters")
+	check(Game.flag("starter_paldea_rest"), "Les starters restants ne sont donnés qu'une fois")
 
 	print("7. Maître des Capacités")
 	world.load_map("centre_pa_mesaledo", Vector2i(3, 3), "up")
 	await _settle()
+	Game.heal_party()
 	var mon: Pokemon = Game.party[0]
 	var old_moves: Array = mon.moves.map(func(m): return m["id"])
 	await _talk("maitre_capacites")
