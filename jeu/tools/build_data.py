@@ -110,6 +110,12 @@ for r in rows("pokemon_moves"):
     elif r["pokemon_move_method_id"] == "4":
         tm[r["pokemon_id"]].add(int(r["move_id"]))
 
+egg_groups = defaultdict(list)
+eg_names = {r["id"]: r["identifier"] for r in rows("egg_groups")}
+for r in rows("pokemon_egg_groups"):
+    if r["species_id"] in species:
+        egg_groups[r["species_id"]].append(eg_names[r["egg_group_id"]])
+
 out_pkmn = {}
 for sid, s in species.items():
     p = pokemon[sid]
@@ -132,6 +138,9 @@ for sid, s in species.items():
         "evos": evos.get(sid, []),
         "learn": sorted(learn[sid]),
         "tm": sorted(tm[sid]),
+        "egg_groups": egg_groups[sid],
+        "hatch": int(s["hatch_counter"] or 20),
+        "baby_of": 0,
         "height": int(p["height"]),
         "weight": int(p["weight"]),
     }
@@ -199,7 +208,9 @@ out_abil = {
 }
 
 # --- Objets ------------------------------------------------------------------
-ITEMS = """poke-ball great-ball ultra-ball master-ball premier-ball net-ball nest-ball repeat-ball
+KEY_ITEMS = """oaks-parcel silph-scope poke-flute secret-key helix-fossil dome-fossil old-amber bicycle
+card-key ss-ticket town-map gold-teeth exp-share""".split()
+ITEMS = """nugget poke-ball great-ball ultra-ball master-ball premier-ball net-ball nest-ball repeat-ball
 timer-ball luxury-ball dusk-ball heal-ball quick-ball level-ball moon-ball heavy-ball fast-ball
 friend-ball love-ball dive-ball
 potion super-potion hyper-potion max-potion full-restore revive max-revive antidote paralyze-heal
@@ -215,6 +226,12 @@ for ident in ITEMS:
         print("objet introuvable :", ident)
         continue
     out_items[ident] = {"name": item_names.get(r["id"], ident), "desc": item_desc.get(r["id"], ""), "price": int(r["cost"])}
+for ident in KEY_ITEMS:
+    r = item_by_ident.get(ident)
+    if r is None:
+        print("objet rare introuvable :", ident)
+        continue
+    out_items[ident] = {"name": item_names.get(r["id"], ident), "desc": item_desc.get(r["id"], ""), "price": 0, "key": True}
 for r in sorted(machines, key=lambda r: int(r["machine_number"])):
     n = int(r["machine_number"])
     kind = "CT" if n <= 50 else "CS"
@@ -242,11 +259,42 @@ for r in rows("experience"):
 type_fr = {types[r["type_id"]]: r["name"] for r in rows("type_names") if r["local_language_id"] == FR and r["type_id"] in types}
 
 
+# --- Rencontres sauvages Rouge Feu (version 10) -----------------------------
+areas = {r["id"]: r for r in rows("location_areas")}
+locs = {r["id"]: r["identifier"] for r in rows("locations")}
+slots = {r["id"]: r for r in rows("encounter_slots")}
+methods = {r["id"]: r["identifier"] for r in rows("encounter_methods")}
+enc = defaultdict(lambda: defaultdict(list))
+for r in rows("encounters"):
+    if r["version_id"] != "10" or int(r["pokemon_id"]) > MAX_ID:
+        continue
+    a = areas[r["location_area_id"]]
+    key = locs[a["location_id"]] + ("/" + a["identifier"] if a["identifier"] else "")
+    m = methods[slots[r["encounter_slot_id"]]["encounter_method_id"]]
+    kind = "grass" if m == "walk" else "water" if m in ("surf", "super-rod", "good-rod", "old-rod") else None
+    if kind is None:
+        continue
+    enc[key][kind].append([int(r["pokemon_id"]), int(r["min_level"]), int(r["max_level"]), int(slots[r["encounter_slot_id"]]["rarity"])])
+out_enc = {}
+for key, kinds in enc.items():
+    out_enc[key] = {}
+    for kind, lst in kinds.items():
+        merged = {}
+        for sid, lo, hi, w in lst:
+            if sid in merged:
+                m = merged[sid]
+                m[1] = min(m[1], lo); m[2] = max(m[2], hi); m[3] += w
+            else:
+                merged[sid] = [sid, lo, hi, w]
+        out_enc[key][kind] = sorted(merged.values(), key=lambda x: -x[3])
+
+
 def dump(name, obj):
     with open(f"{OUT}/{name}.json", "w", encoding="utf-8") as f:
         json.dump(obj, f, ensure_ascii=False, separators=(",", ":"))
 
 
+dump("encounters", out_enc)
 dump("pokemon", out_pkmn)
 dump("moves", out_moves)
 dump("abilities", out_abil)

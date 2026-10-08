@@ -1,16 +1,28 @@
 class_name BattleScreen
 extends Screen
-## Écran de combat : affiche le moteur Battle et joue ses événements.
+## Écran de combat : simple ou double, solo ou coop. Joue les événements du moteur Battle.
 
 const MSG_AUTO := 0.9
+const BG := {
+	"grass": [Color("f8f0d0"), Color("d8e8b0"), Color("b8d088"), Color("90a868")],
+	"forest": [Color("c8e0b0"), Color("88b070"), Color("78a058"), Color("587840")],
+	"cave": [Color("8c7860"), Color("6c5840"), Color("a08868"), Color("705838")],
+	"water": [Color("c8e0f8"), Color("88b0e8"), Color("a8c8f0"), Color("6890c8")],
+	"indoor": [Color("e8e0f0"), Color("c8c0d8"), Color("d8d0e8"), Color("a098b8")],
+}
 
 var battle: Battle
-var _sprites: Array = [null, null]
-var _boxes: Array = [null, null]
-var _bars: Array = [null, null]
-var _hp_labels: Array = [null, null]
-var _exp_bar: ColorRect
-var _shown_hp: Array = [0, 0]
+var bg := "grass"
+## Coop : {"role": "host"/"guest", "bid": id, "local_owner": 0/1, "peer": id réseau}
+var coop := {}
+var _sprites := {}      # "side:slot" -> TextureRect
+var _home := {}
+var _sizes := {}
+var _boxes := {}
+var _bars := {}
+var _hp_labels := {}
+var _exp_bars := {}
+var _shown_hp := {}
 var _bottom: Panel
 var _prompt: Label
 var _menu_panel: Panel
@@ -24,45 +36,19 @@ var _menu_active := false
 var _info: Panel
 var _info_pp: Label
 var _info_type: Label
-var _home := [Vector2.ZERO, Vector2.ZERO]
-var _box_species := [0, 0]
 var _bg: Control
 var _ball_spr: TextureRect
+var _layout_double := false
 
 signal _menu_done(index: int)
 
 
 func _ready() -> void:
 	size = Vector2(480, 320)
-	_build()
-	_run()
-
-
-# ---------------------------------------------------------------------------
-# Construction de l'écran
-# ---------------------------------------------------------------------------
-
-func _build() -> void:
 	_bg = Control.new()
 	_bg.size = Vector2(480, 320)
 	_bg.draw.connect(_draw_bg)
 	add_child(_bg)
-	for side in 2:
-		var tr := TextureRect.new()
-		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		if side == 1:
-			tr.size = Vector2(144, 144)
-			_home[1] = Vector2(292, 14)
-		else:
-			tr.size = Vector2(192, 192)
-			_home[0] = Vector2(34, 92)
-		tr.position = _home[side]
-		tr.pivot_offset = tr.size / 2
-		tr.visible = false
-		add_child(tr)
-		_sprites[side] = tr
 	_bottom = Kit.panel(self, Rect2(4, 244, 472, 72), Color("f8f8f8"), Color("c04848"))
 	_prompt = Kit.label(_bottom, "", Vector2(12, 8))
 	_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -75,15 +61,70 @@ func _build() -> void:
 	_ball_spr.pivot_offset = Vector2(12, 12)
 	_ball_spr.visible = false
 	add_child(_ball_spr)
+	_run()
+
+
+func role() -> String:
+	return coop.get("role", "solo")
+
+
+func local_owner() -> int:
+	return coop.get("local_owner", 0)
+
+
+func _key(side: int, slot: int) -> String:
+	return "%d:%d" % [side, slot]
+
+
+# ---------------------------------------------------------------------------
+# Disposition
+# ---------------------------------------------------------------------------
+
+func _setup_layout() -> void:
+	_layout_double = battle.is_double()
+	for k in _sprites:
+		_sprites[k].queue_free()
+	_sprites.clear()
+	for side in 2:
+		var n: int = battle.sides[side].slots.size()
+		for slot in n:
+			var tr := TextureRect.new()
+			tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			var sz: float
+			var pos: Vector2
+			if side == 1:
+				sz = 144.0 if n == 1 else 112.0
+				pos = Vector2(292, 14) if n == 1 else Vector2(250 + slot * 100, 30 - slot * 14)
+			else:
+				sz = 192.0 if n == 1 else 150.0
+				pos = Vector2(34, 92) if n == 1 else Vector2(0 + slot * 120, 110 + slot * 8)
+			tr.size = Vector2(sz, sz)
+			tr.position = pos
+			tr.pivot_offset = tr.size / 2
+			tr.visible = false
+			add_child(tr)
+			move_child(tr, _bottom.get_index())
+			var k := _key(side, slot)
+			_sprites[k] = tr
+			_home[k] = pos
+			_sizes[k] = sz
+	_bg.queue_redraw()
 
 
 func _draw_bg() -> void:
-	_bg.draw_rect(Rect2(0, 0, 480, 140), Color("f8f0d0"))
-	_bg.draw_rect(Rect2(0, 140, 480, 180), Color("d8e8b0"))
+	var c: Array = BG.get(bg, BG["grass"])
+	_bg.draw_rect(Rect2(0, 0, 480, 140), c[0])
+	_bg.draw_rect(Rect2(0, 140, 480, 180), c[1])
 	for i in 6:
-		_bg.draw_rect(Rect2(0, 20 + i * 18, 480, 2), Color("f0e4b8"))
-	_ellipse(Vector2(364, 150), Vector2(92, 22), Color("b8d088"), Color("90a868"))
-	_ellipse(Vector2(130, 262), Vector2(110, 26), Color("b8d088"), Color("90a868"))
+		_bg.draw_rect(Rect2(0, 20 + i * 18, 480, 2), c[0].darkened(0.04))
+	if _layout_double:
+		_ellipse(Vector2(350, 140), Vector2(120, 24), c[2], c[3])
+		_ellipse(Vector2(150, 262), Vector2(150, 28), c[2], c[3])
+	else:
+		_ellipse(Vector2(364, 150), Vector2(92, 22), c[2], c[3])
+		_ellipse(Vector2(130, 262), Vector2(110, 26), c[2], c[3])
 
 
 func _ellipse(c: Vector2, r: Vector2, fill: Color, edge: Color) -> void:
@@ -96,54 +137,76 @@ func _ellipse(c: Vector2, r: Vector2, fill: Color, edge: Color) -> void:
 	_bg.draw_polyline(pts, edge, 2.0)
 
 
-func _make_box(side: int) -> void:
-	if _boxes[side] != null:
-		_boxes[side].queue_free()
-	var b: Battle.Battler = battle.sides[side].b
+func _box_rect(side: int, slot: int) -> Rect2:
+	if not _layout_double:
+		return Rect2(12, 14, 214, 52) if side == 1 else Rect2(256, 160, 216, 72)
+	if side == 1:
+		return Rect2(6, 6 + slot * 50, 200, 46)
+	return Rect2(272, 146 + slot * 48, 204, 46)
+
+
+func _make_box(side: int, slot: int) -> void:
+	var k := _key(side, slot)
+	if _boxes.has(k) and is_instance_valid(_boxes[k]):
+		_boxes[k].queue_free()
+	var b: Battle.Battler = battle.battler(side, slot)
+	if b == null:
+		return
 	var mon := b.mon
-	var rect := Rect2(12, 14, 214, 52) if side == 1 else Rect2(256, 160, 216, 72)
-	var p := Kit.panel(self, rect, Color("f8f8e0"), Color("506050"))
+	var rect := _box_rect(side, slot)
+	var mine := side == 0 and b.owner == local_owner()
+	var p := Kit.panel(self, rect, Color("f8f8e0") if mine or side == 1 else Color("e8f0f8"), Color("506050"))
 	move_child(p, _bottom.get_index())
-	_boxes[side] = p
-	_box_species[side] = mon.species
-	var name := mon.name() + (" ★" if mon.shiny else "")
-	Kit.label(p, name, Vector2(10, 2), 15)
-	var g := Kit.label(p, mon.gender_symbol(), Vector2(140, 2), 15, Color("3068d8") if mon.gender == 0 else Color("e05878"))
-	g.visible = mon.gender < 2
-	Kit.label(p, "N.%d" % mon.level, Vector2(164, 2), 15)
-	Kit.label(p, "PV", Vector2(40, 22), 12, Color("e0a020"), false)
-	_bars[side] = Kit.hp_bar(p, Vector2(62, 26), 132, float(mon.hp) / mon.max_hp())
-	_shown_hp[side] = mon.hp
-	Kit.status_tag(p, mon.status, Vector2(4, 24))
+	_boxes[k] = p
+	var small := _layout_double
+	Kit.label(p, mon.name() + (" ★" if mon.shiny else ""), Vector2(10, 0 if small else 2), 13 if small else 15)
+	if mon.gender < 2:
+		Kit.label(p, mon.gender_symbol(), Vector2(rect.size.x - 74, 0 if small else 2), 13 if small else 15, Color("3068d8") if mon.gender == 0 else Color("e05878"))
+	Kit.label(p, "N.%d" % mon.level, Vector2(rect.size.x - 54, 0 if small else 2), 13 if small else 15)
+	Kit.label(p, "PV", Vector2(40, 19 if small else 22), 11, Color("e0a020"), false)
+	var bar_w := rect.size.x - 82
+	_bars[k] = Kit.hp_bar(p, Vector2(62, 23 if small else 26), bar_w, float(mon.hp) / mon.max_hp())
+	_shown_hp[k] = mon.hp
+	Kit.status_tag(p, mon.status, Vector2(4, 21 if small else 24))
+	if side == 1 and Game.caught.has(mon.species) and not mon.boss:
+		var ball := TextureRect.new()
+		ball.texture = PixelArt.ball()
+		ball.position = Vector2(rect.size.x - 20, 26)
+		ball.size = Vector2(12, 12)
+		p.add_child(ball)
+	if side == 1 and mon.boss:
+		Kit.label(p, "BOSS", Vector2(rect.size.x - 54, 28 if small else 32), 11, Color("c02020"), false)
 	if side == 0:
-		_hp_labels[0] = Kit.label(p, "%d/%d" % [mon.hp, mon.max_hp()], Vector2(120, 34), 15)
-		var bg := ColorRect.new()
-		bg.position = Vector2(30, 58)
-		bg.size = Vector2(170, 5)
-		bg.color = Color("404848")
-		p.add_child(bg)
-		_exp_bar = ColorRect.new()
-		_exp_bar.position = Vector2(1, 1)
-		_exp_bar.size = Vector2(168 * mon.exp_progress(), 3)
-		_exp_bar.color = Color("48a0f8")
-		bg.add_child(_exp_bar)
-	else:
-		if Game.caught.has(mon.species):
-			var ball := TextureRect.new()
-			ball.texture = PixelArt.ball()
-			ball.position = Vector2(8, 26)
-			ball.size = Vector2(12, 12)
-			p.add_child(ball)
+		if small:
+			if not mine:
+				Kit.label(p, battle.owner_name(0, b.owner), Vector2(10, 28), 10, Color("406080"), false)
+			_hp_labels[k] = Kit.label(p, "%d/%d" % [mon.hp, mon.max_hp()], Vector2(rect.size.x - 74, 28), 11)
+		else:
+			_hp_labels[k] = Kit.label(p, "%d/%d" % [mon.hp, mon.max_hp()], Vector2(120, 34), 15)
+		if mine:
+			var bg2 := ColorRect.new()
+			bg2.position = Vector2(30, rect.size.y - 8 if small else 58)
+			bg2.size = Vector2(rect.size.x - 46, 4 if small else 5)
+			bg2.color = Color("404848")
+			p.add_child(bg2)
+			var e := ColorRect.new()
+			e.position = Vector2(1, 1)
+			e.size = Vector2((bg2.size.x - 2) * mon.exp_progress(), bg2.size.y - 2)
+			e.color = Color("48a0f8")
+			e.set_meta("full", bg2.size.x - 2)
+			bg2.add_child(e)
+			_exp_bars[k] = e
 
 
-func _set_sprite(side: int, mon: Pokemon, species := 0, shiny := false) -> void:
-	var tr: TextureRect = _sprites[side]
+func _set_sprite(side: int, slot: int, mon: Pokemon, species := 0, shiny := false) -> void:
+	var k := _key(side, slot)
+	var tr: TextureRect = _sprites[k]
 	var sid := species if species != 0 else mon.species
 	var sh := shiny if species != 0 else mon.shiny
 	Sprites.apply(tr, "back" if side == 0 else "front", sid, sh, PixelArt.placeholder())
 	tr.modulate = Color.WHITE
-	tr.position = _home[side]
-	tr.scale = Vector2.ONE
+	tr.position = _home[k]
+	tr.scale = Vector2.ONE * (1.25 if mon.boss else 1.0)
 	tr.visible = true
 
 
@@ -153,19 +216,119 @@ func _set_sprite(side: int, mon: Pokemon, species := 0, shiny := false) -> void:
 
 func _run() -> void:
 	await get_tree().process_frame
-	await _play(battle.start())
+	if role() == "guest":
+		await _guest_loop()
+		return
+	_setup_layout()
+	var evs := battle.start()
+	_share(evs)
+	await _play(evs)
 	while not battle.over:
-		if battle.need_switch:
-			var idx: int = await _pick_switch(true)
-			await _play(battle.player_switch(idx))
+		if battle.need_switch.size() > 0:
+			var n: Dictionary = battle.need_switch[0]
+			var idx: int
+			if role() == "host" and n["owner"] != local_owner():
+				_prompt.text = "En attente de %s..." % battle.owner_name(0, n["owner"])
+				Net.ask_switch(coop["bid"], coop["peer"], n["slot"], battle)
+				var a: Dictionary = await Net.wait_action(coop["bid"], 100 + n["slot"], coop["peer"])
+				idx = a.get("index", -1)
+				var bench := battle.bench(0, n["owner"])
+				if not bench.has(idx):
+					idx = bench[0] if bench.size() > 0 else -1
+			else:
+				idx = await _pick_switch(n["slot"], true)
+			if idx < 0:
+				battle.need_switch.erase(n)
+				continue
+			evs = battle.player_switch(n["slot"], idx)
+			_share(evs)
+			await _play(evs)
 			continue
-		var action = await _choose_action()
-		if action == null:
-			continue
+		var acts := {}
+		var remote_slots := []
+		for k in battle.sides[0].slots.size():
+			var b := battle.battler(0, k)
+			if b == null or not b.alive():
+				continue
+			if b.owner == local_owner():
+				var a2 = await _choose_action(k)
+				acts[k] = a2
+				if a2.get("type", "") in ["run"]:
+					break
+			else:
+				remote_slots.append(k)
+		if role() == "host" and remote_slots.size() > 0 and not acts.values().any(func(x): return x.get("type", "") == "run"):
+			_prompt.text = "En attente de %s..." % battle.owner_name(0, 1)
+			Net.ask_actions(coop["bid"], coop["peer"], remote_slots, battle)
+			for k in remote_slots:
+				acts[k] = await Net.wait_action(coop["bid"], k, coop["peer"])
 		_prompt.text = ""
-		await _play(battle.play_turn(action))
+		evs = battle.play_turn(acts)
+		_share(evs)
+		await _play(evs)
 	await get_tree().create_timer(0.3).timeout
 	finish(battle.result)
+
+
+func _share(evs: Array) -> void:
+	if role() == "host":
+		Net.send_events(coop["bid"], coop["peer"], evs, battle)
+
+
+## Invité : affiche ce que l'hôte envoie et répond quand on lui demande d'agir.
+func _guest_loop() -> void:
+	var first := true
+	while true:
+		var m: Dictionary = await Net.next_coop(coop["bid"])
+		match m["kind"]:
+			"lost":
+				await _say("La connexion avec ton partenaire a été perdue...")
+				finish("run")
+				return
+			"events":
+				battle.apply_snapshot(m["data"]["snap"])
+				_sync_party()
+				if first:
+					_setup_layout()
+					first = false
+				await _play(m["data"]["events"])
+			"ask":
+				battle.apply_snapshot(m["data"]["snap"])
+				_sync_party()
+				for k in m["data"]["slots"]:
+					var a = await _choose_action(k)
+					Net.send_action(coop["bid"], coop["peer"], k, a)
+				_prompt.text = "En attente de %s..." % battle.owner_name(0, 0)
+			"switch":
+				battle.apply_snapshot(m["data"]["snap"])
+				_sync_party()
+				var idx := await _pick_switch(m["data"]["slot"], true)
+				Net.send_action(coop["bid"], coop["peer"], 100 + m["data"]["slot"], {"index": idx})
+			"end":
+				coop["end"] = m["data"]
+				await get_tree().create_timer(0.3).timeout
+				finish(m["data"]["result"])
+				return
+
+
+## Invité : l'écran Équipe montre l'état réel (copie reçue de l'hôte).
+func _sync_party() -> void:
+	if role() != "guest":
+		return
+	var mine := []
+	for i in battle.sides[0].party.size():
+		if battle.sides[0].owners[i] == local_owner():
+			mine.append(battle.sides[0].party[i])
+	if not mine.is_empty():
+		Game.party = mine
+
+
+func _offset() -> int:
+	var o := 0
+	for i in battle.sides[0].owners.size():
+		if battle.sides[0].owners[i] < local_owner():
+			o += 1
+	return o
 
 
 func _say(text: String) -> void:
@@ -177,68 +340,94 @@ func _play(events: Array) -> void:
 	var i := 0
 	while i < events.size():
 		var e: Dictionary = events[i]
+		var k := _key(e.get("side", 0), e.get("slot", 0))
 		match e["t"]:
 			"msg":
 				await _say(e["text"])
 			"trainer_say":
-				await _say("%s : %s" % [battle.trainer.get("name", ""), e["text"]])
+				await _say(e["text"])
 			"send":
-				var side: int = e["side"]
-				var mon: Pokemon = e["mon"]
-				_set_sprite(side, mon)
-				_make_box(side)
-				await _appear(side, mon)
+				var mon: Pokemon = battle.sides[e["side"]].party[e["index"]] if e.has("index") and e["index"] < battle.sides[e["side"]].party.size() else e.get("mon")
+				if mon == null:
+					i += 1
+					continue
+				if not _sprites.has(k):
+					_setup_layout()
+				_set_sprite(e["side"], e["slot"], mon)
+				_make_box(e["side"], e["slot"])
+				if Game.settings.get("cries", true):
+					Audio.cry(mon.species)
+				await _appear(k, mon)
 			"recall":
-				await _tween_scale(_sprites[e["side"]], 0.0, 0.25)
-				_sprites[e["side"]].visible = false
+				if _sprites.has(k):
+					await _tween_scale(_sprites[k], 0.0, 0.25)
+					_sprites[k].visible = false
 			"hp":
-				await _anim_hp(e["side"], e["hp"], e["max"])
+				await _anim_hp(k, e["hp"], e["max"])
 			"faint":
-				await _faint(e["side"])
+				Audio.sfx("faint")
+				await _faint(k)
 			"anim":
-				await _anim(e["side"], e["kind"])
+				await _anim(k, e["kind"])
 			"refresh":
-				for s in 2:
-					if battle.sides[s].b != null and _boxes[s] != null:
-						var keep: int = _shown_hp[s]
-						_make_box(s)
-						_shown_hp[s] = keep
-						_update_hp_display(s, keep, battle.sides[s].b.mon.max_hp())
+				for key in _boxes.keys():
+					var parts: PackedStringArray = key.split(":")
+					var b := battle.battler(int(parts[0]), int(parts[1]))
+					if b != null and b.alive() and is_instance_valid(_boxes[key]):
+						var keep: int = _shown_hp.get(key, b.mon.hp)
+						_make_box(int(parts[0]), int(parts[1]))
+						_shown_hp[key] = keep
+						_update_hp_display(key, keep, b.mon.max_hp())
 			"exp":
-				if e["active"]:
+				if e["active"] and e.get("owner", 0) == local_owner():
+					var sk := _key(0, e["slot"])
 					var levels_follow := false
 					for j in range(i + 1, events.size()):
 						if events[j]["t"] == "level" and events[j]["index"] == e["index"]:
 							levels_follow = true
 							break
-					var mon: Pokemon = Game.party[e["index"]]
-					await _tween_exp(1.0 if levels_follow else mon.exp_progress())
+					var mon2: Pokemon = battle.sides[0].party[e["index"]]
+					Audio.sfx("exp")
+					await _tween_exp(sk, 1.0 if levels_follow else mon2.exp_progress())
 			"level":
 				if e["active"]:
-					var keep_hp: int = _shown_hp[0]
-					_make_box(0)
-					_shown_hp[0] = keep_hp
-					_update_hp_display(0, keep_hp, battle.sides[0].b.mon.max_hp())
-					_exp_bar.size.x = 0
-					var last := true
-					for j in range(i + 1, events.size()):
-						if events[j]["t"] == "level" and events[j]["index"] == e["index"]:
-							last = false
-							break
-					if last:
-						await _tween_exp(Game.party[e["index"]].exp_progress())
+					var sk2 := _key(0, e["slot"])
+					var keep_hp: int = _shown_hp.get(sk2, 0)
+					_make_box(0, e["slot"])
+					_shown_hp[sk2] = keep_hp
+					var b2 := battle.battler(0, e["slot"])
+					if b2 != null:
+						_update_hp_display(sk2, keep_hp, b2.mon.max_hp())
+					if _exp_bars.has(sk2) and is_instance_valid(_exp_bars[sk2]):
+						_exp_bars[sk2].size.x = 0
+					if e.get("owner", 0) == local_owner():
+						Audio.jingle("levelup")
+						var last := true
+						for j in range(i + 1, events.size()):
+							if events[j]["t"] == "level" and events[j]["index"] == e["index"]:
+								last = false
+								break
+						if last:
+							await _tween_exp(sk2, battle.sides[0].party[e["index"]].exp_progress())
 			"learn":
-				await Events.learn_move(e["mon"], e["move"])
+				if e.get("owner", 0) == local_owner():
+					if role() == "guest":
+						if not coop.has("learn"):
+							coop["learn"] = []
+						coop["learn"].append({"index": e["index"] - _offset(), "move": e["move"]})
+					else:
+						await Events.learn_move(battle.sides[0].party[e["index"]], e["move"])
 			"ball":
-				await _ball(e["shakes"], e["caught"])
+				await _ball(_key(1, e.get("slot", 0)), e["shakes"], e["caught"])
 			"hide":
-				_sprites[e["side"]].visible = not e["on"]
+				if _sprites.has(k):
+					_sprites[k].visible = not e["on"]
 			"sub":
-				_sprites[e["side"]].modulate.a = 0.55 if e["on"] else 1.0
+				if _sprites.has(k):
+					_sprites[k].modulate.a = 0.55 if e["on"] else 1.0
 			"transform":
-				Sprites.apply(_sprites[e["side"]], "back" if e["side"] == 0 else "front", e["species"], e["shiny"], PixelArt.placeholder())
-			"weather", "end":
-				pass
+				if _sprites.has(k):
+					Sprites.apply(_sprites[k], "back" if e["side"] == 0 else "front", e["species"], e["shiny"], PixelArt.placeholder())
 		i += 1
 
 
@@ -246,16 +435,18 @@ func _play(events: Array) -> void:
 # Animations
 # ---------------------------------------------------------------------------
 
-func _appear(side: int, mon: Pokemon) -> void:
-	var tr: TextureRect = _sprites[side]
+func _appear(k: String, mon: Pokemon) -> void:
+	var tr: TextureRect = _sprites[k]
+	var target := tr.scale
 	tr.scale = Vector2(0.1, 0.1)
 	tr.modulate = Color(3, 3, 3, 1)
 	var tw := create_tween().set_parallel()
-	tw.tween_property(tr, "scale", Vector2.ONE, 0.3)
+	tw.tween_property(tr, "scale", target, 0.3)
 	tw.tween_property(tr, "modulate", Color.WHITE, 0.45)
 	await tw.finished
 	if mon.shiny:
-		for k in 3:
+		Audio.sfx("shiny")
+		for n in 3:
 			tr.modulate = Color(1.6, 1.6, 0.8)
 			await get_tree().create_timer(0.08).timeout
 			tr.modulate = Color.WHITE
@@ -268,58 +459,66 @@ func _tween_scale(node: Control, s: float, t: float) -> void:
 	await tw.finished
 
 
-func _anim_hp(side: int, hp: int, mx: int) -> void:
-	if _bars[side] == null:
+func _anim_hp(k: String, hp: int, mx: int) -> void:
+	if not _bars.has(k) or not is_instance_valid(_bars[k]):
 		return
-	var from: int = _shown_hp[side]
+	var from: int = _shown_hp.get(k, hp)
+	if hp < from:
+		Audio.sfx("hit")
 	var tw := create_tween()
-	tw.tween_method(func(v: float): _update_hp_display(side, int(round(v)), mx), float(from), float(hp), clampf(absf(hp - from) / float(mx) * 1.2, 0.15, 0.8))
+	tw.tween_method(func(v: float): _update_hp_display(k, int(round(v)), mx), float(from), float(hp), clampf(absf(hp - from) / float(maxi(1, mx)) * 1.2, 0.15, 0.8))
 	await tw.finished
-	_shown_hp[side] = hp
+	_shown_hp[k] = hp
 
 
-func _update_hp_display(side: int, hp: int, mx: int) -> void:
-	if _bars[side] == null or not is_instance_valid(_bars[side]):
+func _update_hp_display(k: String, hp: int, mx: int) -> void:
+	if not _bars.has(k) or not is_instance_valid(_bars[k]):
 		return
-	Kit.set_bar(_bars[side], float(hp) / maxf(1, mx))
-	if side == 0 and _hp_labels[0] != null and is_instance_valid(_hp_labels[0]):
-		_hp_labels[0].text = "%d/%d" % [hp, mx]
+	Kit.set_bar(_bars[k], float(hp) / maxf(1, mx))
+	if _hp_labels.has(k) and is_instance_valid(_hp_labels[k]):
+		_hp_labels[k].text = "%d/%d" % [hp, mx]
 
 
-func _tween_exp(ratio: float) -> void:
-	if _exp_bar == null or not is_instance_valid(_exp_bar):
+func _tween_exp(k: String, ratio: float) -> void:
+	if not _exp_bars.has(k) or not is_instance_valid(_exp_bars[k]):
 		return
+	var e: ColorRect = _exp_bars[k]
 	var tw := create_tween()
-	tw.tween_property(_exp_bar, "size:x", 168.0 * ratio, 0.6)
+	tw.tween_property(e, "size:x", e.get_meta("full") * ratio, 0.6)
 	await tw.finished
 
 
-func _faint(side: int) -> void:
-	var tr: TextureRect = _sprites[side]
+func _faint(k: String) -> void:
+	if not _sprites.has(k):
+		return
+	var tr: TextureRect = _sprites[k]
 	var tw := create_tween().set_parallel()
 	tw.tween_property(tr, "position:y", tr.position.y + 80, 0.4)
 	tw.tween_property(tr, "modulate:a", 0.0, 0.4)
 	await tw.finished
 	tr.visible = false
-	if _boxes[side] != null:
-		_boxes[side].queue_free()
-		_boxes[side] = null
-		_bars[side] = null
+	if _boxes.has(k) and is_instance_valid(_boxes[k]):
+		_boxes[k].queue_free()
+	_boxes.erase(k)
+	_bars.erase(k)
 
 
-func _anim(side: int, kind: String) -> void:
-	var tr: TextureRect = _sprites[side]
-	if not tr.visible:
+func _anim(k: String, kind: String) -> void:
+	if not _sprites.has(k):
+		return
+	var tr: TextureRect = _sprites[k]
+	if not tr.visible or not Game.settings.get("animations", true):
 		return
 	var base := tr.modulate
 	match kind:
 		"hit":
-			for k in 3:
+			for n in 3:
 				tr.modulate.a = 0.0
 				await get_tree().create_timer(0.06).timeout
 				tr.modulate.a = base.a
 				await get_tree().create_timer(0.06).timeout
 		"stat_up", "stat_down":
+			Audio.sfx(kind)
 			var c := Color(0.6, 0.8, 1.6) if kind == "stat_up" else Color(1.6, 0.6, 0.6)
 			var tw := create_tween()
 			tw.tween_property(tr, "modulate", c, 0.15)
@@ -329,23 +528,27 @@ func _anim(side: int, kind: String) -> void:
 			var col: Color = {"status_psn": Color(1.3, 0.6, 1.4), "status_tox": Color(1.3, 0.6, 1.4),
 				"status_par": Color(1.6, 1.5, 0.5), "status_slp": Color(0.7, 0.7, 0.8), "status_brn": Color(1.7, 0.8, 0.5),
 				"status_frz": Color(0.7, 1.2, 1.7), "status_conf": Color(1.4, 1.2, 1.4)}.get(kind, Color(1.3, 1.3, 1.3))
+			var x0 := tr.position.x
 			var tw2 := create_tween()
 			tw2.tween_property(tr, "modulate", col, 0.15)
-			tw2.tween_property(tr, "position:x", tr.position.x + 4, 0.05)
-			tw2.tween_property(tr, "position:x", tr.position.x - 4, 0.1)
-			tw2.tween_property(tr, "position:x", tr.position.x, 0.05)
+			tw2.tween_property(tr, "position:x", x0 + 4, 0.05)
+			tw2.tween_property(tr, "position:x", x0 - 4, 0.1)
+			tw2.tween_property(tr, "position:x", x0, 0.05)
 			tw2.tween_property(tr, "modulate", base, 0.2)
 			await tw2.finished
 
 
-func _ball(shakes: int, caught: bool) -> void:
-	var target: TextureRect = _sprites[1]
-	var dest := target.position + Vector2(60, 70)
+func _ball(k: String, shakes: int, caught: bool) -> void:
+	if not _sprites.has(k):
+		k = _key(1, 0)
+	var target: TextureRect = _sprites[k]
+	var dest := target.position + target.size * Vector2(0.42, 0.5)
 	_ball_spr.position = Vector2(40, 200)
 	_ball_spr.rotation = 0
 	_ball_spr.modulate = Color.WHITE
 	_ball_spr.visible = true
 	var start := _ball_spr.position
+	Audio.sfx("throw")
 	var tw := create_tween()
 	tw.tween_method(func(t: float):
 		_ball_spr.position = start.lerp(dest, t) + Vector2(0, -sin(t * PI) * 90)
@@ -358,12 +561,14 @@ func _ball(shakes: int, caught: bool) -> void:
 		_ball_spr.visible = false
 		return
 	target.modulate = Color(3, 3, 3, 1)
+	var scale0 := target.scale
 	await _tween_scale(target, 0.0, 0.25)
 	var tw2 := create_tween()
-	tw2.tween_property(_ball_spr, "position:y", dest.y + 50, 0.3).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	tw2.tween_property(_ball_spr, "position:y", dest.y + 40, 0.3).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 	await tw2.finished
-	for k in shakes:
+	for n in shakes:
 		await get_tree().create_timer(0.35).timeout
+		Audio.sfx("shake")
 		var tw3 := create_tween()
 		tw3.tween_property(_ball_spr, "rotation", 0.4, 0.1)
 		tw3.tween_property(_ball_spr, "rotation", -0.4, 0.2)
@@ -372,43 +577,50 @@ func _ball(shakes: int, caught: bool) -> void:
 	await get_tree().create_timer(0.4).timeout
 	if caught:
 		_ball_spr.modulate = Color(0.6, 0.6, 0.6)
+		Audio.sfx("click")
 		await get_tree().create_timer(0.3).timeout
 	else:
+		Audio.sfx("break_free")
 		_ball_spr.visible = false
 		target.modulate = Color.WHITE
-		await _tween_scale(target, 1.0, 0.2)
+		await _tween_scale(target, scale0.x, 0.2)
 
 
 # ---------------------------------------------------------------------------
 # Menus du joueur
 # ---------------------------------------------------------------------------
 
-func _choose_action() -> Variant:
-	var lock := battle.locked_move(0)
+func _choose_action(slot: int) -> Dictionary:
+	var lock := battle.locked_move(0, slot)
 	if lock != 0:
 		return {"type": "move", "slot": -1}
-	var b: Battle.Battler = battle.sides[0].b
+	var b := battle.battler(0, slot)
 	while true:
 		_prompt.text = "Que doit faire\n%s ?" % b.mon.name()
 		var i: int = await _menu(["ATTAQUE", "SAC", "POKéMON", "FUITE"], Rect2(256, 244, 220, 72), 2, false)
 		match i:
 			0:
-				if battle.usable_slots(0).is_empty():
+				if battle.usable_slots(0, slot).is_empty():
 					return {"type": "move", "id": Battle.STRUGGLE}
-				var slot: int = await _move_menu()
-				if slot >= 0:
-					return {"type": "move", "slot": slot}
+				var ms: int = await _move_menu(slot)
+				if ms >= 0:
+					var target = await _pick_target(b, Data.moves[b.moves()[ms]["id"]])
+					if target == null:
+						continue
+					var a := {"type": "move", "slot": ms}
+					a.merge(target)
+					return a
 			1:
 				var bag := BagScreen.new()
 				bag.mode = "battle"
 				var item = await Game.ui.open(bag)
 				if item == null:
 					continue
-				var act = await _item_action(item)
+				var act = await _item_action(item, b)
 				if act != null:
 					return act
 			2:
-				var idx: int = await _pick_switch(false)
+				var idx: int = await _pick_switch(slot, false)
 				if idx >= 0:
 					if battle.trapped(b):
 						await _say("%s ne peut pas être rappelé !" % b.mon.name())
@@ -419,11 +631,34 @@ func _choose_action() -> Variant:
 					await _say("Impossible de fuir un combat de Dresseur !")
 					continue
 				return {"type": "run"}
-	return null
+	return {}
 
 
-func _move_menu() -> int:
-	var b: Battle.Battler = battle.sides[0].b
+## Choix de la cible quand il y a plusieurs Pokémon possibles. Renvoie {} si inutile, null si annulé.
+func _pick_target(b: Battle.Battler, m: Dictionary) -> Variant:
+	var tgt: String = m["target"]
+	if not battle.is_double() or tgt in Battle.SELF_TARGETS or tgt in Battle.SPREAD_TARGETS or tgt in ["entire-field", "opponents-field", "all-pokemon"]:
+		return {}
+	var options := []
+	var labels := []
+	for f: Battle.Battler in battle.foes(b):
+		options.append({"target_side": 1, "target_slot": f.slot})
+		labels.append(f.mon.name())
+	var al := battle.ally(b)
+	if al != null and m["cat"] != "status":
+		options.append({"target_side": 0, "target_slot": al.slot})
+		labels.append(al.mon.name() + " (allié)")
+	if options.size() <= 1:
+		return options[0] if options.size() == 1 else {}
+	_prompt.text = "Quelle cible ?"
+	var i: int = await _menu(labels, Rect2(256, 244, 220, 72), 1, true)
+	if i < 0:
+		return null
+	return options[i]
+
+
+func _move_menu(slot: int) -> int:
+	var b := battle.battler(0, slot)
 	var ms := b.moves()
 	var labels := []
 	for m in ms:
@@ -434,6 +669,7 @@ func _move_menu() -> int:
 	_info_pp = Kit.label(_info, "", Vector2(10, 6))
 	_info_type = Kit.label(_info, "", Vector2(10, 32))
 	_prompt.text = ""
+	var foe_types: Array = battle.foe(b).types if battle.foe(b) != null else []
 	var on_move := func(idx: int) -> void:
 		if idx < ms.size():
 			var m: Dictionary = ms[idx]
@@ -441,7 +677,7 @@ func _move_menu() -> int:
 			var md: Dictionary = Data.moves[m["id"]]
 			var typ: String = b.mon.hidden_power_type() if md["ident"] == "hidden-power" else md["type"]
 			_info_type.text = "TYPE/%s" % Data.type_name(typ).to_upper()
-			var eff := Data.effectiveness(typ, battle.sides[1].b.types)
+			var eff := Data.effectiveness(typ, foe_types)
 			_info_type.add_theme_color_override("font_color", Color("d03030") if eff > 1.0 and md["cat"] != "status" else Color("3050c0") if eff < 1.0 and md["cat"] != "status" else Kit.INK)
 		else:
 			_info_pp.text = ""
@@ -464,31 +700,45 @@ func _move_menu() -> int:
 	return -1
 
 
-func _pick_switch(forced: bool) -> int:
+## Choisit un Pokémon de réserve pour l'emplacement `slot`. Renvoie l'indice dans l'équipe du combat.
+func _pick_switch(slot: int, forced: bool) -> int:
+	var off := _offset()
+	var on_field := []
+	for b: Battle.Battler in battle.sides[0].slots:
+		if b != null and b.alive() and b.owner == local_owner():
+			on_field.append(b.party_index - off)
 	while true:
 		var ps := PartyScreen.new()
 		ps.mode = "battle"
 		ps.forced = forced
-		ps.active_index = battle.sides[0].b.party_index if battle.sides[0].b != null else -1
+		ps.active_index = on_field[0] if on_field.size() > 0 else -1
+		ps.blocked = on_field
 		var idx = await Game.ui.open(ps)
 		if idx == null or idx < 0:
 			if forced:
+				if battle.bench(0, local_owner()).is_empty():
+					return -1
 				continue
 			return -1
-		return idx
+		return idx + off
 	return -1
 
 
-func _item_action(item: String) -> Variant:
+func _item_action(item: String, b: Battle.Battler) -> Variant:
 	if ItemUse.is_ball(item):
 		if not battle.wild:
 			await _say("Le Dresseur bloque la Ball ! Pas de vol !")
 			return null
-		if Game.party.size() >= Game.PARTY_MAX and Game.pc.size() >= 600:
-			await _say("Il n'y a plus de place !")
-			return null
+		var foes := battle.foes(b)
+		var target_slot: int = foes[0].slot if foes.size() > 0 else 0
+		if foes.size() > 1:
+			_prompt.text = "Sur quel Pokémon ?"
+			var i: int = await _menu(foes.map(func(f): return f.mon.name()), Rect2(256, 244, 220, 72), 1, true)
+			if i < 0:
+				return null
+			target_slot = foes[i].slot
 		Game.remove_item(item)
-		return {"type": "ball", "item": item}
+		return {"type": "ball", "item": item, "target": target_slot}
 	if item in ItemUse.BATTLE_ONLY:
 		Game.remove_item(item)
 		return {"type": "item", "item": item}
@@ -516,7 +766,7 @@ func _item_action(item: String) -> Variant:
 		await _say("Ça n'aura aucun effet.")
 		return null
 	Game.remove_item(item)
-	return {"type": "item", "item": item, "target": idx, "move": move_index}
+	return {"type": "item", "item": item, "target": idx + _offset(), "move": move_index}
 
 
 ## Petit menu interne au combat (curseur, A pour valider, B pour annuler si autorisé).
@@ -524,10 +774,17 @@ func _menu(labels: Array, rect: Rect2, cols: int, cancel: bool, on_move := Calla
 	_menu_panel = Kit.panel(self, rect)
 	_menu_labels = []
 	var cw := (rect.size.x - 20) / cols
+	var rows_n := ceili(float(labels.size()) / cols)
+	var rh: float = 26.0 if rows_n <= 2 else (rect.size.y - 12) / rows_n
+	if rows_n > 2:
+		_menu_panel.size.y = rows_n * 22 + 14
+		_menu_panel.position.y = 316 - _menu_panel.size.y
+		rh = 22
 	for i in labels.size():
-		var l := Kit.label(_menu_panel, str(labels[i]), Vector2(26 + (i % cols) * cw, 6 + (i / cols) * 26), 15)
+		var l := Kit.label(_menu_panel, str(labels[i]), Vector2(26 + (i % cols) * cw, 6 + (i / cols) * rh), 15)
 		_menu_labels.append(l)
 	_menu_cursor = Kit.label(_menu_panel, "▶", Vector2(8, 7), 14, Kit.INK, false)
+	_menu_cursor.set_meta("rh", rh)
 	_menu_cols = cols
 	_menu_cancel = cancel
 	_menu_on_move = on_move
@@ -537,13 +794,15 @@ func _menu(labels: Array, rect: Rect2, cols: int, cancel: bool, on_move := Calla
 	var r: int = await _menu_done
 	_menu_active = false
 	_menu_panel.queue_free()
+	Audio.sfx("select")
 	return r
 
 
 func _menu_set(i: int, cw := -1.0) -> void:
 	_menu_index = clampi(i, 0, _menu_labels.size() - 1)
 	var w := cw if cw > 0 else (_menu_panel.size.x - 20) / _menu_cols
-	_menu_cursor.position = Vector2(8 + (_menu_index % _menu_cols) * w, 7 + (_menu_index / _menu_cols) * 26)
+	var rh: float = _menu_cursor.get_meta("rh", 26)
+	_menu_cursor.position = Vector2(8 + (_menu_index % _menu_cols) * w, 7 + (_menu_index / _menu_cols) * rh)
 	if _menu_on_move.is_valid():
 		_menu_on_move.call(_menu_index)
 

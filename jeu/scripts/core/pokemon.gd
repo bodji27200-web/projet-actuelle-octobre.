@@ -24,6 +24,10 @@ var ball := "poke-ball"
 var happiness := 70
 var ot := ""
 var stats: Array = [1, 1, 1, 1, 1, 1]
+var is_egg := false
+var egg_steps := 0
+## Pokémon boss (donjons) : PV multipliés, ne se sauvegarde pas.
+var boss := false
 
 
 static func create(sid: int, lvl: int) -> Pokemon:
@@ -54,7 +58,41 @@ func data() -> Dictionary:
 
 
 func name() -> String:
+	if is_egg:
+		return "ŒUF"
 	return nickname if nickname != "" else data()["name"]
+
+
+## Peut combattre (ni K.O., ni œuf).
+func can_battle() -> bool:
+	return not is_egg and hp > 0
+
+
+static func base_species(sid: int) -> int:
+	var s := sid
+	while Data.pokemon[s]["evolves_from"] != 0 and Data.pokemon.has(Data.pokemon[s]["evolves_from"]):
+		s = Data.pokemon[s]["evolves_from"]
+	return s
+
+
+static func create_egg(sid: int) -> Pokemon:
+	var p := Pokemon.create(base_species(sid), 1)
+	p.is_egg = true
+	p.egg_steps = Data.pokemon[p.species]["hatch"] * 256
+	p.happiness = 120
+	return p
+
+
+## Message du résumé, comme dans les jeux (pas de compteur visible).
+func egg_hint() -> String:
+	var cycles := egg_steps / 256
+	if cycles > 10:
+		return "Cet Œuf va sûrement mettre du temps à éclore."
+	if cycles > 5:
+		return "Qu'est-ce qui va en sortir ? Ça va prendre du temps."
+	if cycles > 1:
+		return "Il bouge de temps en temps. Il devrait bientôt éclore."
+	return "Il fait du bruit ! Il va éclore très bientôt !"
 
 
 func types() -> Array:
@@ -62,7 +100,7 @@ func types() -> Array:
 
 
 func is_fainted() -> bool:
-	return hp <= 0
+	return hp <= 0 or is_egg
 
 
 func max_hp() -> int:
@@ -184,6 +222,8 @@ func evolve(to: int) -> void:
 
 
 func heal_full() -> void:
+	if boss:
+		return
 	hp = stats[0]
 	status = ""
 	sleep_turns = 0
@@ -208,6 +248,7 @@ func to_dict() -> Dictionary:
 		"species": species, "nickname": nickname, "level": level, "exp": exp, "ivs": ivs, "evs": evs,
 		"nature": nature, "ability": ability, "gender": gender, "shiny": shiny, "moves": moves,
 		"hp": hp, "status": status, "sleep": sleep_turns, "ball": ball, "happiness": happiness, "ot": ot,
+		"egg": is_egg, "egg_steps": egg_steps, "boss": boss, "maxhp": stats[0],
 	}
 
 
@@ -229,6 +270,11 @@ static func from_dict(d: Dictionary) -> Pokemon:
 	p.ball = d.get("ball", "poke-ball")
 	p.happiness = d.get("happiness", 70)
 	p.ot = d.get("ot", "")
+	p.is_egg = d.get("egg", false)
+	p.egg_steps = d.get("egg_steps", 0)
+	p.boss = d.get("boss", false)
 	p.recalc_stats()
+	if p.boss:
+		p.stats[0] = d.get("maxhp", p.stats[0])
 	p.hp = clampi(d["hp"], 0, p.stats[0])
 	return p

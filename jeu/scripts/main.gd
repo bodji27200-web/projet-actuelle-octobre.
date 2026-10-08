@@ -15,7 +15,15 @@ func _ready() -> void:
 	var ui := Control.new()
 	ui.set_script(load("res://scripts/ui/ui_root.gd"))
 	layer.add_child(ui)
+	var hud := CanvasLayer.new()
+	hud.layer = 5
+	add_child(hud)
+	var mm := Control.new()
+	mm.set_script(load("res://scripts/ui/minimap.gd"))
+	hud.add_child(mm)
+	Net.message.connect(func(t): Game.ui.toast(t))
 	await get_tree().process_frame
+	Audio.play_music("title")
 	var choice: String = await Game.ui.open(TitleScreen.new())
 	if choice == "continue" and Game.load_game():
 		world.load_map(Game.map_id, Game.pos, Game.facing)
@@ -58,12 +66,14 @@ func _intro() -> void:
 		"Certains vivent avec les humains, d'autres se battent à leurs côtés.",
 		"Moi, j'étudie les Pokémon. C'est ma profession."])
 	pika.visible = false
-	await Game.ui.say("Mais d'abord, dis-moi... Comment t'appelles-tu ?")
-	Game.player_name = await Game.ui.enter_name("Ton nom :", "Sacha", 10)
+	var g: int = await Game.ui.ask("Mais d'abord, dis-moi... Es-tu un garçon ou une fille ?", ["GARÇON", "FILLE"], false)
+	Game.gender = maxi(0, g)
+	chen.texture = PixelArt.character(Game.look(), "down", 0)
+	await Game.ui.say("Et comment t'appelles-tu ?")
+	Game.player_name = await Game.ui.enter_name("Ton nom :", "Sacha" if Game.gender == 0 else "Ondine", 10)
 	await Game.ui.say("Très bien, %s !" % Game.player_name)
-	await Game.ui.say("Et voici mon petit-fils. Vous êtes rivaux depuis que vous êtes tout petits. Comment s'appelle-t-il déjà ?")
-	Game.rival_name = await Game.ui.enter_name("Nom du rival :", "Régis", 10)
-	await Game.ui.say(["C'est ça ! Il s'appelle %s !" % Game.rival_name,
+	chen.texture = PixelArt.character("rival", "down", 0)
+	await Game.ui.say(["Et voici mon petit-fils, Régis. Vous êtes rivaux depuis que vous êtes tout petits !",
 		"%s ! Ta propre aventure Pokémon va commencer !" % Game.player_name,
 		"Un monde de rêves et d'aventures t'attend ! Allons-y !"])
 	await Game.ui.fade(true, 0.5)

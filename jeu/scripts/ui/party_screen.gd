@@ -7,6 +7,7 @@ var item := ""
 var title := "Choisissez un Pokémon."
 var forced := false
 var active_index := -1
+var blocked: Array = []
 var _index := 0
 var _swap_from := -1
 var _slots: Array = []
@@ -48,8 +49,15 @@ func _build() -> void:
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		Sprites.apply(icon, "icon", mon.species)
+		if mon.is_egg:
+			icon.texture = PixelArt.egg()
+		else:
+			Sprites.apply(icon, "icon", mon.species)
 		p.add_child(icon)
+		if mon.is_egg:
+			Kit.label(p, "ŒUF", Vector2(64, 4), 15)
+			Kit.label(p, "Il éclora en marchant.", Vector2(64, 30), 12, Color("707070"))
+			continue
 		Kit.label(p, mon.name() + (" ★" if mon.shiny else ""), Vector2(64, 4), 15)
 		if mon.gender < 2:
 			Kit.label(p, mon.gender_symbol(), Vector2(196, 4), 15, Color("3068d8") if mon.gender == 0 else Color("e05878"))
@@ -110,7 +118,9 @@ func _choose() -> void:
 				var mon: Pokemon = Game.party[_index]
 				if mon.is_fainted():
 					_msg.text = "%s n'a plus d'énergie pour se battre !" % mon.name()
-				elif _index == active_index:
+				elif mon.is_egg:
+					_msg.text = "Un Œuf ne peut pas combattre !"
+				elif _index == active_index or blocked.has(_index):
 					_msg.text = "%s est déjà au combat !" % mon.name()
 				else:
 					finish(_index)

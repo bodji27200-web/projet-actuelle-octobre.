@@ -31,9 +31,14 @@ const TRAP_TEXT := {"bind": "%s est ligoté !", "wrap": "%s est ligoté !", "fir
 	"clamp": "%s est pris dans la Claquoir !", "sand-tomb": "%s est piégé par le Tourbi-Sable !"}
 
 
+const SPREAD_TARGETS := ["all-opponents", "all-other-pokemon"]
+
+
 class Battler:
 	var mon: Pokemon
 	var side := 0
+	var slot := 0
+	var owner := 0
 	var party_index := 0
 	var stages := {"atk": 0, "def": 0, "spa": 0, "spd": 0, "spe": 0, "acc": 0, "eva": 0}
 	var types: Array = []
@@ -41,10 +46,12 @@ class Battler:
 	var confusion := 0
 	var flinch := false
 	var seeded := false
+	var seeded_by: Battler = null
 	var substitute := 0
 	var trap_turns := 0
 	var trap_move := ""
 	var charging := 0
+	var charge_target := {}
 	var invuln := ""
 	var recharge := false
 	var rampage := 0
@@ -90,6 +97,8 @@ class Battler:
 	var hit_phys := 0
 	var hit_spec := 0
 	var hit_by_foe := false
+	var fainted := false
+	var empty := false
 
 	func moves() -> Array:
 		return t_moves if transformed else mon.moves
@@ -97,10 +106,16 @@ class Battler:
 	func raw(i: int) -> int:
 		return t_stats[i] if transformed else mon.stats[i]
 
+	func alive() -> bool:
+		return not empty and not fainted and mon.hp > 0
+
 
 class BSide:
-	var party: Array = []
-	var b: Battler
+	var party: Array = []      # tous les Pokémon du camp (plusieurs dresseurs possibles)
+	var owners: Array = []     # propriétaire de chaque Pokémon (indice de dresseur)
+	var slots: Array = []      # Battler sur le terrain, un par emplacement
+	var slot_owner: Array = [] # dresseur qui contrôle chaque emplacement
+	var names: Array = []      # nom de chaque dresseur du camp
 	var reflect := 0
 	var light_screen := 0
 	var mist := 0
@@ -108,12 +123,16 @@ class BSide:
 	var spikes := 0
 	var future_turns := 0
 	var future_damage := 0
-	var name := ""
+
+	var b: Battler:
+		get:
+			return slots[0] if slots.size() > 0 else null
 
 
 var sides: Array = [BSide.new(), BSide.new()]
 var wild := true
 var trainer := {}
+var trainers: Array = []
 var player_name := "Vous"
 var weather := ""
 var weather_turns := 0
@@ -121,8 +140,8 @@ var turn := 0
 var events: Array = []
 var over := false
 var result := ""
-var need_switch := false
-var baton_pass := false
+## Emplacements du joueur à remplacer : [{slot, owner, baton}]
+var need_switch: Array = []
 var escape_attempts := 0
 var participants := {}
 var leveled := {}
@@ -130,19 +149,57 @@ var cave := false
 var ai_potions := 0
 var pay_day := 0
 var caught: Pokemon = null
+var caught_owner := 0
 var caught_species := []
 var mud_sport := false
 var water_sport := false
-var actions: Array = [{}, {}]
+var actions := {}
+var _spread := false
+## Tests : force la réussite des jets de précision.
+var always_hit := false
+## Multi Exp activé, par dresseur du camp du joueur.
+var exp_share: Array = [false, false]
 
 
-func _init(player_party: Array, enemy_party: Array, is_wild: bool, trainer_info := {}) -> void:
-	sides[0].party = player_party
-	sides[1].party = enemy_party
+## p_parties / e_parties : une équipe par dresseur du camp.
+## opts : double (2 emplacements même avec un seul dresseur), boss (le Pokémon adverse est un boss).
+func _init(p_parties: Array, e_parties: Array, is_wild: bool, trainer_infos: Variant = {}, opts := {}) -> void:
 	wild = is_wild
-	trainer = trainer_info
-	sides[0].name = "player"
-	ai_potions = trainer_info.get("potions", 0)
+	if trainer_infos is Dictionary:
+		trainers = [trainer_infos] if not trainer_infos.is_empty() else []
+	else:
+		trainers = trainer_infos
+	trainer = trainers[0] if trainers.size() > 0 else {}
+	for t in trainers:
+		ai_potions += int(t.get("potions", 0))
+	# Compatibilité : une simple liste de Pokémon = une seule équipe.
+	if p_parties.size() > 0 and p_parties[0] is Pokemon:
+		p_parties = [p_parties]
+	if e_parties.size() > 0 and e_parties[0] is Pokemon:
+		e_parties = [e_parties] if not (is_wild and opts.get("wild_double", false)) else e_parties.map(func(m): return [m])
+	_fill(sides[0], p_parties, opts.get("double", false), opts.get("player_names", []))
+	_fill(sides[1], e_parties, opts.get("double", false) and e_parties.size() == 1, trainers.map(func(t): return t.get("name", "")))
+	if opts.get("boss", false):
+		for m in sides[1].party:
+			m.boss = true
+
+
+func _fill(side: BSide, parties: Array, double: bool, names: Array) -> void:
+	for o in parties.size():
+		for m in parties[o]:
+			side.party.append(m)
+			side.owners.append(o)
+	side.names = names
+	var n := parties.size()
+	if n == 1 and double:
+		side.slot_owner = [0, 0]
+	else:
+		side.slot_owner = range(n)
+	side.slots.resize(side.slot_owner.size())
+
+
+func is_double() -> bool:
+	return sides[0].slots.size() > 1 or sides[1].slots.size() > 1
 
 
 # ---------------------------------------------------------------------------
@@ -159,8 +216,53 @@ func flush() -> Array:
 	return out
 
 
+func actives(side_i := -1) -> Array:
+	var out := []
+	for s in ([0, 1] if side_i < 0 else [side_i]):
+		for b: Battler in sides[s].slots:
+			if b != null and b.alive():
+				out.append(b)
+	if side_i < 0:
+		out.sort_custom(func(a, c): return speed(a) > speed(c))
+	return out
+
+
+## Pokémon sur le terrain, sans tri (utilisé par les talents pour éviter une boucle avec la vitesse).
+func _on_field() -> Array:
+	var out := []
+	for s in [0, 1]:
+		for b in sides[s].slots:
+			if b != null and b.alive():
+				out.append(b)
+	return out
+
+
+func _first_active(side_i: int) -> Battler:
+	var a := actives(side_i)
+	return a[0] if a.size() > 0 else null
+
+
+func foes(b: Battler) -> Array:
+	return actives(1 - b.side)
+
+
+func ally(b: Battler) -> Battler:
+	for o: Battler in actives(b.side):
+		if o != b:
+			return o
+	return null
+
+
+## Adversaire par défaut (celui en face, sinon le premier debout).
 func foe(b: Battler) -> Battler:
-	return sides[1 - b.side].b
+	var f := foes(b)
+	if f.is_empty():
+		var any: Battler = sides[1 - b.side].slots[0]
+		return any
+	for o in f:
+		if o.slot == b.slot:
+			return o
+	return f[0]
 
 
 func nm(b: Battler) -> String:
@@ -172,15 +274,15 @@ func nm(b: Battler) -> String:
 func ab(b: Battler) -> String:
 	if b == null:
 		return ""
-	var other: Battler = foe(b)
-	if other != null and other.mon.hp > 0 and Data.ability_ident(other.ability) == "neutralizing-gas":
-		return ""
+	for o: Battler in _on_field():
+		if o != b and Data.ability_ident(o.ability) == "neutralizing-gas":
+			return ""
 	return Data.ability_ident(b.ability)
 
 
 func weather_on() -> String:
-	for s in sides:
-		if s.b != null and Data.ability_ident(s.b.ability) == "cloud-nine":
+	for b: Battler in _on_field():
+		if Data.ability_ident(b.ability) == "cloud-nine":
 			return ""
 	return weather
 
@@ -190,11 +292,11 @@ func move_data(id: int) -> Dictionary:
 
 
 func hp_event(b: Battler) -> void:
-	events.append({"t": "hp", "side": b.side, "hp": b.mon.hp, "max": b.mon.max_hp()})
+	events.append({"t": "hp", "side": b.side, "slot": b.slot, "hp": b.mon.hp, "max": b.mon.max_hp()})
 
 
 func anim(b: Battler, kind: String) -> void:
-	events.append({"t": "anim", "side": b.side, "kind": kind})
+	events.append({"t": "anim", "side": b.side, "slot": b.slot, "kind": kind})
 
 
 func refresh() -> void:
@@ -226,17 +328,23 @@ func is_grounded_immune(b: Battler) -> bool:
 func trapped(b: Battler) -> bool:
 	if b.types.has("ghost"):
 		return false
-	var o := foe(b)
-	if o != null and ab(o) == "arena-trap" and not is_grounded_immune(b):
-		return true
+	for o: Battler in foes(b):
+		if ab(o) == "arena-trap" and not is_grounded_immune(b):
+			return true
 	return b.trap_turns > 0 or b.mean_look or b.ingrain
 
 
-func usable_slots(side_i: int) -> Array:
-	var b: Battler = sides[side_i].b
+func battler(side_i: int, slot: int) -> Battler:
+	var s: BSide = sides[side_i]
+	return s.slots[slot] if slot < s.slots.size() else null
+
+
+func usable_slots(side_i: int, slot := 0) -> Array:
+	var b := battler(side_i, slot)
 	var out := []
-	var ms := b.moves()
-	for i in ms.size():
+	if b == null:
+		return out
+	for i in b.moves().size():
 		if can_use(b, i):
 			out.append(i)
 	return out
@@ -258,17 +366,19 @@ func can_use(b: Battler, slot: int) -> bool:
 		return false
 	if b.torment and b.last_move == id:
 		return false
-	var o := foe(b)
-	if o != null and o.imprison:
-		for om in o.moves():
-			if om["id"] == id:
-				return false
+	for o: Battler in foes(b):
+		if o.imprison:
+			for om in o.moves():
+				if om["id"] == id:
+					return false
 	return true
 
 
 ## Capacité imposée (charge, mania, repos après Ultralaser…) : 0 = libre, -1 = doit se reposer.
-func locked_move(side_i: int) -> int:
-	var b: Battler = sides[side_i].b
+func locked_move(side_i: int, slot := 0) -> int:
+	var b := battler(side_i, slot)
+	if b == null:
+		return 0
 	if b.recharge:
 		return -1
 	if b.charging:
@@ -282,20 +392,44 @@ func locked_move(side_i: int) -> int:
 	return 0
 
 
-func first_alive(side_i: int) -> int:
-	var party: Array = sides[side_i].party
-	for i in party.size():
-		if not party[i].is_fainted():
+## Indices (dans side.party) des Pokémon du dresseur `owner` pouvant combattre et pas déjà sur le terrain.
+func bench(side_i: int, owner: int) -> Array:
+	var s: BSide = sides[side_i]
+	var out := []
+	for i in s.party.size():
+		if s.owners[i] != owner or not s.party[i].can_battle():
+			continue
+		var on_field := false
+		for b in s.slots:
+			if b != null and b.party_index == i and b.alive():
+				on_field = true
+		if not on_field:
+			out.append(i)
+	return out
+
+
+func first_alive(side_i: int, owner := -1) -> int:
+	var s: BSide = sides[side_i]
+	for i in s.party.size():
+		if (owner < 0 or s.owners[i] == owner) and s.party[i].can_battle():
 			return i
 	return -1
 
 
-func alive_count(side_i: int) -> int:
+func alive_count(side_i: int, owner := -1) -> int:
 	var n := 0
-	for m in sides[side_i].party:
-		if not m.is_fainted():
+	var s: BSide = sides[side_i]
+	for i in s.party.size():
+		if (owner < 0 or s.owners[i] == owner) and s.party[i].can_battle():
 			n += 1
 	return n
+
+
+func owner_name(side_i: int, owner: int) -> String:
+	var s: BSide = sides[side_i]
+	if owner < s.names.size() and str(s.names[owner]) != "":
+		return s.names[owner]
+	return trainer.get("name", "Le Dresseur") if side_i == 1 else player_name
 
 
 # ---------------------------------------------------------------------------
@@ -303,24 +437,57 @@ func alive_count(side_i: int) -> int:
 # ---------------------------------------------------------------------------
 
 func start() -> Array:
-	var e := first_alive(1)
+	var e: BSide = sides[1]
 	if wild:
-		_send(1, e, false, false)
-		msg("Un %s sauvage apparaît !" % sides[1].party[e].name())
+		var names := []
+		for k in e.slots.size():
+			var idx := _next_for_slot(1, k)
+			if idx >= 0:
+				_send(1, k, idx, false)
+				names.append(e.party[idx].name())
+		if names.size() == 2:
+			msg("Un %s et un %s sauvages apparaissent !" % names)
+		else:
+			msg("Un %s sauvage apparaît !" % names[0])
+		if e.party[0].boss:
+			msg("%s dégage une aura terrifiante ! C'est un Pokémon BOSS !" % names[0])
 	else:
-		msg("%s veut se battre !" % trainer.get("name", "Le Dresseur"))
-		_send(1, e)
-	_send(0, first_alive(0))
+		if trainers.size() >= 2:
+			msg("%s et %s veulent se battre !" % [trainers[0].get("name", ""), trainers[1].get("name", "")])
+		else:
+			msg("%s veut se battre !" % trainer.get("name", "Le Dresseur"))
+		for k in e.slots.size():
+			var idx := _next_for_slot(1, k)
+			if idx >= 0:
+				_send(1, k, idx)
+	for k in sides[0].slots.size():
+		var idx := _next_for_slot(0, k)
+		if idx >= 0:
+			_send(0, k, idx)
+	if e.party.size() > 0 and e.party[0].boss:
+		for b: Battler in actives(1):
+			for key in ["atk", "def", "spa", "spd", "spe"]:
+				b.stages[key] = 1
+		msg("Les statistiques du boss augmentent !")
 	_entry_abilities()
 	return flush()
 
 
-func _send(side_i: int, idx: int, announce := true, keep_stages := false) -> void:
+func _next_for_slot(side_i: int, slot: int) -> int:
+	var s: BSide = sides[side_i]
+	var owner: int = s.slot_owner[slot]
+	var b := bench(side_i, owner)
+	return b[0] if b.size() > 0 else -1
+
+
+func _send(side_i: int, slot: int, idx: int, announce := true, keep_stages := false) -> void:
 	var side: BSide = sides[side_i]
-	var old: Battler = side.b
+	var old: Battler = side.slots[slot]
 	var b := Battler.new()
 	b.mon = side.party[idx]
 	b.side = side_i
+	b.slot = slot
+	b.owner = side.owners[idx]
 	b.party_index = idx
 	b.types = b.mon.types().duplicate()
 	b.ability = b.mon.ability
@@ -329,25 +496,25 @@ func _send(side_i: int, idx: int, announce := true, keep_stages := false) -> voi
 		b.confusion = old.confusion
 		b.substitute = old.substitute
 		b.seeded = old.seeded
+		b.seeded_by = old.seeded_by
 		b.focus_energy = old.focus_energy
 		b.cursed = old.cursed
 		b.perish = old.perish
 		b.ingrain = old.ingrain
-	side.b = b
+	side.slots[slot] = b
 	if side_i == 0:
-		var e: Battler = sides[1].b
-		if e != null:
+		for e: Battler in actives(1):
 			_add_participant(e.party_index, idx)
 	else:
 		participants[idx] = []
-		if sides[0].b != null:
-			_add_participant(idx, sides[0].b.party_index)
+		for p: Battler in actives(0):
+			_add_participant(idx, p.party_index)
 	if announce:
 		if side_i == 0:
-			msg("Go ! %s !" % b.mon.name())
+			msg("Go ! %s !" % b.mon.name() if b.owner == 0 or sides[0].names.size() < 2 else "%s envoie %s !" % [owner_name(0, b.owner), b.mon.name()])
 		else:
-			msg("%s envoie %s !" % [trainer.get("name", "Le Dresseur"), b.mon.name()])
-	events.append({"t": "send", "side": side_i, "mon": b.mon})
+			msg("%s envoie %s !" % [owner_name(1, b.owner), b.mon.name()])
+	events.append({"t": "send", "side": side_i, "slot": slot, "mon": b.mon, "index": idx, "owner": b.owner})
 	if side.spikes > 0 and not is_grounded_immune(b):
 		var frac: int = [8, 6, 4][side.spikes - 1]
 		msg("%s est blessé par les picots !" % nm(b))
@@ -362,22 +529,19 @@ func _add_participant(enemy_idx: int, player_idx: int) -> void:
 
 
 func _entry_abilities() -> void:
-	var order := [0, 1]
-	if speed(sides[1].b) > speed(sides[0].b):
-		order = [1, 0]
-	for s in order:
-		_entry_ability(sides[s].b)
+	for b: Battler in actives():
+		_entry_ability(b)
 
 
 func _entry_ability(b: Battler) -> void:
-	if b == null or b.mon.hp <= 0:
+	if b == null or not b.alive():
 		return
 	var o := foe(b)
 	match ab(b):
 		"intimidate":
-			if o != null and o.mon.hp > 0:
-				msg("Intimidation de %s !" % nm(b))
-				_stage(o, "atk", -1, b)
+			msg("Intimidation de %s !" % nm(b))
+			for f: Battler in foes(b):
+				_stage(f, "atk", -1, b)
 		"trace":
 			if o != null and o.ability != 0 and Data.ability_ident(o.ability) != "trace":
 				b.ability = o.ability
@@ -406,24 +570,34 @@ func _entry_ability(b: Battler) -> void:
 func _switch_out(b: Battler) -> void:
 	if ab(b) == "natural-cure" and b.mon.status != "":
 		b.mon.status = ""
-	b.mon.sleep_turns = maxi(b.mon.sleep_turns, 0)
-	var o := foe(b)
-	if o != null:
-		if o.trap_turns > 0 and o.trap_move != "":
-			pass
+	for o: Battler in foes(b):
 		o.mean_look = false
 		o.attract = false
 
 
-func player_switch(idx: int) -> Array:
-	need_switch = false
-	var bp := baton_pass
-	baton_pass = false
-	var b: Battler = sides[0].b
-	if b != null and b.mon.hp > 0 and not bp:
+## Remplace le Pokémon de l'emplacement `slot` du joueur par party[idx].
+func player_switch(slot: int, idx: int = -999) -> Array:
+	if idx == -999:
+		idx = slot
+		slot = need_switch[0]["slot"] if need_switch.size() > 0 else 0
+	var bp := false
+	for n in need_switch.duplicate():
+		if n["slot"] == slot:
+			bp = n.get("baton", false)
+			need_switch.erase(n)
+	var b: Battler = sides[0].slots[slot]
+	if b != null and b.alive() and not bp:
 		_switch_out(b)
-	_send(0, idx, true, bp)
-	_entry_ability(sides[0].b)
+	if b != null and b.alive():
+		events.append({"t": "recall", "side": 0, "slot": slot})
+	_send(0, slot, idx, true, bp)
+	_entry_ability(sides[0].slots[slot])
+	for n in need_switch.duplicate():
+		if bench(0, n["owner"]).is_empty():
+			need_switch.erase(n)
+			var eb: Battler = sides[0].slots[n["slot"]]
+			if eb != null and not eb.alive():
+				eb.empty = true
 	_check_end()
 	return flush()
 
@@ -432,10 +606,12 @@ func player_switch(idx: int) -> Array:
 # Tour de combat
 # ---------------------------------------------------------------------------
 
-func play_turn(action: Dictionary) -> Array:
+## actions : {emplacement_joueur: action}. Une action seule est acceptée pour le combat simple.
+func play_turn(player_actions: Dictionary) -> Array:
+	if player_actions.has("type"):
+		player_actions = {0: player_actions}
 	turn += 1
-	for s in sides:
-		var b: Battler = s.b
+	for b: Battler in actives():
 		b.flinch = false
 		b.protected = false
 		b.endure = false
@@ -443,59 +619,61 @@ func play_turn(action: Dictionary) -> Array:
 		b.hit_phys = 0
 		b.hit_spec = 0
 		b.hit_by_foe = false
-	var enemy_action := _ai_action()
-	actions = [action, enemy_action]
+	actions = {}
+	for k in player_actions:
+		var b := battler(0, int(k))
+		if b != null and b.alive():
+			actions[b] = player_actions[k]
+	for b: Battler in actives(1):
+		actions[b] = _ai_action(b)
 
-	# Actions prioritaires : fuite, objets, Balls, changements.
-	match action.get("type", ""):
-		"run":
-			_try_run()
-		"ball":
-			_throw_ball(action["item"])
-		"item":
-			_use_item(action["item"], action.get("target", 0), action.get("move", -1))
-		"switch":
-			msg("%s, reviens !" % sides[0].b.mon.name())
-			events.append({"t": "recall", "side": 0})
-			_switch_out(sides[0].b)
-			_send(0, action["index"])
-			_entry_ability(sides[0].b)
-	if over:
-		return flush()
-	if enemy_action.get("type", "") == "item":
-		_ai_use_potion()
-	elif enemy_action.get("type", "") == "switch":
-		var eb: Battler = sides[1].b
-		msg("%s rappelle %s !" % [trainer.get("name", "Le Dresseur"), eb.mon.name()])
-		events.append({"t": "recall", "side": 1})
-		_switch_out(eb)
-		_send(1, enemy_action["index"])
-		_entry_ability(sides[1].b)
+	# Actions prioritaires : fuite, Balls, objets, changements.
+	for b: Battler in actives(0):
+		var a: Dictionary = actions.get(b, {})
+		match a.get("type", ""):
+			"run":
+				_try_run()
+			"ball":
+				_throw_ball(a["item"], a.get("target", -1))
+			"item":
+				_use_item(b, a["item"], a.get("target", b.party_index), a.get("move", -1))
+			"switch":
+				msg("%s, reviens !" % b.mon.name())
+				events.append({"t": "recall", "side": 0, "slot": b.slot})
+				_switch_out(b)
+				_send(0, b.slot, a["index"])
+				_entry_ability(sides[0].slots[b.slot])
+		if over:
+			return flush()
+	for b: Battler in actives(1):
+		var a2: Dictionary = actions.get(b, {})
+		if a2.get("type", "") == "item":
+			_ai_use_potion(b)
+		elif a2.get("type", "") == "switch":
+			msg("%s rappelle %s !" % [owner_name(1, b.owner), b.mon.name()])
+			events.append({"t": "recall", "side": 1, "slot": b.slot})
+			_switch_out(b)
+			_send(1, b.slot, a2["index"])
+			_entry_ability(sides[1].slots[b.slot])
 
-	# Capacités, dans l'ordre de priorité puis de vitesse.
+	# Capacités : priorité, puis vitesse.
 	var movers := []
-	for s in 2:
-		if actions[s].get("type", "") == "move":
-			movers.append(s)
-	if movers.size() == 2:
-		var p0 := _priority(0)
-		var p1 := _priority(1)
-		var first := 0
-		if p1 > p0:
-			first = 1
-		elif p1 == p0:
-			var s0 := speed(sides[0].b)
-			var s1 := speed(sides[1].b)
-			if s1 > s0 or (s1 == s0 and randi() % 2 == 1):
-				first = 1
-		movers = [first, 1 - first]
-	for s in movers:
+	for b: Battler in actions:
+		if actions[b].get("type", "") == "move" and is_instance_valid(b) and sides[b.side].slots[b.slot] == b:
+			movers.append(b)
+	movers.shuffle()
+	movers.sort_custom(func(a, c):
+		var pa := _priority(a)
+		var pc := _priority(c)
+		if pa != pc:
+			return pa > pc
+		return speed(a) > speed(c))
+	for b: Battler in movers:
 		if over:
 			break
-		var b: Battler = sides[s].b
-		if b.mon.hp <= 0:
+		if not b.alive() or sides[b.side].slots[b.slot] != b:
 			continue
-		_do_move(b, actions[s])
+		_do_move(b, actions[b])
 		b.moved = true
 		_check_end()
 	if not over:
@@ -504,12 +682,11 @@ func play_turn(action: Dictionary) -> Array:
 	return flush()
 
 
-func _action_move_id(s: int) -> int:
-	var a: Dictionary = actions[s]
-	var b: Battler = sides[s].b
+func _action_move_id(b: Battler) -> int:
+	var a: Dictionary = actions.get(b, {})
 	if a.has("id"):
 		return a["id"]
-	var lock := locked_move(s)
+	var lock := locked_move(b.side, b.slot)
 	if lock > 0:
 		return lock
 	var slot: int = a.get("slot", -1)
@@ -522,25 +699,45 @@ func _action_move_id(s: int) -> int:
 	return b.moves()[slot]["id"]
 
 
-func _priority(s: int) -> int:
-	if locked_move(s) == -1:
+func _priority(b: Battler) -> int:
+	if locked_move(b.side, b.slot) == -1:
 		return 0
-	return move_data(_action_move_id(s))["prio"]
+	return move_data(_action_move_id(b))["prio"]
 
 
-# ---------------------------------------------------------------------------
-# Utilisation d'une capacité
-# ---------------------------------------------------------------------------
+## Cible choisie (ou par défaut), avec repli si elle est K.O.
+func _chosen_target(u: Battler, a: Dictionary) -> Battler:
+	if a.has("target_side"):
+		var t := battler(a["target_side"], a.get("target_slot", 0))
+		if t != null and t.alive():
+			return t
+		if a["target_side"] == u.side:
+			var al := ally(u)
+			if al != null:
+				return al
+	var f := foes(u)
+	if f.is_empty():
+		return null
+	if a.has("target_slot") and not a.has("target_side"):
+		for o in f:
+			if o.slot == a["target_slot"]:
+				return o
+	return f[randi() % f.size()] if f.size() > 1 and not a.has("target_slot") else f[0]
+
 
 func _do_move(u: Battler, action: Dictionary) -> void:
-	var t := foe(u)
 	if u.recharge:
 		u.recharge = false
 		msg("%s doit se reposer !" % nm(u))
 		return
-	var lock := locked_move(u.side)
-	var id := _action_move_id(u.side)
+	var lock := locked_move(u.side, u.slot)
+	var id := _action_move_id(u)
 	var continuing := lock > 0
+	var t: Battler = null
+	if continuing and not u.charge_target.is_empty():
+		t = _chosen_target(u, u.charge_target)
+	else:
+		t = _chosen_target(u, action)
 	var slot := -1
 	for i in u.moves().size():
 		if u.moves()[i]["id"] == id:
@@ -560,13 +757,15 @@ func _do_move(u: Battler, action: Dictionary) -> void:
 		if not can_use(u, slot):
 			msg("%s ne peut pas utiliser %s !" % [nm(u), Data.move_name(id)])
 			return
-		var cost := 2 if (t != null and ab(t) == "pressure") else 1
+		var cost := 1
+		for f: Battler in foes(u):
+			if ab(f) == "pressure":
+				cost = 2
 		u.moves()[slot]["pp"] = maxi(0, u.moves()[slot]["pp"] - cost)
+		u.charge_target = action.duplicate()
 	if id == STRUGGLE and not continuing:
 		msg("%s n'a plus de capacité utilisable !" % nm(u))
 	msg("%s utilise %s !" % [nm(u), Data.move_name(id)])
-	if u.encore_turns > 0 and id == u.encore_move:
-		pass
 	var m := move_data(id)
 	if id != 118 and id != 119:
 		u.last_move = id
@@ -576,8 +775,23 @@ func _do_move(u: Battler, action: Dictionary) -> void:
 		u.fury_cutter = 0
 	if m["ident"] not in ["protect", "detect", "endure"]:
 		u.protect_chain = 0
-	_execute(u, t, m)
-	if u.mon.hp > 0 and u.rampage > 0 and m["ident"] in RAMPAGE:
+	# Capacités qui touchent plusieurs Pokémon.
+	if m["target"] in SPREAD_TARGETS and not TWO_TURN.has(m["ident"]):
+		var targets := foes(u) if m["target"] == "all-opponents" else actives().filter(func(x): return x != u)
+		if targets.is_empty():
+			_fail()
+		else:
+			_spread = targets.size() > 1
+			for t2: Battler in targets:
+				if t2.alive() and u.alive():
+					_execute(u, t2, m)
+			_spread = false
+	else:
+		if t == null and _targets_foe(m):
+			_fail()
+		else:
+			_execute(u, t if t != null else foe(u), m)
+	if u.alive() and u.rampage > 0 and m["ident"] in RAMPAGE:
 		u.rampage -= 1
 		if u.rampage == 0:
 			msg("%s est épuisé par sa colère !" % nm(u))
@@ -626,7 +840,7 @@ func _can_act(u: Battler, id: int) -> bool:
 		msg("%s est paralysé ! Il ne peut pas attaquer !" % nm(u))
 		return false
 	if u.attract:
-		msg("%s est amoureux de %s !" % [nm(u), nm(foe(u))])
+		msg("%s est amoureux !" % nm(u))
 		if randi() % 2 == 0:
 			msg("L'amour empêche %s d'attaquer !" % nm(u))
 			return false
@@ -643,14 +857,14 @@ func _execute(u: Battler, t: Battler, m: Dictionary) -> void:
 				msg(TWO_TURN[ident] % nm(u))
 				if SEMI_INVULN.has(ident):
 					u.invuln = ident
-					events.append({"t": "hide", "side": u.side, "on": true})
+					events.append({"t": "hide", "side": u.side, "slot": u.slot, "on": true})
 				if ident == "skull-bash":
 					_stage(u, "def", 1, u)
 				return
 		u.charging = 0
 		if u.invuln != "":
 			u.invuln = ""
-			events.append({"t": "hide", "side": u.side, "on": false})
+			events.append({"t": "hide", "side": u.side, "slot": u.slot, "on": false})
 	if _special_move(u, t, m):
 		return
 	if m["cat"] == "status":
@@ -668,6 +882,8 @@ func _fail() -> void:
 
 
 func _hits(u: Battler, t: Battler, m: Dictionary) -> bool:
+	if always_hit and t.invuln == "":
+		return true
 	var ident: String = m["ident"]
 	if t.invuln != "":
 		var ok := false
@@ -860,6 +1076,8 @@ func _calc_damage(u: Battler, t: Battler, m: Dictionary, power: int, eff: float,
 		dmg = int(dmg * 0.5)
 	if crit:
 		dmg = int(dmg * (2.25 if ab(u) == "sniper" else 1.5))
+	if _spread:
+		dmg = int(dmg * 0.75)
 	dmg = int(dmg * randi_range(85, 100) / 100.0)
 	if u.types.has(typ):
 		dmg = int(dmg * (2.0 if ab(u) == "adaptability" else 1.5))
@@ -1001,7 +1219,7 @@ func _damage_move(u: Battler, t: Battler, m: Dictionary) -> void:
 			if t.substitute <= 0:
 				t.substitute = 0
 				msg("Le clone de %s disparaît !" % nm(t))
-				events.append({"t": "sub", "side": t.side, "on": false})
+				events.append({"t": "sub", "side": t.side, "slot": t.slot, "on": false})
 			total += dmg
 			continue
 		if ident == "false-swipe":
@@ -1065,10 +1283,10 @@ func _damage_move(u: Battler, t: Battler, m: Dictionary) -> void:
 	if ident == "uproar" and u.uproar == 0:
 		u.uproar = 3
 		msg("%s fait un BROUHAHA !" % nm(u))
-		for s in sides:
-			if s.b.mon.status == "slp":
-				s.b.mon.status = ""
-				msg("%s se réveille !" % nm(s.b))
+		for ob: Battler in actives():
+			if ob.mon.status == "slp":
+				ob.mon.status = ""
+				msg("%s se réveille !" % nm(ob))
 	if ident == "rollout":
 		u.rollout -= 1
 
@@ -1282,9 +1500,9 @@ func _field_move(u: Battler, m: Dictionary) -> void:
 	var ident: String = m["ident"]
 	match ident:
 		"haze":
-			for s in sides:
-				for k in s.b.stages:
-					s.b.stages[k] = 0
+			for ob: Battler in actives():
+				for k in ob.stages:
+					ob.stages[k] = 0
 			msg("Les changements de stats sont annulés !")
 		"rain-dance", "sunny-day", "sandstorm", "hail":
 			var w: String = {"rain-dance": "rain", "sunny-day": "sun", "sandstorm": "sandstorm", "hail": "hail"}[ident]
@@ -1347,22 +1565,22 @@ func _force_switch(u: Battler, t: Battler) -> void:
 		_fail()
 		return
 	if wild:
+		if is_double() or t.mon.boss:
+			_fail()
+			return
 		msg("%s est emporté au loin !" % nm(t))
 		over = true
 		result = "run"
 		events.append({"t": "end", "result": "run"})
 		return
-	var options := []
-	for i in sides[t.side].party.size():
-		if i != t.party_index and not sides[t.side].party[i].is_fainted():
-			options.append(i)
+	var options := bench(t.side, t.owner)
 	if options.is_empty():
 		_fail()
 		return
 	var idx: int = options[randi() % options.size()]
-	events.append({"t": "recall", "side": t.side})
+	events.append({"t": "recall", "side": t.side, "slot": t.slot})
 	_switch_out(t)
-	_send(t.side, idx, false)
+	_send(t.side, t.slot, idx, false)
 	msg("%s est envoyé au combat !" % sides[t.side].party[idx].name())
 
 
@@ -1414,7 +1632,7 @@ func _special_move(u: Battler, t: Battler, m: Dictionary) -> bool:
 			u.mon.hp -= cost
 			hp_event(u)
 			u.substitute = cost + 1
-			events.append({"t": "sub", "side": u.side, "on": true})
+			events.append({"t": "sub", "side": u.side, "slot": u.slot, "on": true})
 			msg("%s crée un clone !" % nm(u))
 		"focus-energy":
 			if u.focus_energy:
@@ -1491,7 +1709,7 @@ func _special_move(u: Battler, t: Battler, m: Dictionary) -> bool:
 			u.t_moves = []
 			for mv in t.moves():
 				u.t_moves.append({"id": mv["id"], "pp": 5, "max": 5, "ups": 0})
-			events.append({"t": "transform", "side": u.side, "species": t.mon.species, "shiny": t.mon.shiny})
+			events.append({"t": "transform", "side": u.side, "slot": u.slot, "species": t.mon.species, "shiny": t.mon.shiny})
 			msg("%s se transforme en %s !" % [nm(u), t.mon.data()["name"]])
 		"conversion":
 			var typ: String = move_data(u.moves()[0]["id"])["type"]
@@ -1558,24 +1776,16 @@ func _special_move(u: Battler, t: Battler, m: Dictionary) -> bool:
 			t.mean_look = true
 			msg("%s ne peut plus s'enfuir !" % nm(t))
 		"baton-pass":
+			var bench_list := bench(u.side, u.owner)
+			if bench_list.is_empty() or (u.side == 1 and wild):
+				_fail()
+				return true
+			msg("%s passe le relais !" % nm(u))
 			if u.side == 0:
-				if alive_count(0) <= 1:
-					_fail()
-					return true
-				baton_pass = true
-				need_switch = true
-				msg("%s passe le relais !" % nm(u))
+				need_switch.append({"slot": u.slot, "owner": u.owner, "baton": true})
 			else:
-				if wild or alive_count(1) <= 1:
-					_fail()
-					return true
-				var nxt := -1
-				for i in sides[1].party.size():
-					if i != u.party_index and not sides[1].party[i].is_fainted():
-						nxt = i
-						break
-				events.append({"t": "recall", "side": 1})
-				_send(1, nxt, true, true)
+				events.append({"t": "recall", "side": 1, "slot": u.slot})
+				_send(1, u.slot, bench_list[0], true, true)
 		"encore":
 			if t.last_move == 0 or t.encore_turns > 0 or t.last_move in [STRUGGLE, 227, 102, 118, 119]:
 				_fail()
@@ -1646,14 +1856,15 @@ func _special_move(u: Battler, t: Battler, m: Dictionary) -> bool:
 			refresh()
 			msg("%s est soigné !" % nm(u))
 		"aromatherapy", "heal-bell":
-			for p in sides[u.side].party:
-				p.status = ""
+			for i in sides[u.side].party.size():
+				if sides[u.side].owners[i] == u.owner:
+					sides[u.side].party[i].status = ""
 			refresh()
 			msg("Un parfum apaisant soigne toute l'équipe !")
 		"perish-song":
-			for s in sides:
-				if s.b.perish == 0 and ab(s.b) != "soundproof":
-					s.b.perish = 4
+			for ob: Battler in actives():
+				if ob.perish == 0 and ab(ob) != "soundproof":
+					ob.perish = 4
 			msg("Tous les Pokémon entendant ce chant seront K.O. dans 3 tours !")
 		"nightmare":
 			if t.mon.status != "slp" or t.nightmare:
@@ -1672,6 +1883,7 @@ func _special_move(u: Battler, t: Battler, m: Dictionary) -> bool:
 				msg("%s évite l'attaque !" % nm(t))
 				return true
 			t.seeded = true
+			t.seeded_by = u
 			msg("%s est infecté !" % nm(t))
 		"ingrain":
 			if u.ingrain:
@@ -1765,7 +1977,7 @@ func _set_status(t: Battler, st: String, src: Battler, loud: bool) -> bool:
 		fail = "Ça n'affecte pas %s..." % nm(t)
 	elif st == "frz" and (t.types.has("ice") or weather_on() == "sun"):
 		fail = "Ça n'affecte pas %s..." % nm(t)
-	elif st == "slp" and (ab(t) in ["insomnia", "vital-spirit"] or sides[0].b.uproar > 0 or sides[1].b.uproar > 0):
+	elif st == "slp" and (ab(t) in ["insomnia", "vital-spirit"] or actives().any(func(x): return x.uproar > 0)):
 		fail = "%s ne peut pas s'endormir !" % nm(t)
 	elif ab(t) == "leaf-guard" and weather_on() == "sun":
 		fail = "Feuille Garde protège %s !" % nm(t)
@@ -1866,55 +2078,69 @@ func _heal(b: Battler, amount: int) -> void:
 
 
 func _faint(b: Battler) -> void:
-	if b.get_meta("fainted", false):
+	if b.fainted:
 		return
-	b.set_meta("fainted", true)
+	b.fainted = true
 	b.mon.hp = 0
 	b.mon.status = ""
 	b.charging = 0
 	b.invuln = ""
-	events.append({"t": "faint", "side": b.side})
+	events.append({"t": "faint", "side": b.side, "slot": b.slot})
 	msg("%s est K.O. !" % nm(b))
 	if b.side == 1:
 		_give_exp(b)
 
 
+## Expérience (formule des jeux récents) : elle baisse quand ton Pokémon est plus fort que l'adversaire.
+static func exp_gain(base: int, foe_level: int, my_level: int, trainer_battle: bool, shared: int) -> int:
+	var a := 1.5 if trainer_battle else 1.0
+	var scale := pow((2.0 * foe_level + 10.0) / (foe_level + my_level + 10.0), 2.5)
+	return maxi(1, int(a * base * foe_level / 5.0 / maxi(1, shared) * scale) + 1)
+
+
 func _give_exp(enemy: Battler) -> void:
 	var idxs := []
 	for i in participants.get(enemy.party_index, []):
-		if not sides[0].party[i].is_fainted():
+		if sides[0].party[i].can_battle():
 			idxs.append(i)
 	if idxs.is_empty():
 		return
 	var base: int = enemy.mon.data()["exp"]
-	var gained := int(base * enemy.mon.level / 7.0 * (1.5 if not wild else 1.0) / idxs.size())
-	gained = maxi(1, gained)
-	for i in idxs:
+	if enemy.mon.boss:
+		base *= 3
+	# Multi Exp : les Pokémon qui n'ont pas combattu reçoivent la moitié.
+	var shared := {}
+	for i in sides[0].party.size():
+		var o: int = sides[0].owners[i]
+		if o < exp_share.size() and exp_share[o] and not idxs.has(i) and sides[0].party[i].can_battle():
+			shared[i] = true
+	for i in idxs + shared.keys():
 		var mon: Pokemon = sides[0].party[i]
 		mon.add_evs(enemy.mon.data()["ev"])
 		if mon.level >= 100:
 			continue
+		var gained := exp_gain(base, enemy.mon.level, mon.level, not wild, idxs.size() if not shared.has(i) else 2)
 		msg("%s gagne %d Points Exp. !" % [mon.name(), gained])
 		var reached := mon.add_exp(gained)
-		var active: bool = sides[0].b != null and sides[0].b.party_index == i
-		events.append({"t": "exp", "index": i, "active": active})
+		var on_field: Battler = null
+		for p: Battler in sides[0].slots:
+			if p != null and p.party_index == i and p.alive():
+				on_field = p
+		var owner: int = sides[0].owners[i]
+		events.append({"t": "exp", "index": i, "owner": owner, "active": on_field != null, "slot": on_field.slot if on_field else -1})
 		for lv in reached:
 			leveled[i] = true
-			events.append({"t": "level", "index": i, "active": active, "level": lv})
+			events.append({"t": "level", "index": i, "owner": owner, "active": on_field != null, "slot": on_field.slot if on_field else -1, "level": lv})
 			msg("%s monte au niveau %d !" % [mon.name(), lv])
 			for mid in mon.moves_at(lv):
 				if mon.moves.size() < 4:
 					mon.moves.append(Pokemon.make_move(mid))
 					msg("%s apprend %s !" % [mon.name(), Data.move_name(mid)])
 				else:
-					events.append({"t": "learn", "mon": mon, "move": mid})
-		if active:
-			hp_event(sides[0].b)
+					events.append({"t": "learn", "mon": mon, "move": mid, "index": i, "owner": owner})
+		if on_field != null:
+			hp_event(on_field)
 
-
-# ---------------------------------------------------------------------------
-# Fin de tour
-# ---------------------------------------------------------------------------
 
 func _end_of_turn() -> void:
 	var w := weather_on()
@@ -1928,10 +2154,9 @@ func _end_of_turn() -> void:
 		else:
 			msg({"rain": "La pluie continue de tomber.", "sun": "Le soleil brille.",
 				"sandstorm": "La tempête de sable fait rage.", "hail": "La grêle continue de tomber."}[weather])
-	for s in [0, 1]:
-		var b: Battler = sides[s].b
-		var side: BSide = sides[s]
-		if b.mon.hp <= 0:
+	for b: Battler in actives():
+		var side: BSide = sides[b.side]
+		if not b.alive():
 			continue
 		b.turns += 1
 		var mx := b.mon.max_hp()
@@ -1950,7 +2175,7 @@ func _end_of_turn() -> void:
 			b.mon.status = ""
 			msg("Hydratation soigne %s !" % nm(b))
 			refresh()
-		if side.future_turns > 0:
+		if side.future_turns > 0 and b == _first_active(b.side):
 			side.future_turns -= 1
 			if side.future_turns == 0 and b.mon.hp > 0:
 				msg("%s subit l'attaque prévue !" % nm(b))
@@ -1962,11 +2187,11 @@ func _end_of_turn() -> void:
 			msg("%s absorbe des nutriments avec ses racines !" % nm(b))
 			_heal(b, mx / 16)
 		if b.seeded and ab(b) != "magic-guard":
-			var o := foe(b)
+			var o: Battler = b.seeded_by
 			var drained := mini(b.mon.hp, maxi(1, mx / 8))
 			msg("Vampigraine draine l'énergie de %s !" % nm(b))
 			_hurt(b, drained)
-			if o != null and o.mon.hp > 0:
+			if o != null and o.alive():
 				_heal(o, drained)
 		if b.mon.hp <= 0:
 			continue
@@ -2021,7 +2246,7 @@ func _end_of_turn() -> void:
 		if b.yawn > 0:
 			b.yawn -= 1
 			if b.yawn == 0:
-				_set_status(b, "slp", foe(b), false)
+				_set_status(b, "slp", null, false)
 		if b.perish > 0:
 			b.perish -= 1
 			msg("Le compte à rebours de %s passe à %d !" % [nm(b), b.perish])
@@ -2045,35 +2270,50 @@ func _trap_id(ident: String) -> int:
 func _check_end() -> void:
 	if over:
 		return
-	var enemy: Battler = sides[1].b
-	var player: Battler = sides[0].b
-	if enemy.mon.hp <= 0:
-		if alive_count(1) == 0:
-			if alive_count(0) == 0:
-				_lose()
-				return
-			_win()
-			return
-		if player.mon.hp > 0 or alive_count(0) > 0:
-			var nxt := _ai_next()
-			_send(1, nxt)
-			_entry_ability(sides[1].b)
-	if player.mon.hp <= 0:
-		if alive_count(0) == 0:
+	var enemy_left := alive_count(1)
+	var player_left := alive_count(0)
+	if enemy_left == 0 or player_left == 0:
+		if player_left == 0:
 			_lose()
 		else:
-			need_switch = true
+			_win()
+		return
+	# Remplacements adverses (automatiques).
+	for k in sides[1].slots.size():
+		var b: Battler = sides[1].slots[k]
+		if b != null and not b.alive() and not b.empty:
+			var nxt := _ai_next(sides[1].slot_owner[k])
+			if nxt >= 0 and not wild:
+				_send(1, k, nxt)
+				_entry_ability(sides[1].slots[k])
+			else:
+				b.empty = true
+	# Remplacements du joueur (il choisit).
+	for k in sides[0].slots.size():
+		var b2: Battler = sides[0].slots[k]
+		if b2 != null and not b2.alive() and not b2.empty:
+			var owner: int = sides[0].slot_owner[k]
+			if bench(0, owner).is_empty():
+				b2.empty = true
+			elif not need_switch.any(func(n): return n["slot"] == k):
+				need_switch.append({"slot": k, "owner": owner, "baton": false})
 
 
 func _win() -> void:
 	over = true
 	result = "win"
 	if not wild:
-		var reward := int(trainer.get("money", 100))
-		msg("Vous avez battu %s !" % trainer.get("name", "le Dresseur"))
-		if trainer.get("defeat", "") != "":
-			events.append({"t": "trainer_say", "text": trainer["defeat"]})
-		msg("Vous remportez %d ₽ !" % reward)
+		var total := 0
+		for t in trainers:
+			total += int(t.get("money", 100))
+		if trainers.size() >= 2:
+			msg("Vous avez battu %s et %s !" % [trainers[0].get("name", ""), trainers[1].get("name", "")])
+		else:
+			msg("Vous avez battu %s !" % trainer.get("name", "le Dresseur"))
+		for t in trainers:
+			if t.get("defeat", "") != "":
+				events.append({"t": "trainer_say", "text": "%s : %s" % [t.get("name", ""), t["defeat"]]})
+		msg("Vous remportez %d ₽ !" % total)
 	if pay_day > 0:
 		msg("Vous ramassez %d ₽ !" % pay_day)
 	events.append({"t": "end", "result": "win"})
@@ -2092,20 +2332,31 @@ func _lose() -> void:
 # ---------------------------------------------------------------------------
 
 func _try_run() -> void:
-	var p: Battler = sides[0].b
-	var e: Battler = sides[1].b
+	if over:
+		return
+	var p := _first_active(0)
+	var e := _first_active(1)
+	if p == null or e == null:
+		return
+	if e.mon.boss:
+		msg("Impossible de fuir face à un boss !")
+		return
 	if ab(p) == "run-away" or p.types.has("ghost"):
 		msg("Vous prenez la fuite !")
 		over = true
 		result = "run"
 		events.append({"t": "end", "result": "run"})
 		return
-	if trapped(p):
-		msg("Impossible de fuir !")
-		return
+	for b: Battler in actives(0):
+		if trapped(b):
+			msg("Impossible de fuir !")
+			return
 	escape_attempts += 1
-	var f := int(speed(p) * 128 / maxf(1.0, speed(e))) + 30 * escape_attempts
-	if speed(p) >= speed(e) or f > 255 or randi() % 256 < f:
+	var fast := 0.0
+	for b: Battler in actives(1):
+		fast = maxf(fast, speed(b))
+	var f := int(speed(p) * 128 / maxf(1.0, fast)) + 30 * escape_attempts
+	if speed(p) >= fast or f > 255 or randi() % 256 < f:
 		msg("Vous prenez la fuite !")
 		over = true
 		result = "run"
@@ -2116,7 +2367,7 @@ func _try_run() -> void:
 
 func ball_bonus(item: String, t: Battler) -> float:
 	var mon := t.mon
-	var p: Battler = sides[0].b
+	var p: Battler = _first_active(0) if _first_active(0) != null else sides[0].slots[0]
 	match item:
 		"great-ball":
 			return 1.5
@@ -2149,16 +2400,49 @@ func ball_bonus(item: String, t: Battler) -> float:
 	return 1.0
 
 
-func _throw_ball(item: String) -> void:
+## Probabilité qu'une Ball capture (0 à 1), formule des générations 3/4. Sert aussi aux tests.
+func catch_chance(item: String, t: Battler) -> float:
+	if item == "master-ball":
+		return 1.0
+	var rate: float = t.mon.data()["catch"]
+	if item == "heavy-ball":
+		var w: int = t.mon.data()["weight"]
+		rate = maxf(1.0, rate + (-20 if w < 1000 else 0 if w < 2000 else 20 if w < 3000 else 30))
+	if t.mon.boss:
+		rate = maxf(1.0, rate / 3.0)
+	var mx := float(t.mon.max_hp())
+	var st := 1.0
+	if t.mon.status in ["slp", "frz"]:
+		st = 2.5
+	elif t.mon.status != "":
+		st = 1.5
+	var a := ((3.0 * mx - 2.0 * t.mon.hp) * rate * ball_bonus(item, t)) / (3.0 * mx) * st
+	if a >= 255.0:
+		return 1.0
+	var b := 1048560.0 / sqrt(sqrt(16711680.0 / maxf(1.0, a)))
+	return pow(b / 65536.0, 4.0)
+
+
+func _throw_ball(item: String, target_slot := -1) -> void:
 	msg("%s lance une %s !" % [player_name, Data.item_name(item)])
-	var t: Battler = sides[1].b
+	var targets := actives(1)
+	if targets.is_empty():
+		return
+	var t: Battler = targets[0]
+	for x in targets:
+		if x.slot == target_slot:
+			t = x
+	if t.mon.boss:
+		events.append({"t": "ball", "shakes": -1, "caught": false, "ball": item, "slot": t.slot})
+		msg("Le boss dévie la Ball d'un coup de patte ! Impossible de le capturer.")
+		return
 	if not wild:
-		events.append({"t": "ball", "shakes": -1, "caught": false, "ball": item})
+		events.append({"t": "ball", "shakes": -1, "caught": false, "ball": item, "slot": t.slot})
 		msg("Le Dresseur dévie la Ball !")
 		msg("Voler les Pokémon des autres, c'est mal !")
 		return
 	if t.invuln != "":
-		events.append({"t": "ball", "shakes": -1, "caught": false, "ball": item})
+		events.append({"t": "ball", "shakes": -1, "caught": false, "ball": item, "slot": t.slot})
 		msg("Raté ! La Ball n'a rien touché !")
 		return
 	var shakes := 0
@@ -2167,38 +2451,29 @@ func _throw_ball(item: String) -> void:
 		ok = true
 		shakes = 3
 	else:
-		var rate: float = t.mon.data()["catch"]
-		if item == "heavy-ball":
-			var w: int = t.mon.data()["weight"]
-			rate = maxf(1.0, rate + (-20 if w < 1000 else 0 if w < 2000 else 20 if w < 3000 else 30))
-		var mx := float(t.mon.max_hp())
-		var st := 1.0
-		if t.mon.status in ["slp", "frz"]:
-			st = 2.5
-		elif t.mon.status != "":
-			st = 1.5
-		var a := ((3.0 * mx - 2.0 * t.mon.hp) * rate * ball_bonus(item, t)) / (3.0 * mx) * st
-		if a >= 255.0:
-			ok = true
-			shakes = 3
-		else:
-			var b := 1048560.0 / sqrt(sqrt(16711680.0 / maxf(1.0, a)))
-			for i in 4:
-				if randf() * 65536.0 < b:
-					shakes += 1
-				else:
-					break
-			ok = shakes == 4
-			shakes = mini(shakes, 3)
-	events.append({"t": "ball", "shakes": shakes, "caught": ok, "ball": item})
+		var p := catch_chance(item, t)
+		var per_shake := pow(p, 0.25)
+		for i in 4:
+			if randf() < per_shake:
+				shakes += 1
+			else:
+				break
+		ok = shakes == 4
+		shakes = mini(shakes, 3)
+	events.append({"t": "ball", "shakes": shakes, "caught": ok, "ball": item, "slot": t.slot})
 	if ok:
 		msg("Et hop ! %s est attrapé !" % t.mon.name())
 		t.mon.ball = item
+		t.mon.boss = false
+		t.mon.recalc_stats()
+		t.mon.hp = mini(t.mon.hp, t.mon.max_hp())
 		if item == "heal-ball":
 			t.mon.heal_full()
 		if item == "friend-ball":
 			t.mon.happiness = 200
 		caught = t.mon
+		var thrower := actions.keys().filter(func(k): return k.side == 0 and actions[k].get("type", "") == "ball")
+		caught_owner = thrower[0].owner if thrower.size() > 0 else 0
 		over = true
 		result = "caught"
 		events.append({"t": "end", "result": "caught"})
@@ -2207,9 +2482,8 @@ func _throw_ball(item: String) -> void:
 			"Aaaah ! C'était si près !", "Mince ! Il y était presque !"][shakes])
 
 
-func _use_item(item: String, target: int, move_index: int) -> void:
-	var b: Battler = sides[0].b
-	msg("%s utilise %s !" % [player_name, Data.item_name(item)])
+func _use_item(b: Battler, item: String, target: int, move_index: int) -> void:
+	msg("%s utilise %s !" % [owner_name(0, b.owner), Data.item_name(item)])
 	var stat_items := {"x-attack": "atk", "x-defense": "def", "x-sp-atk": "spa", "x-sp-def": "spd", "x-speed": "spe", "x-accuracy": "acc"}
 	if stat_items.has(item):
 		_stage(b, stat_items[item], 2, b)
@@ -2227,9 +2501,10 @@ func _use_item(item: String, target: int, move_index: int) -> void:
 	if text == "":
 		msg("Ça n'a aucun effet.")
 		return
-	if b.party_index == target:
-		hp_event(b)
-		refresh()
+	for p: Battler in actives(0):
+		if p.party_index == target:
+			hp_event(p)
+	refresh()
 	for line in text.split("\n"):
 		msg(line)
 
@@ -2238,37 +2513,40 @@ func _use_item(item: String, target: int, move_index: int) -> void:
 # IA adverse
 # ---------------------------------------------------------------------------
 
-func _ai_action() -> Dictionary:
-	var b: Battler = sides[1].b
-	if locked_move(1) != 0:
+func _ai_action(b: Battler) -> Dictionary:
+	if locked_move(1, b.slot) != 0:
 		return {"type": "move", "slot": -1}
-	var slots := usable_slots(1)
+	var slots := usable_slots(1, b.slot)
 	if slots.is_empty():
 		return {"type": "move", "id": STRUGGLE}
+	var targets := foes(b)
+	if targets.is_empty():
+		return {"type": "move", "slot": slots[0]}
 	if wild:
-		return {"type": "move", "slot": slots[randi() % slots.size()]}
+		var t0: Battler = targets[randi() % targets.size()]
+		return {"type": "move", "slot": slots[randi() % slots.size()], "target_side": 0, "target_slot": t0.slot}
 	if ai_potions > 0 and b.mon.hp * 4 < b.mon.max_hp() and randi() % 2 == 0:
 		return {"type": "item"}
-	var t: Battler = sides[0].b
 	var best := -1
+	var best_t: Battler = targets[0]
 	var best_score := -1.0
-	var scores := {}
+	var scores := []
 	for s in slots:
 		var m := move_data(b.moves()[s]["id"])
-		var sc := _ai_score(b, t, m)
-		scores[s] = sc
-		if sc > best_score:
-			best_score = sc
-			best = s
+		for t: Battler in targets:
+			var sc := _ai_score(b, t, m)
+			scores.append([s, t, sc])
+			if sc > best_score:
+				best_score = sc
+				best = s
+				best_t = t
 	if randi() % 100 < 80 and best >= 0:
-		return {"type": "move", "slot": best}
-	var good := []
-	for s in scores:
-		if scores[s] > 0:
-			good.append(s)
+		return {"type": "move", "slot": best, "target_side": 0, "target_slot": best_t.slot}
+	var good := scores.filter(func(x): return x[2] > 0)
 	if good.is_empty():
-		good = slots
-	return {"type": "move", "slot": good[randi() % good.size()]}
+		good = scores
+	var pick: Array = good[randi() % good.size()]
+	return {"type": "move", "slot": pick[0], "target_side": 0, "target_slot": pick[1].slot}
 
 
 func _ai_score(b: Battler, t: Battler, m: Dictionary) -> float:
@@ -2337,23 +2615,20 @@ func _ai_score(b: Battler, t: Battler, m: Dictionary) -> float:
 	return 15.0
 
 
-func _ai_use_potion() -> void:
-	var b: Battler = sides[1].b
+func _ai_use_potion(b: Battler) -> void:
 	ai_potions -= 1
 	var amount := 60 if b.mon.level < 30 else 120
-	msg("%s utilise une %s !" % [trainer.get("name", "Le Dresseur"), "Super Potion" if amount == 60 else "Hyper Potion"])
+	msg("%s utilise une %s !" % [owner_name(1, b.owner), "Super Potion" if amount == 60 else "Hyper Potion"])
 	_heal(b, amount)
 	msg("%s récupère des PV !" % nm(b))
 
 
-func _ai_next() -> int:
-	var t: Battler = sides[0].b
+func _ai_next(owner: int) -> int:
+	var t := _first_active(0)
 	var best := -1
 	var best_score := -999.0
-	for i in sides[1].party.size():
+	for i in bench(1, owner):
 		var mon: Pokemon = sides[1].party[i]
-		if mon.is_fainted():
-			continue
 		var sc := 0.0
 		for mv in mon.moves:
 			var md := move_data(mv["id"])
@@ -2366,3 +2641,62 @@ func _ai_next() -> int:
 			best_score = sc
 			best = i
 	return best
+
+
+# ---------------------------------------------------------------------------
+# Copie de l'état (combat coop : l'hôte calcule, l'invité affiche)
+# ---------------------------------------------------------------------------
+
+const SYNC_FIELDS := ["party_index", "owner", "fainted", "empty", "types", "stages", "transformed", "t_moves", "t_stats",
+	"substitute", "invuln", "recharge", "charging", "rampage", "rampage_move", "rollout", "uproar", "disable_move",
+	"disable_turns", "encore_move", "encore_turns", "taunt", "torment", "confusion", "last_move", "imprison"]
+
+
+func snapshot() -> Dictionary:
+	var out := []
+	for side: BSide in sides:
+		var slots := []
+		for b in side.slots:
+			if b == null:
+				slots.append(null)
+				continue
+			var d := {}
+			for f in SYNC_FIELDS:
+				d[f] = b.get(f)
+			slots.append(d)
+		out.append({"party": side.party.map(func(m): return m.to_dict()), "owners": side.owners, "slot_owner": side.slot_owner,
+			"names": side.names, "slots": slots})
+	return {"sides": out, "need_switch": need_switch, "over": over, "result": result, "wild": wild, "turn": turn,
+		"weather": weather, "trainers": trainers}
+
+
+func apply_snapshot(d: Dictionary) -> void:
+	wild = d["wild"]
+	over = d["over"]
+	result = d["result"]
+	turn = d["turn"]
+	weather = d["weather"]
+	need_switch = d["need_switch"]
+	trainers = d.get("trainers", trainers)
+	trainer = trainers[0] if trainers.size() > 0 else {}
+	for k in 2:
+		var sd: Dictionary = d["sides"][k]
+		var side: BSide = sides[k]
+		side.party = sd["party"].map(func(x): return Pokemon.from_dict(x))
+		side.owners = sd["owners"]
+		side.slot_owner = sd["slot_owner"]
+		side.names = sd["names"]
+		side.slots = []
+		for bd in sd["slots"]:
+			if bd == null:
+				side.slots.append(null)
+				continue
+			var b := Battler.new()
+			for f in SYNC_FIELDS:
+				if bd.has(f):
+					b.set(f, bd[f])
+			b.side = k
+			b.slot = side.slots.size()
+			b.mon = side.party[b.party_index]
+			b.ability = b.mon.ability
+			side.slots.append(b)

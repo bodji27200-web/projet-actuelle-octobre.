@@ -85,6 +85,46 @@ func fade(to_black: bool, time := 0.25) -> void:
 	await tw.finished
 
 
+## Transition d'entrée en combat (bandes noires).
+func battle_intro() -> void:
+	var bars := []
+	for i in 8:
+		var r := ColorRect.new()
+		r.color = Color.BLACK
+		r.size = Vector2(0, 40)
+		r.position = Vector2(0 if i % 2 == 0 else 480, i * 40)
+		r.z_index = 90
+		add_child(r)
+		bars.append(r)
+	await flash(2)
+	var tw := create_tween().set_parallel()
+	for i in 8:
+		var r: ColorRect = bars[i]
+		tw.tween_property(r, "size:x", 480.0, 0.35)
+		if i % 2 == 1:
+			tw.tween_property(r, "position:x", 0.0, 0.35)
+	await tw.finished
+	for r in bars:
+		r.queue_free()
+
+
+## Petit message temporaire en haut de l'écran (multijoueur).
+func toast(text: String) -> void:
+	var p := Kit.panel(self, Rect2(8, 8, 360, 26), Color(0.1, 0.12, 0.2, 0.9), Color("e0e0f0"))
+	p.z_index = 80
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var l := Kit.label(p, text, Vector2(8, 0), 13, Color.WHITE, false)
+	l.clip_text = true
+	l.size = Vector2(344, 24)
+	for c in get_children():
+		if c != p and c.has_meta("toast"):
+			c.position.y += 30
+	p.set_meta("toast", true)
+	await get_tree().create_timer(4.0).timeout
+	if is_instance_valid(p):
+		p.queue_free()
+
+
 func flash(times := 3) -> void:
 	for i in times:
 		_fade.color = Color(1, 1, 1, 1)

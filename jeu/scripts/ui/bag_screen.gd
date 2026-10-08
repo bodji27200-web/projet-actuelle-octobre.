@@ -2,8 +2,8 @@ class_name BagScreen
 extends ItemList2
 ## Sac : poches OBJETS / SOINS / BALLS / CT. Renvoie l'objet choisi (ou null).
 
-const POCKETS := ["objets", "soins", "balls", "ct"]
-const POCKET_NAMES := ["OBJETS", "SOINS", "BALLS", "CT / CS"]
+const POCKETS := ["objets", "soins", "balls", "ct", "rares"]
+const POCKET_NAMES := ["OBJETS", "SOINS", "BALLS", "CT / CS", "OBJ. RARES"]
 
 static var last_pocket := 1
 
@@ -57,7 +57,9 @@ func row_text(i: int) -> String:
 
 
 func row_right(i: int) -> String:
-	if i >= _items.size() or ItemUse.is_tm(_items[i]):
+	if i >= _items.size() or ItemUse.is_tm(_items[i]) or Data.items.get(_items[i], {}).get("key", false):
+		if i < _items.size() and _items[i] == "exp-share":
+			return "ON" if Game.flag("exp_share_on") else "OFF"
 		return ""
 	return "x%d" % Game.item_count(_items[i])
 

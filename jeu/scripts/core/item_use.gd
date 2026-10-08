@@ -29,6 +29,8 @@ static func category(item: String) -> String:
 		return "balls"
 	if is_tm(item):
 		return "ct"
+	if Data.items.get(item, {}).get("key", false):
+		return "rares"
 	if BATTLE_ONLY.has(item) or STONES.has(item) or item.ends_with("repel") or item == "escape-rope" or item == "rare-candy" or VITAMINS.has(item):
 		return "objets"
 	return "soins"

@@ -200,6 +200,33 @@ static func tile(kind: String, frame := 0) -> Texture2D:
 			_rect(img, 3, 3, 10, 5, Color("50d070"))
 			for i in 3:
 				_rect(img, 3 + i * 4, 10, 2, 2, Color("e04040"))
+		"bridge":
+			_rect(img, 0, 0, T, T, Color("5888e8"))
+			_rect(img, 0, 1, T, 14, Color("b07840"))
+			for yy in [1, 5, 9, 13]:
+				_rect(img, 0, yy, T, 1, Color("805028"))
+			_rect(img, 0, 1, T, 1, Color("d09858"))
+			for xx in [3, 12]:
+				_px(img, xx, 3, Color("604020"))
+				_px(img, xx, 11, Color("604020"))
+		"towerfloor":
+			_rect(img, 0, 0, T, T, Color("9078b0"))
+			_rect(img, 0, 0, T, 1, Color("7860a0"))
+			_rect(img, 0, 0, 1, T, Color("7860a0"))
+			_px(img, 5, 6, Color("a890c8"))
+			_px(img, 11, 12, Color("a890c8"))
+		"statue":
+			_rect(img, 0, 0, T, T, Color("f0f0f0"))
+			_stamp(img, ["....kkkkkk......", "...kGGGGGGk.....", "..kGGLLGGGGk....", "..kGLLGGGGGk....", "..kGGGGGGGDk....",
+				"...kGGGGGDk.....", "....kGGGDk......", "....kGGGDk......", "...kGGGGGDk.....", "..kkkkkkkkkk....",
+				"..kSSSSSSSSk....", "..kSSSSSSSSk....", "..kDDDDDDDDk....", "..kkkkkkkkkk...."],
+				{"k": OUTLINE, "G": Color("a8a8b8"), "L": Color("d8d8e8"), "D": Color("707080"), "S": Color("c0c0c8")}, 2, 1)
+		"stairs_up", "stairs_down":
+			_rect(img, 0, 0, T, T, Color("706050"))
+			for i in 4:
+				var c2 := Color("c8b8a0").darkened(i * 0.12 if kind == "stairs_up" else (3 - i) * 0.12)
+				_rect(img, 1, 1 + i * 4, 14, 3, c2)
+				_rect(img, 1, 3 + i * 4, 14, 1, Color("504030"))
 		"black":
 			_rect(img, 0, 0, T, T, Color("000000"))
 		_:
@@ -215,6 +242,8 @@ static func _grass(img: Image) -> void:
 		_px(img, p[0], p[1], Color("68b050"))
 		_px(img, p[0] + 1, p[1] - 1, Color("68b050"))
 		_px(img, p[0] + 2, p[1], Color("68b050"))
+	for p in [[5, 4], [12, 7], [1, 9], [8, 12], [14, 1]]:
+		_px(img, p[0], p[1], Color("a0e088"))
 
 
 static func _tall(img: Image, dark := Color("308838"), light := Color("58b850")) -> void:
@@ -244,7 +273,11 @@ static func building(kind: String, w: int, h: int) -> Texture2D:
 	var W := w * T
 	var H := h * T
 	var img := _img(W, H)
-	var roof: Color = {"house": Color("d85040"), "lab": Color("8890a0"), "center": Color("e85858"), "mart": Color("4878d8"), "gym": Color("a07848")}.get(kind, Color("d85040"))
+	if kind == "cave":
+		return _cave_entrance(w, h)
+	var roof: Color = {"house": Color("d85040"), "lab": Color("8890a0"), "center": Color("e85858"), "mart": Color("4878d8"),
+		"gym": Color("a07848"), "tower": Color("7058a0"), "silph": Color("708090"), "store": Color("d8a040"), "casino": Color("d04890"),
+		"mansion": Color("806858"), "gate": Color("6878a0"), "dojo": Color("905838"), "league": Color("c8a030")}.get(kind, Color("d85040"))
 	var roof_dark := roof.darkened(0.3)
 	var wall := Color("f8f0e0") if kind != "lab" else Color("f0f0f0")
 	var roof_h := int(H * 0.5)
@@ -276,8 +309,14 @@ static func building(kind: String, w: int, h: int) -> Texture2D:
 	_rect(img, dx + 1, H - 13, 10, 12, Color("806040") if kind != "center" and kind != "mart" else Color("a8d0f0"))
 	if kind == "center" or kind == "mart":
 		_rect(img, dx + 6, H - 13, 1, 12, Color("506070"))
+	# Étages pour les grands bâtiments
+	if kind in ["silph", "tower", "store", "league", "mansion"]:
+		for fy in range(roof_h + 18, H - 16, 16):
+			for wx2 in range(6, W - 8, 12):
+				_rect(img, wx2, fy, 8, 7, Color("405870"))
+				_rect(img, wx2 + 1, fy + 1, 6, 5, Color("88c0f0") if kind != "tower" else Color("c0a0e0"))
 	# Enseigne
-	if kind in ["center", "mart", "gym"]:
+	if kind in ["center", "mart", "gym", "league", "store", "casino"]:
 		var sx := W / 2 - 14
 		var sy := roof_h - 12
 		_rect(img, sx, sy, 28, 10, Color("f8f8f8"))
@@ -292,6 +331,26 @@ static func building(kind: String, w: int, h: int) -> Texture2D:
 			_rect(img, sx + 11, sy + 3, 6, 2, Color("f8f8f8"))
 		else:
 			_rect(img, sx + 10, sy + 2, 8, 6, letter)
+	var tex := _tex(img)
+	_cache[key] = tex
+	return tex
+
+
+static func _cave_entrance(w: int, h: int) -> Texture2D:
+	var key := "cave_%d_%d" % [w, h]
+	if _cache.has(key):
+		return _cache[key]
+	var W := w * T
+	var H := h * T
+	var img := _img(W, H)
+	for y in H:
+		for x in W:
+			var dx := (x - W / 2.0) / (W / 2.0)
+			var dy := (y - H) / float(H)
+			if dx * dx + dy * dy < 1.0:
+				img.set_pixel(x, y, Color("8c6c4c") if (x + y) % 7 else Color("a8886a"))
+	_rect(img, W / 2 - 7, H - 14, 14, 14, Color("201810"))
+	_rect(img, W / 2 - 5, H - 16, 10, 2, Color("201810"))
 	var tex := _tex(img)
 	_cache[key] = tex
 	return tex
@@ -316,6 +375,19 @@ const LOOKS := {
 	"oldman": {"h": "e0e0e0", "H": "b0b0b0", "w": "e0e0e0", "g": "e0e0e0", "c": "a08060", "C": "806040", "p": "605040", "b": "403020"},
 	"girl": {"h": "402818", "H": "301808", "w": "402818", "g": "402818", "c": "f0d040", "C": "c0a020", "p": "e05050", "b": "604030"},
 	"scientist": {"h": "607080", "H": "405060", "w": "607080", "g": "607080", "c": "f8f8f8", "C": "c8c8d0", "p": "404858", "b": "303030"},
+	"rocket": {"h": "303030", "H": "181818", "w": "e03030", "g": "303030", "c": "303030", "C": "202020", "p": "202020", "b": "c0c0c0"},
+	"giovanni": {"h": "302018", "H": "201008", "w": "302018", "g": "302018", "c": "c06830", "C": "904818", "p": "302820", "b": "202020"},
+	"leader1": {"h": "604028", "H": "402818", "w": "604028", "g": "604028", "c": "c09048", "C": "906830", "p": "604828", "b": "403020"},
+	"leader2": {"h": "f08030", "H": "c06020", "w": "f08030", "g": "f08030", "c": "f0d030", "C": "c0a020", "p": "4080e0", "b": "e05050"},
+	"leader3": {"h": "e0c040", "H": "a08820", "w": "e0c040", "g": "e0c040", "c": "608040", "C": "406028", "p": "406028", "b": "303030"},
+	"leader4": {"h": "302838", "H": "201828", "w": "e05050", "g": "302838", "c": "f0c040", "C": "c09020", "p": "e05050", "b": "804020"},
+	"leader5": {"h": "404070", "H": "282850", "w": "404070", "g": "404070", "c": "504080", "C": "382860", "p": "282840", "b": "202020"},
+	"leader6": {"h": "302040", "H": "201030", "w": "302040", "g": "302040", "c": "c02848", "C": "901830", "p": "202020", "b": "202020"},
+	"leader7": {"h": "f0f0f0", "H": "c0c0c0", "w": "202020", "g": "f0f0f0", "c": "f0f0f0", "C": "c0c0c0", "p": "e06030", "b": "303030"},
+	"elite1": {"h": "4060c0", "H": "284090", "w": "4060c0", "g": "4060c0", "c": "202020", "C": "101010", "p": "202020", "b": "202020"},
+	"elite2": {"h": "202020", "H": "101010", "w": "202020", "g": "202020", "c": "f0f0f0", "C": "c0c0c0", "p": "f0f0f0", "b": "806040"},
+	"elite3": {"h": "c0c0c8", "H": "909098", "w": "c0c0c8", "g": "c0c0c8", "c": "604880", "C": "403060", "p": "403060", "b": "202020"},
+	"elite4": {"h": "c03028", "H": "801810", "w": "c03028", "g": "c03028", "c": "202838", "C": "101828", "p": "202838", "b": "f0c030"},
 }
 
 const DOWN := [
@@ -344,12 +416,33 @@ const LEFT := [
 ]
 
 
+## Cheveux longs (sprite fille), dessinés par-dessus le sprite de base.
+const GIRL_HAIR := {
+	"down": ["................", "................", "................", "................", "................",
+		"................", "..g..........g..", "..g..........g..", "..gg........gg..", "...g........g...", "...............", ""],
+	"up": ["................", "................", "................", "................", "................",
+		"................", "..gggggggggggg..", "..gggggggggggg..", "..gggggggggggg..", "...gggggggggg...", "....gggggggg....", ""],
+	"left": ["................", "................", "................", "................", "................",
+		"................", "..........gg....", "..........ggg...", ".........gggg...", ".........ggg....", "..........g.....", ""],
+}
+
+
 ## Renvoie la texture d'un personnage : dir = "down"/"up"/"left"/"right", frame 0 (arrêt) ou 1/2 (marche).
+## look : clé de LOOKS, ou "boy_<tenue>" / "girl_<tenue>" pour le joueur.
 static func character(look: String, dir: String, frame: int) -> Texture2D:
 	var key := "c_%s_%s_%d" % [look, dir, frame]
 	if _cache.has(key):
 		return _cache[key]
+	var girl := look.begins_with("girl_")
 	var l: Dictionary = LOOKS.get(look, LOOKS["player"])
+	if look.begins_with("boy_") or girl:
+		l = LOOKS["player"].duplicate()
+		var o: Dictionary = Game.OUTFITS.get(look.split("_", true, 1)[1], Game.OUTFITS["classique"])
+		for k in o:
+			if k != "name":
+				l[k] = o[k]
+		if girl:
+			l["g"] = "f0a030" if not o.has("g") else o["g"]
 	var pal := {"k": OUTLINE, "s": Color("f8c898"), "e": OUTLINE}
 	for k in l:
 		pal[k] = Color(l[k])
@@ -368,7 +461,14 @@ static func character(look: String, dir: String, frame: int) -> Texture2D:
 		_:
 			rows = LEFT[0 if frame == 0 else 1]
 			flip = true
+	# Ombre sous les pieds.
+	for x in range(4, 12):
+		if img.get_pixel(x, 15).a == 0:
+			img.set_pixel(x, 15, Color(0, 0, 0, 0.25))
 	_stamp(img, rows, pal, 0, 0, flip)
+	if girl:
+		var hd := "left" if dir in ["left", "right"] else dir
+		_stamp(img, GIRL_HAIR[hd], pal, 0, 0, dir == "right")
 	var tex := _tex(img)
 	_cache[key] = tex
 	return tex
@@ -396,6 +496,24 @@ static func emote() -> Texture2D:
 		{"k": OUTLINE, "w": Color("f8f8f8"), "r": Color("e03030")})
 	var tex := _tex(img)
 	_cache["emote"] = tex
+	return tex
+
+
+static func egg() -> Texture2D:
+	if _cache.has("egg"):
+		return _cache["egg"]
+	var img := _img(32, 32)
+	for y in 32:
+		for x in 32:
+			var dx := (x - 15.5) / 11.0
+			var dy := (y - 17.0) / (14.0 if y > 17 else 15.5)
+			var d := dx * dx + dy * dy
+			if d < 1.0:
+				img.set_pixel(x, y, OUTLINE if d > 0.86 else Color("f8f0d8") if (x * 7 + y * 3) % 23 > 3 else Color("80c870"))
+	for p in [[11, 10], [19, 14], [13, 22], [21, 23], [16, 8]]:
+		_rect(img, p[0], p[1], 3, 2, Color("80c870"))
+	var tex := _tex(img)
+	_cache["egg"] = tex
 	return tex
 
 

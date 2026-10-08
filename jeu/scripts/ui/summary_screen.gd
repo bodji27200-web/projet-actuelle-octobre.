@@ -50,6 +50,20 @@ func _process(_delta: float) -> void:
 func _draw_page() -> void:
 	Kit.clear(_root)
 	var mon: Pokemon = list[index]
+	if mon.is_egg:
+		var ep := Kit.panel(_root, Rect2(40, 60, 400, 200), Color("f8f8f0"), Color("a09070"))
+		var tr := TextureRect.new()
+		tr.texture = PixelArt.egg()
+		tr.position = Vector2(150, 10)
+		tr.size = Vector2(96, 96)
+		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		ep.add_child(tr)
+		var l := Kit.label(ep, "", Vector2(16, 120), 15)
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		l.size = Vector2(368, 60)
+		l.text = "ŒUF\n" + mon.egg_hint()
+		return
 	var d := mon.data()
 	# Bandeau
 	var head := ColorRect.new()

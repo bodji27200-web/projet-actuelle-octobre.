@@ -39,7 +39,7 @@ func _process(delta: float) -> void:
 	var total := _label.get_total_character_count()
 	var fast := Input.is_action_pressed("a") or Input.is_action_pressed("b")
 	if _shown < total:
-		_shown += delta * SPEED * (3.0 if fast else 1.0)
+		_shown += delta * Game.text_speed() * (3.0 if fast else 1.0)
 		_label.visible_characters = int(_shown)
 		_arrow.visible = false
 		if act("a") or act("b"):
