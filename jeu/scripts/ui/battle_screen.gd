@@ -1093,7 +1093,15 @@ func _pick_switch(slot: int, forced: bool) -> int:
 			return -1
 		# Sécurité : jamais un Pokémon K.O., un Œuf ou un Pokémon déjà au combat.
 		var chosen: Pokemon = battle.sides[0].party[idx + off] if idx + off < battle.sides[0].party.size() else null
-		if chosen == null or chosen.is_egg or chosen.hp <= 0 or on_field.has(idx):
+		if chosen == null:
+			continue
+		if on_field.has(idx):
+			await _say("%s est déjà au combat !" % chosen.name())
+			if not forced:
+				return -1
+			continue
+		if chosen.is_egg or chosen.hp <= 0:
+			await _say("%s n'a plus la force de se battre !" % chosen.name() if not chosen.is_egg else "Un Œuf ne peut pas se battre !")
 			continue
 		return idx + off
 	return -1

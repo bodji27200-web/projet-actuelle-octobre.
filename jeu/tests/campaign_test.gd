@@ -203,9 +203,9 @@ func _autopilot(done: Array) -> void:
 			await get_tree().process_frame
 		elif t is PartyScreen:
 			# Le premier Pokémon en forme (après un K.O., il faut en envoyer un autre).
-			var pick := 0
+			var pick := -1 if t.mode == "battle" else 0
 			for i in Game.party.size():
-				if Game.party[i].hp > 0 and not Game.party[i].is_egg:
+				if Game.party[i].hp > 0 and not Game.party[i].is_egg and not (t.mode == "battle" and t.blocked.has(i)):
 					pick = i
 					break
 			t.finish(pick)
