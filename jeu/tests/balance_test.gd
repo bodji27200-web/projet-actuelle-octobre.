@@ -75,7 +75,7 @@ func _best_move(b: Battle, bt: Battle.Battler, s: int) -> Dictionary:
 	var usable := b.usable_slots(0, s)
 	if usable.is_empty():
 		return {"type": "move", "id": Battle.STRUGGLE}
-	var best := usable[0]
+	var best: int = usable[0]
 	var best_t: Battle.Battler = null
 	var best_score := -1.0
 	for i in usable:

@@ -1430,7 +1430,7 @@ def rainbow(W):
                          "Giovanni : ... Encore toi. Toujours toi. Très bien. La Team Rainbow Rocket n'existe plus.", "giovanni", "villain",
                          aura="ground", money=50000)
     gardien = strong_trainer(W, "gardien_abime", "Gardien de l'Abîme", "", [(150, 100), (384, 100), (383, 100), (382, 100), (483, 100), (484, 100)],
-                             "Gardien de l'Abîme : ...", "Gardien de l'Abîme : ...", "abyss", "abyss", aura="dragon", money=100000)
+                             "Gardien de l'Abîme : ...", "Gardien de l'Abîme : ...", "abyss", "abyss", aura="dark", money=100000)
     W.trainers[gardien]["name"] = "Gardien de l'Abîme"
     W.quests["chap_rainbow"] = {"title": "Le Château Rocket", "main": False, "stages": ["",
         "Les huit Fragments Arc-en-Ciel t'ont mené au Château Rocket. Monte jusqu'au trône et bats Giovanni !",
