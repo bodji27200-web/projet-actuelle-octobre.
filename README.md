@@ -55,7 +55,8 @@ Si vous n'êtes pas dans le même groupe, chacun joue normalement, même sur la 
 - **Légendaires en fin de jeu** : Artikodin, Électhor, Sulfura, Ronflex, Mewtwo (après la Ligue), Mew (Pokédex à 150).
 - **Les 151 Pokémon**, tous obtenables, avec les vraies listes de Pokémon sauvages de Rouge Feu.
 - **303 capacités**, talents, IV, EV, 25 natures, shiny (1/4096), formule de capture officielle et **20 types de Balls**, **niveau maximum 100**.
-- **Pêche** : trois cannes (Canne à Carmin-sur-Mer, Super Canne à Parmanie, Méga Canne sur la Route 12, quête « Les frères pêcheurs »). Face à l'eau, appuie sur A (ou utilise la canne depuis le Sac) : chaque point d'eau a ses Pokémon, ceux de Rouge Feu (Magicarpe, Poissirène, Hypotrempe, Léviator, Minidraco au Parc Safari…). La Scuba Ball est plus efficace sur un Pokémon pêché.
+- **Pêche** : trois cannes (Canne à Carmin-sur-Mer, Super Canne à Parmanie, Méga Canne sur la Route 12, quête « Les frères pêcheurs »). Face à l'eau, appuie sur A (ou utilise la canne depuis le Sac). Tables de Rouge Feu complétées par celles de Cristal et HeartGold, plus quelques Pokémon Eau rares selon le lieu (étang, côte, mer : Stari, Otaria, Lokhlass…). Toutes les routes de pêche ont un étang. La Scuba Ball est plus efficace sur un Pokémon pêché.
+- **Builds** : 25 natures, IV (0-31) et EV (252 par stat, 510 au total) avec la formule officielle, tous visibles dans le résumé (page STATS, avec le caractère du Pokémon). Vitamines (+10 EV), Baies anti-EV (-10), **Aromates** pour changer de nature (herboriste du Magasin de Céladopole), talent **Synchro** en tête d'équipe (1 chance sur 2 de copier la nature d'un Pokémon sauvage) et **Joliesse**.
 - **Œufs** : Pension de la Route 5 (groupes d'œufs, IV hérités), Œuf de Léo. Ils éclosent en marchant, comme dans les jeux.
 - **15 tenues** : garçon ou fille au choix, tenues en boutique (Céladopole), en récompense de quêtes et de boss. Changement depuis le menu TENUES ou la penderie de ta chambre.
 - **Mini-carte** en haut à droite et **carte de Kanto** (touche C) avec ta position et celle de ton partenaire.
@@ -67,7 +68,7 @@ Si vous n'êtes pas dans le même groupe, chacun joue normalement, même sur la 
 
 - `jeu/tools/build_data.py` : données Pokémon depuis les CSV de PokeAPI. `jeu/tools/build_world.py` : génère et vérifie toute la région. `jeu/tools/build_audio.py` : compose et synthétise la musique. `jeu/tools/patch_font.py` : ajoute à la police Jersey 10 les symboles qui lui manquent (♂ ♀ ★ ▶ ₽…).
 - Tests (`godot --headless res://tests/...`) :
-  - `systems_test.tscn` : plus de 1 000 vérifications (Balls, capture, évolutions, expérience, rythme de progression, PP, effet de chaque capacité, K.O., tenues, œufs, rival, données du monde, pêche, affichage) ;
+  - `systems_test.tscn` : plus de 1 000 vérifications (Balls, capture, évolutions, expérience, rythme de progression, PP, effet de chaque capacité, K.O., tenues, œufs, rival, données du monde, pêche, natures/IV/EV, affichage) ;
   - `smoke_test.tscn` : combats aléatoires simples, doubles, coop et boss, et tous les écrans ;
   - `play_test.tscn` : un robot joue le début du jeu, puis va pêcher à Carmin ;
   - `net_test.tscn` : lancer deux fois (`-- host` puis `-- client`), un combat coop sauvage, dresseurs et boss.

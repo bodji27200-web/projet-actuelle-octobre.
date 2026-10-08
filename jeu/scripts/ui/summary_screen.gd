@@ -141,30 +141,38 @@ func _info(p: Control, mon: Pokemon, d: Dictionary) -> void:
 
 func _stats(p: Control, mon: Pokemon) -> void:
 	var nat: Dictionary = Data.natures[mon.nature]
-	Kit.label(p, "STAT", Vector2(10, 4), 13, Color("806040"))
-	Kit.label(p, "VALEUR", Vector2(110, 4), 13, Color("806040"))
-	Kit.label(p, "IV", Vector2(190, 4), 13, Color("806040"))
-	Kit.label(p, "EV", Vector2(234, 4), 13, Color("806040"))
+	Kit.label(p, "STAT", Vector2(10, 2), 13, Color("806040"))
+	Kit.label(p, "VALEUR", Vector2(110, 2), 13, Color("806040"))
+	Kit.label(p, "IV", Vector2(190, 2), 13, Color("806040"))
+	Kit.label(p, "EV", Vector2(234, 2), 13, Color("806040"))
 	var total_ev := 0
+	var iv_total := 0
 	for i in 6:
-		var y := 26 + i * 26
+		var y := 22 + i * 21
 		var col := Kit.INK
 		if nat["up"] == i:
 			col = Color("d03030")
 		elif nat["down"] == i:
 			col = Color("3050c0")
-		Kit.label(p, Data.STAT_NAMES[i], Vector2(10, y), 15, col)
+		Kit.label(p, Data.STAT_NAMES[i], Vector2(10, y), 14, col)
 		var v := "%d/%d" % [mon.hp, mon.max_hp()] if i == 0 else str(mon.stats[i])
-		Kit.label(p, v, Vector2(110, y), 15)
-		Kit.label(p, str(mon.ivs[i]), Vector2(190, y), 15, Color("308030") if mon.ivs[i] == 31 else Kit.INK)
-		Kit.label(p, str(mon.evs[i]), Vector2(234, y), 15)
+		Kit.label(p, v, Vector2(110, y), 14)
+		Kit.label(p, str(mon.ivs[i]), Vector2(190, y), 14, Color("308030") if mon.ivs[i] == 31 else Kit.INK)
+		Kit.label(p, str(mon.evs[i]), Vector2(234, y), 14, Color("308030") if mon.evs[i] >= 252 else Kit.INK)
 		total_ev += mon.evs[i]
-	Kit.label(p, "EV au total : %d / 510" % total_ev, Vector2(10, 186), 13)
-	var iv_total := 0
-	for v in mon.ivs:
-		iv_total += v
-	Kit.label(p, "IV au total : %d / 186" % iv_total, Vector2(10, 204), 13)
-	Kit.label(p, "Puissance Cachée : type %s" % Data.type_name(mon.hidden_power_type()), Vector2(10, 222), 13)
+		iv_total += mon.ivs[i]
+	# Nature : stat augmentée en rouge, baissée en bleu (comme dans les jeux).
+	Kit.label(p, "Nature %s" % nat["name"], Vector2(10, 150), 13, Color("806040"))
+	if nat["up"] >= 0:
+		Kit.label(p, "+" + Data.STAT_NAMES[nat["up"]], Vector2(120, 150), 13, Color("d03030"))
+		Kit.label(p, "-" + Data.STAT_NAMES[nat["down"]], Vector2(200, 150), 13, Color("3050c0"))
+	else:
+		Kit.label(p, "neutre (aucun effet)", Vector2(120, 150), 13)
+	Kit.label(p, "Caractère : " + mon.characteristic() + ".", Vector2(10, 168), 12, Color("406080"))
+	Kit.label(p, "EV : %d / 510" % total_ev, Vector2(10, 186), 13)
+	Kit.label(p, "IV : %d / 186" % iv_total, Vector2(150, 186), 13)
+	Kit.label(p, "Puissance Cachée : type %s" % Data.type_name(mon.hidden_power_type()), Vector2(10, 204), 13)
+	Kit.label(p, "IV : inné (0-31)   EV : entraîné (252 max)", Vector2(10, 222), 10, Color("707070"))
 	var exp_bg := ColorRect.new()
 	exp_bg.position = Vector2(40, 252)
 	exp_bg.size = Vector2(230, 8)

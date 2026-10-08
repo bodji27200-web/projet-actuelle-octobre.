@@ -661,7 +661,31 @@ static func pick_wild(table: Array) -> Pokemon:
 		if r < 0:
 			pick = e
 			break
-	return Pokemon.create(pick[0], randi_range(pick[1], pick[2]))
+	var mon := Pokemon.create(pick[0], randi_range(pick[1], pick[2]))
+	lead_ability(mon)
+	return mon
+
+
+## Talents du Pokémon de tête hors combat, comme dans les jeux :
+## Synchro : 1 chance sur 2 que le Pokémon sauvage ait la même nature.
+## Joliesse : 2 chances sur 3 qu'il soit du sexe opposé.
+static func lead_ability(mon: Pokemon) -> void:
+	var lead: Pokemon = null
+	for m in Game.party:
+		if not m.is_egg:
+			lead = m
+			break
+	if lead == null:
+		return
+	match Data.ability_ident(lead.ability):
+		"synchronize":
+			if randf() < 0.5:
+				mon.nature = lead.nature
+				mon.recalc_stats()
+				mon.hp = mon.max_hp()
+		"cute-charm":
+			if mon.gender < 2 and lead.gender < 2 and randf() < 2.0 / 3.0:
+				mon.gender = 1 - lead.gender
 
 
 static func wild_encounter(ow: Node, table: Array) -> void:

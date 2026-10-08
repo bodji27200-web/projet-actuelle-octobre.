@@ -743,7 +743,7 @@ func _item_action(item: String, b: Battle.Battler) -> Variant:
 	if item in ItemUse.BATTLE_ONLY:
 		Game.remove_item(item)
 		return {"type": "item", "item": item}
-	if not ItemUse.targets_pokemon(item) or ItemUse.is_tm(item) or item in ItemUse.STONES or item == "rare-candy" or ItemUse.VITAMINS.has(item):
+	if not ItemUse.targets_pokemon(item) or ItemUse.is_tm(item) or item in ItemUse.STONES or item == "rare-candy" or ItemUse.field_only(item):
 		await _say("Ce n'est pas le moment d'utiliser ça !")
 		return null
 	var ps := PartyScreen.new()

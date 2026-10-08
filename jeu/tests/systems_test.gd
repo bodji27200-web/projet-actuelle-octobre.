@@ -30,6 +30,7 @@ func _ready() -> void:
 	_rival()
 	_world_data()
 	_fishing()
+	_builds()
 	_display()
 	print("\n=== RÉSULTAT : %d vérifications OK, %d échecs ===" % [ok, fail])
 	for f in failures.slice(0, 60):
@@ -587,7 +588,7 @@ func _fishing() -> void:
 	# Canne : Magicarpe ; Méga Canne : Pokémon plus forts.
 	var old: Array = Game.maps["carmin"]["wild"]["old-rod"]
 	var sup: Array = Game.maps["carmin"]["wild"]["super-rod"]
-	check(old.size() == 1 and int(old[0][0]) == 129, "Canne de Carmin = Magicarpe")
+	check(old.size() >= 2 and int(old[0][0]) == 129, "Canne de Carmin : surtout des Magicarpe, mais pas que")
 	check(sup.any(func(e): return e[2] >= 30), "Méga Canne : Pokémon jusqu'au N.30+")
 	check(Game.maps["safari"]["wild"]["super-rod"].any(func(e): return int(e[0]) == 147), "Minidraco pêchable au Parc Safari")
 	# Scuba Ball efficace sur un Pokémon pêché.
@@ -595,6 +596,129 @@ func _fishing() -> void:
 	check(b.ball_bonus("dive-ball", b.battler(1, 0)) == 1.0, "Scuba Ball x1 hors pêche")
 	b.fishing = true
 	check(b.ball_bonus("dive-ball", b.battler(1, 0)) == 3.5, "Scuba Ball x3,5 à la pêche")
+
+
+func _builds() -> void:
+	print("Natures, IV, EV, builds...")
+	# 25 natures : 5 neutres, 20 qui couvrent chaque paire (+stat, -stat) une seule fois.
+	check(Data.natures.size() == 25, "25 natures")
+	var pairs := {}
+	var neutral := 0
+	for n in Data.natures:
+		if n["up"] < 0:
+			neutral += 1
+		else:
+			check(n["up"] != n["down"] and n["up"] >= 1 and n["down"] >= 1, "Nature %s modifie deux stats différentes (hors PV)" % n["name"])
+			pairs["%d/%d" % [n["up"], n["down"]]] = true
+	check(neutral == 5 and pairs.size() == 20, "5 natures neutres + 20 combinaisons (%d, %d)" % [neutral, pairs.size()])
+	check(Data.natures[Pokemon.nature_index("adamant")]["name"] == "Rigide" and Data.natures[Pokemon.nature_index("timid")]["name"] == "Timide", "Noms français des natures")
+	# Formule des stats (3e génération et suivantes), calculée à la main.
+	var p := Pokemon.create(25, 100)
+	var b: Array = p.data()["base"]
+	p.ivs = [31, 31, 31, 31, 31, 31]
+	p.evs = [0, 252, 0, 0, 4, 252]
+	p.nature = Pokemon.nature_index("adamant")
+	p.recalc_stats()
+	check(p.stats[0] == (2 * b[0] + 31) + 100 + 10, "PV = 2xBase + IV + EV/4 + N + 10 (%d)" % p.stats[0])
+	check(p.stats[1] == int(float((2 * b[1] + 31 + 63) + 5) * 1.1), "Attaque Rigide 252 EV (%d)" % p.stats[1])
+	check(p.stats[3] == int(float((2 * b[3] + 31) + 5) * 0.9), "Atq. Spé. baissée par Rigide (%d)" % p.stats[3])
+	check(p.stats[4] == (2 * b[4] + 31 + 1) + 5, "4 EV = +1 point au N.100 (%d)" % p.stats[4])
+	var low := Pokemon.create(25, 50)
+	low.ivs = [0, 0, 0, 0, 0, 0]
+	low.evs = [0, 0, 0, 0, 0, 0]
+	low.nature = Pokemon.nature_index("hardy")
+	low.recalc_stats()
+	var hi := Pokemon.create(25, 50)
+	hi.ivs = [31, 31, 31, 31, 31, 31]
+	hi.evs = [0, 0, 0, 0, 0, 0]
+	hi.nature = low.nature
+	hi.recalc_stats()
+	check(hi.stats[5] - low.stats[5] == 15, "31 IV = +15 points au N.50 (%d)" % (hi.stats[5] - low.stats[5]))
+	# EV : 252 par stat, 510 au total, gagnés en battant des Pokémon.
+	var t := Pokemon.create(1, 30)
+	t.evs = [0, 0, 0, 0, 0, 0]
+	for i in 400:
+		t.add_evs([0, 2, 0, 0, 0, 3])
+	var tot := 0
+	for v in t.evs:
+		tot += v
+	check(t.evs[5] == 252 and t.evs[1] == 252 and tot <= 510, "EV plafonnés à 252 par stat (%s)" % [t.evs])
+	for i in 400:
+		t.add_evs([2, 0, 2, 0, 0, 0])
+	tot = 0
+	for v in t.evs:
+		tot += v
+	check(tot == 510, "EV plafonnés à 510 au total (%d)" % tot)
+	check(Data.pokemon[129]["ev"][5] == 1 and Data.pokemon[143]["ev"][0] == 2, "EV donnés : Magicarpe 1 Vitesse, Ronflex 2 PV")
+	# Vitamines (+10) et Baies (-10).
+	var v := Pokemon.create(1, 30)
+	v.evs = [0, 0, 0, 0, 0, 0]
+	check(ItemUse.apply(v, "protein") != "" and v.evs[1] == 10, "Protéine : +10 EV Attaque")
+	check(ItemUse.apply(v, "kelpsy-berry") != "" and v.evs[1] == 0, "Baie Alga : -10 EV Attaque")
+	check(ItemUse.apply(v, "kelpsy-berry") == "", "Baie inutile à 0 EV (pas consommée)")
+	check(ItemUse.field_only("tamato-berry") and ItemUse.field_only("jolly-mint") and ItemUse.targets_pokemon("jolly-mint"), "Baies et Aromates : hors combat, sur un Pokémon")
+	# Aromates : changent la nature et donc les stats.
+	var m := Pokemon.create(6, 50)
+	m.nature = Pokemon.nature_index("modest")
+	m.recalc_stats()
+	var atk: int = m.stats[1]
+	check(ItemUse.apply(m, "adamant-mint") != "" and Data.natures[m.nature]["name"] == "Rigide" and m.stats[1] > atk, "Aromate Rigide")
+	check(ItemUse.apply(m, "adamant-mint") == "", "Aromate inutile si la nature est déjà la bonne")
+	check(ItemUse.apply(m, "serious-mint") != "" and Data.natures[m.nature]["up"] == -1, "Aromate Sérieux = nature neutre")
+	for n in ["lonely", "adamant", "naughty", "brave", "bold", "impish", "lax", "relaxed", "modest", "mild", "rash", "quiet",
+			"calm", "gentle", "careful", "sassy", "timid", "hasty", "jolly", "naive", "serious"]:
+		check(Data.items.has(n + "-mint") and Pokemon.nature_index(n) >= 0, "Aromate %s" % n)
+	# Caractère.
+	var c := Pokemon.create(1, 10)
+	c.ivs = [0, 0, 0, 0, 0, 0]
+	check(c.characteristic() == "Il adore manger", "Caractère : IV tous à 0 -> « Il adore manger »")
+	c.ivs = [10, 3, 4, 2, 1, 30]
+	check(c.characteristic() == "Il aime la vitesse", "Caractère : meilleur IV en Vitesse (30) -> « Il aime la vitesse »")
+	var missing := 0
+	for i in 300:
+		if Pokemon.create(randi_range(1, 151), 20).characteristic() == "":
+			missing += 1
+	check(missing == 0, "Chaque Pokémon a un caractère")
+	# Synchro : 1 chance sur 2 (+1/25) que la nature soit copiée.
+	var saved := Game.party.duplicate()
+	var sync := Pokemon.create(63, 20)
+	for id in Data.abilities:
+		if Data.abilities[id]["ident"] == "synchronize":
+			sync.ability = id
+	sync.nature = Pokemon.nature_index("timid")
+	Game.party = [sync]
+	var same := 0
+	for i in 1000:
+		if Events.pick_wild([[19, 3, 3, 1]]).nature == sync.nature:
+			same += 1
+	check(same > 440 and same < 600, "Synchro : ~52 %% de natures copiées (%d / 1000)" % same)
+	Game.party = saved
+	# Pension : 3 IV hérités des parents.
+	Game.daycare = [Pokemon.create(19, 20), Pokemon.create(19, 20)]
+	Game.daycare[0].gender = 0
+	Game.daycare[1].gender = 1
+	Game.daycare[0].ivs = [31, 31, 31, 31, 31, 31]
+	Game.daycare[1].ivs = [31, 31, 31, 31, 31, 31]
+	var perfect := 0
+	for i in 200:
+		var egg := Game.daycare_make_egg()
+		perfect += egg.ivs.count(31)
+	check(perfect >= 200 * 3, "Œuf : au moins 3 IV hérités des parents (%.1f IV à 31 en moyenne)" % (perfect / 200.0))
+	Game.daycare = []
+	# Pêche plus variée et étangs sur les routes de pêche.
+	for mid in ["r22", "r4", "r24", "r6", "r11", "r13", "r12"]:
+		var water := false
+		for row in Game.maps[mid]["rows"]:
+			if "~" in row or "w" in row:
+				water = true
+		check(water, "%s : un point d'eau pour pêcher" % mid)
+	for mid in Game.maps:
+		var has_water := false
+		for row in Game.maps[mid]["rows"]:
+			if "~" in row or "w" in row:
+				has_water = true
+		if has_water:
+			check(Game.maps[mid]["wild"]["super-rod"].size() >= 5, "%s : au moins 5 Pokémon à la Méga Canne (%d)" % [mid, Game.maps[mid]["wild"]["super-rod"].size()])
 
 
 func _display() -> void:

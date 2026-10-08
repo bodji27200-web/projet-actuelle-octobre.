@@ -218,14 +218,21 @@ awakening burn-heal ice-heal full-heal ether max-ether elixir max-elixir fresh-w
 lemonade moomoo-milk rare-candy hp-up protein iron calcium zinc carbos pp-up pp-max
 fire-stone water-stone thunder-stone leaf-stone moon-stone linking-cord
 x-attack x-defense x-sp-atk x-sp-def x-speed x-accuracy dire-hit guard-spec
-repel super-repel max-repel escape-rope""".split()
+repel super-repel max-repel escape-rope
+pomeg-berry kelpsy-berry qualot-berry hondew-berry grepa-berry tamato-berry""".split()
+# Aromates (changent la nature) : une par nature qui modifie les stats, plus Sérieux (neutre).
+MINTS = """lonely adamant naughty brave bold impish lax relaxed modest mild rash quiet calm gentle careful sassy
+timid hasty jolly naive serious""".split()
+ITEMS += [f"{n}-mint" for n in MINTS]
+PRICES = {f"{n}-mint": 15000 for n in MINTS}
+PRICES.update({b: 500 for b in "pomeg-berry kelpsy-berry qualot-berry hondew-berry grepa-berry tamato-berry".split()})
 out_items = {}
 for ident in ITEMS:
     r = item_by_ident.get(ident)
     if r is None:
         print("objet introuvable :", ident)
         continue
-    out_items[ident] = {"name": item_names.get(r["id"], ident), "desc": item_desc.get(r["id"], ""), "price": int(r["cost"])}
+    out_items[ident] = {"name": item_names.get(r["id"], ident), "desc": item_desc.get(r["id"], ""), "price": PRICES.get(ident, int(r["cost"]))}
 for ident in KEY_ITEMS:
     r = item_by_ident.get(ident)
     if r is None:
@@ -249,7 +256,11 @@ nat_names = fr_names("nature_names", "nature_id")
 out_nat = []
 for r in sorted(rows("natures"), key=lambda r: int(r["game_index"])):
     up, down = int(r["increased_stat_id"]), int(r["decreased_stat_id"])
-    out_nat.append({"name": nat_names[r["id"]], "up": up - 1 if up != down else -1, "down": down - 1 if up != down else -1})
+    out_nat.append({"name": nat_names[r["id"]], "ident": r["identifier"], "up": up - 1 if up != down else -1, "down": down - 1 if up != down else -1})
+
+# Caractère (« Il aime la vitesse »...) : dépend du meilleur IV et de sa valeur modulo 5.
+char_text = {r["characteristic_id"]: r["message"] for r in rows("characteristic_text") if r["local_language_id"] == FR}
+out_char = [{"stat": int(r["stat_id"]) - 1, "mod": int(r["gene_mod_5"]), "text": char_text[r["id"]]} for r in rows("characteristics")]
 
 exp = defaultdict(lambda: [0] * 101)
 for r in rows("experience"):
@@ -276,9 +287,6 @@ for r in rows("encounters"):
         continue
     entry = [int(r["pokemon_id"]), int(r["min_level"]), int(r["max_level"]), int(slots[r["encounter_slot_id"]]["rarity"])]
     enc[key][kind].append(entry)
-    # Tables de pêche séparées, une par canne (Canne, Super Canne, Méga Canne).
-    if m.endswith("-rod"):
-        enc[key][m].append(list(entry))
 out_enc = {}
 for key, kinds in enc.items():
     out_enc[key] = {}
@@ -292,6 +300,30 @@ for key, kinds in enc.items():
                 merged[sid] = [sid, lo, hi, w]
         out_enc[key][kind] = sorted(merged.values(), key=lambda x: -x[3])
 
+# Pêche : une table par canne. Rouge Feu seul est très pauvre (la Canne ne donne que Magicarpe) :
+# on la complète avec Cristal et HeartGold, qui ont les mêmes lieux de Kanto. Chaque jeu pèse autant.
+ROD_VERSIONS = ("10", "6", "15")
+rod_src = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+for r in rows("encounters"):
+    if r["version_id"] not in ROD_VERSIONS or int(r["pokemon_id"]) > MAX_ID:
+        continue
+    m = methods[slots[r["encounter_slot_id"]]["encounter_method_id"]]
+    if not m.endswith("-rod"):
+        continue
+    a = areas[r["location_area_id"]]
+    key = locs[a["location_id"]] + ("/" + a["identifier"] if a["identifier"] else "")
+    rod_src[key][m][r["version_id"]].append((int(r["pokemon_id"]), int(r["min_level"]), int(r["max_level"]), int(slots[r["encounter_slot_id"]]["rarity"])))
+for key, rods in rod_src.items():
+    for rod, per_version in rods.items():
+        merged = {}
+        for lst in per_version.values():
+            total = sum(e[3] for e in lst) or 1
+            for sid, lo, hi, w in lst:
+                m = merged.setdefault(sid, [sid, lo, hi, 0.0])
+                m[1] = min(m[1], lo); m[2] = max(m[2], hi); m[3] += 100.0 * w / total
+        table = [[sid, lo, hi, max(1, round(w))] for sid, lo, hi, w in merged.values()]
+        out_enc.setdefault(key, {})[rod] = sorted(table, key=lambda x: -x[3])
+
 
 def dump(name, obj):
     with open(f"{OUT}/{name}.json", "w", encoding="utf-8") as f:
@@ -303,5 +335,5 @@ dump("pokemon", out_pkmn)
 dump("moves", out_moves)
 dump("abilities", out_abil)
 dump("items", out_items)
-dump("misc", {"natures": out_nat, "exp": {str(k): v for k, v in exp.items()}, "types": type_fr})
+dump("misc", {"natures": out_nat, "characteristics": out_char, "exp": {str(k): v for k, v in exp.items()}, "types": type_fr})
 print(len(out_pkmn), "pokémon,", len(out_moves), "capacités,", len(out_abil), "talents,", len(out_items), "objets")

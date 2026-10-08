@@ -79,6 +79,13 @@ func _ready() -> void:
 	world.show_emote(world.player)
 	await _snap("26_peche_touche")
 	world.fish_bobber("")
+	for y in Game.maps["r24"]["h"]:
+		var row3: String = Game.maps["r24"]["rows"][y]
+		var x3 := row3.find("~")
+		if x3 >= 0:
+			world.load_map("r24", Vector2i(maxi(1, x3 - 3), y), "right")
+			break
+	await _snap("27_etang_route24")
 	world.load_map("centre_jadielle", Vector2i(6, 4), "up")
 	ui.say("Bienvenue au Centre Pokémon ! Nous soignons vos Pokémon gratuitement. Voulez-vous que je soigne vos Pokémon ?")
 	for k in 200:

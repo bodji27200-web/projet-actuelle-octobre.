@@ -239,6 +239,27 @@ func hidden_power_type() -> String:
 	return HP_TYPES[int(t * 15 / 63)]
 
 
+## Caractère (« Il aime la vitesse ») : il dépend du meilleur IV et de sa valeur modulo 5.
+## En cas d'égalité : PV, Attaque, Défense, Vitesse, Atq. Spé., Déf. Spé.
+func characteristic() -> String:
+	var best := 0
+	for i in [0, 1, 2, 5, 3, 4]:
+		if ivs[i] > ivs[best]:
+			best = i
+	for c in Data.characteristics:
+		if c["stat"] == best and c["mod"] == ivs[best] % 5:
+			return c["text"]
+	return ""
+
+
+## Indice de nature à partir de son identifiant anglais (« adamant »), -1 si inconnu.
+static func nature_index(ident: String) -> int:
+	for i in Data.natures.size():
+		if Data.natures[i].get("ident", "") == ident:
+			return i
+	return -1
+
+
 func gender_symbol() -> String:
 	return ["♂", "♀", ""][gender]
 

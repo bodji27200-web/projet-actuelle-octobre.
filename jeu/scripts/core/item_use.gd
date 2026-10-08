@@ -11,6 +11,8 @@ const CURE := {"antidote": ["psn", "tox"], "paralyze-heal": ["par"], "awakening"
 	"burn-heal": ["brn"], "ice-heal": ["frz"], "full-heal": ["psn", "tox", "par", "slp", "brn", "frz"],
 	"full-restore": ["psn", "tox", "par", "slp", "brn", "frz"]}
 const VITAMINS := {"hp-up": 0, "protein": 1, "iron": 2, "calcium": 3, "zinc": 4, "carbos": 5}
+## Baies qui baissent les EV d'une stat de 10 (et rendent le Pokémon plus amical).
+const EV_BERRIES := {"pomeg-berry": 0, "kelpsy-berry": 1, "qualot-berry": 2, "hondew-berry": 3, "grepa-berry": 4, "tamato-berry": 5}
 const STONES := ["fire-stone", "water-stone", "thunder-stone", "leaf-stone", "moon-stone", "linking-cord"]
 const BATTLE_ONLY := ["x-attack", "x-defense", "x-sp-atk", "x-sp-def", "x-speed", "x-accuracy", "dire-hit", "guard-spec"]
 const PP_ITEMS := ["ether", "max-ether", "pp-up", "pp-max"]
@@ -24,6 +26,16 @@ static func is_tm(item: String) -> bool:
 	return item.begins_with("tm")
 
 
+## Aromate : change la nature du Pokémon.
+static func is_mint(item: String) -> bool:
+	return item.ends_with("-mint")
+
+
+## Objets d'entraînement (vitamines, Baies, Aromates) : hors combat seulement.
+static func field_only(item: String) -> bool:
+	return VITAMINS.has(item) or EV_BERRIES.has(item) or is_mint(item)
+
+
 static func category(item: String) -> String:
 	if is_ball(item):
 		return "balls"
@@ -31,7 +43,7 @@ static func category(item: String) -> String:
 		return "ct"
 	if Data.items.get(item, {}).get("key", false):
 		return "rares"
-	if BATTLE_ONLY.has(item) or STONES.has(item) or item.ends_with("repel") or item == "escape-rope" or item == "rare-candy" or VITAMINS.has(item):
+	if BATTLE_ONLY.has(item) or STONES.has(item) or item.ends_with("repel") or item == "escape-rope" or item == "rare-candy" or field_only(item):
 		return "objets"
 	return "soins"
 
@@ -43,7 +55,7 @@ static func needs_move(item: String) -> bool:
 
 ## Objet utilisable sur un Pokémon de l'équipe ?
 static func targets_pokemon(item: String) -> bool:
-	return HEAL.has(item) or CURE.has(item) or VITAMINS.has(item) or STONES.has(item) \
+	return HEAL.has(item) or CURE.has(item) or field_only(item) or STONES.has(item) \
 		or PP_ITEMS.has(item) or item in ["revive", "max-revive", "elixir", "max-elixir", "rare-candy"] or is_tm(item)
 
 
@@ -79,6 +91,21 @@ static func apply(mon: Pokemon, item: String, move_index := -1) -> String:
 		mon.recalc_stats()
 		mon.happiness = mini(255, mon.happiness + 5)
 		msgs.append("%s de %s augmente !" % [Data.STAT_NAMES[i], n])
+	if EV_BERRIES.has(item):
+		var s: int = EV_BERRIES[item]
+		if mon.evs[s] <= 0:
+			return ""
+		mon.evs[s] = maxi(0, mon.evs[s] - 10)
+		mon.recalc_stats()
+		mon.happiness = mini(255, mon.happiness + 10)
+		msgs.append("%s de %s baisse ! (EV : %d)" % [Data.STAT_NAMES[s], n, mon.evs[s]])
+	if is_mint(item):
+		var nat := Pokemon.nature_index(item.trim_suffix("-mint"))
+		if nat < 0 or nat == mon.nature:
+			return ""
+		mon.nature = nat
+		mon.recalc_stats()
+		msgs.append("%s hume l'Aromate... Sa nature devient %s !" % [n, Data.natures[nat]["name"]])
 	if item in ["elixir", "max-elixir"]:
 		var any := false
 		for m in mon.moves:

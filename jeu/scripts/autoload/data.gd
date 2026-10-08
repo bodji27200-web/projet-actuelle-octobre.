@@ -42,6 +42,7 @@ var moves := {}
 var abilities := {}
 var items := {}
 var natures: Array = []
+var characteristics: Array = []
 var exp_table := {}
 var type_names := {}
 
@@ -53,6 +54,7 @@ func _ready() -> void:
 	items = _load("items")
 	var misc: Dictionary = _load("misc")
 	natures = misc["natures"]
+	characteristics = misc.get("characteristics", [])
 	type_names = misc["types"]
 	exp_table = _int_keys(misc["exp"])
 

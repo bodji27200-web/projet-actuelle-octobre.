@@ -902,6 +902,14 @@ ms.npc("vendeur_objets", "clerk", 2, 2, kind="shop", stock=MARTS["high"] + ["fir
                                                                             "x-attack", "x-defense", "x-speed", "x-sp-atk", "x-sp-def", "x-accuracy", "dire-hit", "guard-spec",
                                                                             "hp-up", "protein", "iron", "calcium", "zinc", "carbos", "fresh-water", "soda-pop", "lemonade"])
 ms.npc("vendeur_ct", "clerk", 12, 2, kind="shop", stock=[f"tm{n:02d}" for n in range(1, 51)])
+MINTS = ["lonely", "adamant", "naughty", "brave", "bold", "impish", "lax", "relaxed", "modest", "mild", "rash", "quiet",
+         "calm", "gentle", "careful", "sassy", "timid", "hasty", "jolly", "naive", "serious"]
+ms.npc("herboriste", "lass", 2, 6, "right", kind="shop",
+       stock=["pomeg-berry", "kelpsy-berry", "qualot-berry", "hondew-berry", "grepa-berry", "tamato-berry"] + [f"{n}-mint" for n in MINTS])
+ms.npc("conseil_build", "youngster", 9, 8, "up", text=[
+    "L'herboriste vend des Aromates : ils changent la nature d'un Pokémon. Pratique pour un build !",
+    "Ses Baies baissent les EV d'une stat de 10. Les vitamines, elles, en ajoutent 10.",
+    "Les IV, eux, ne changent jamais. Il faut capturer ou faire éclore le bon Pokémon !"])
 ms.npc("vendeur_tenues", "lass", 7, 2, kind="outfit_shop", stock=["bleu_marine", "vert_foret", "noir_minuit", "blanc_neige", "rose_bonbon", "orange_soleil"])
 ms.npc("porygon_vendeur", "scientist", 12, 6, "left", kind="script", script=[
     iff(F("porygon_got"), [say("Porygon est un Pokémon artificiel. Il aime les ordinateurs !")],
@@ -1446,13 +1454,85 @@ for mid, extra in EXTRA.items():
 for mid, extra in MARSH_EXTRA.items():
     maps[mid].wild.setdefault("marsh", []).extend(extra)
 
+# Mares : certaines routes de Rouge Feu ont de l'eau (et des tables de pêche) mais le générateur
+# n'a pas pu y placer d'étang (route trop étroite). On en creuse un sur une zone d'herbe libre,
+# seulement si ça ne coupe aucun passage.
+def has_water(m):
+    return any(c in row for row in m.g for c in "~w")
+
+
+def add_pond(m, seed):
+    rng = random.Random(seed)
+    start = next(((x, y) for y in range(m.h) for x in range(m.w) if m.g[y][x] == ","), None)
+    if start is None:
+        return False
+    before = reachable(m, start)
+    for pw, ph in ((6, 4), (5, 4), (5, 3), (4, 3), (3, 4), (3, 3), (2, 4), (2, 3)):
+        spots = []
+        for y in range(1, m.h - ph):
+            for x in range(1, m.w - pw):
+                cells = [(xx, yy) for yy in range(y, y + ph) for xx in range(x, x + pw)]
+                if any(m.g[yy][xx] not in '."' or (xx, yy) in m.protected for xx, yy in cells):
+                    continue
+                ring = [(xx, yy) for yy in range(y - 1, y + ph + 1) for xx in range(x - 1, x + pw + 1) if (xx, yy) not in cells]
+                if any(m.get(xx, yy) in ",S" for xx, yy in ring):
+                    continue
+                if any(abs(n["x"] - cx) + abs(n["y"] - cy) <= 2 for n in m.npcs for cx, cy in cells):
+                    continue
+                if any(b["x"] - 1 <= cx <= b["x"] + b["w"] and b["y"] - 1 <= cy <= b["y"] + b["h"] for b in m.buildings for cx, cy in cells):
+                    continue
+                spots.append((x, y, cells))
+        rng.shuffle(spots)
+        for x, y, cells in spots:
+            old = {c: m.g[c[1]][c[0]] for c in cells}
+            m.rect(x, y, pw, ph, "w", True)
+            if pw >= 3 and ph >= 3:
+                m.rect(x + 1, y + 1, pw - 2, ph - 2, "~", True)
+            after = reachable(m, start)
+            # Rien d'autre que l'étang ne doit devenir inaccessible.
+            if before - set(cells) <= after:
+                return True
+            for (cx, cy), c in old.items():
+                m.g[cy][cx] = c
+                m.protected.discard((cx, cy))
+    return False
+
+
+for mid, mm in maps.items():
+    if mm.outdoor and mid in RECT and not has_water(mm) and any(rk in mm.wild for rk in RODS):
+        if not add_pond(mm, sum(map(ord, mid)) + 7):
+            print("pas de place pour un étang :", mid)
+
 # Pêche : chaque point d'eau a ses tables Canne / Super Canne / Méga Canne.
 wild(maps["bourg"], "pallet-town", kinds=())
 wild(maps["carmin"], "vermilion-city", kinds=())
 for mid, mm in maps.items():
-    if any(c in row for row in mm.g for c in "~w"):
+    if has_water(mm):
         for rk in RODS:
-            mm.wild.setdefault(rk, ENC["pallet-town"][rk])
+            mm.wild.setdefault(rk, list(ENC["pallet-town"][rk]))
+
+# Les vraies tables sont pauvres : on ajoute quelques Pokémon Eau selon le type de point d'eau.
+# Pourcentages approximatifs, ajoutés par-dessus les tables officielles.
+FISH_EXTRA = {
+    "pond": {"old-rod": [(60, 5, 10, 10)], "good-rod": [(54, 15, 25, 12), (79, 15, 25, 10), (60, 15, 20, 10)],
+             "super-rod": [(61, 25, 35, 15), (55, 30, 40, 6), (80, 35, 40, 3), (119, 30, 35, 8)]},
+    "coast": {"old-rod": [(72, 5, 10, 10), (98, 5, 10, 8)], "good-rod": [(120, 15, 25, 15), (98, 15, 25, 10)],
+              "super-rod": [(99, 30, 40, 12), (86, 30, 35, 10), (121, 35, 40, 3), (117, 30, 35, 8)]},
+    "sea": {"old-rod": [(72, 5, 10, 12)], "good-rod": [(120, 15, 25, 15), (90, 15, 25, 10)],
+            "super-rod": [(86, 30, 35, 12), (91, 35, 40, 3), (121, 35, 40, 4), (131, 35, 40, 2), (73, 30, 40, 10)]},
+    "cave": {"good-rod": [(86, 20, 30, 12)], "super-rod": [(86, 30, 40, 15), (87, 40, 45, 3), (55, 35, 40, 8)]},
+}
+for mid, mm in maps.items():
+    if not has_water(mm):
+        continue
+    kind = "sea" if mid in ("r19", "r20", "r21") else "coast" if mid in ("bourg", "carmin") else "cave" if mm.cave else "pond"
+    for rk, extra in FISH_EXTRA[kind].items():
+        table = mm.wild[rk] = [list(e) for e in mm.wild[rk]]
+        total = sum(e[3] for e in table) or 100
+        have = {e[0] for e in table}
+        for sid, lo, hi, pct in extra:
+            if sid not in have:
+                table.append([sid, lo, hi, max(1, round(total * pct / 100))])
 
 # ---------------------------------------------------------------------------
 # Finitions : connexions, panneaux, vérifications
