@@ -7,6 +7,8 @@ var errors := 0
 
 func _ready() -> void:
 	seed(1234)
+	# Sauvegarde à part : le test ne doit jamais toucher la vraie sauvegarde du joueur.
+	Game.save_path = "user://test_smoke.json"
 	_test_moves()
 	_test_random_battles()
 	_test_catch()
@@ -179,4 +181,5 @@ func _test_world_and_screens() -> void:
 	print("écrans OK")
 	Game.save_game()
 	assert(Game.load_game())
+	DirAccess.remove_absolute(Game.save_path)
 	print("sauvegarde OK")

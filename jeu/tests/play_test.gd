@@ -7,6 +7,10 @@ var log_t := 0
 
 
 func _ready() -> void:
+	# Partie neuve, sauvegarde à part (jamais la vraie sauvegarde du joueur).
+	Game.save_path = "user://test_play.json"
+	seed(42)
+	DirAccess.remove_absolute(Game.save_path)
 	main = load("res://scenes/main.tscn").instantiate()
 	add_child(main)
 	_run()
@@ -61,6 +65,9 @@ func _mash(cond: Callable, limit := 3000) -> bool:
 		if t is NameEntry:
 			await _enter()
 		elif t is TextBox:
+			await _tap("a")
+		elif t is Choice and t.options == ["OUI", "NON"]:
+			# Confirmations (starter, surnom...) : toujours OUI, pour un test reproductible.
 			await _tap("a")
 		elif t != null:
 			await _tap(["a", "a", "a", "down", "right", "up", "b"][randi() % 7])

@@ -570,8 +570,10 @@ func _after_step() -> void:
 	elif ch in "_uq" and (map.get("cave", false) or not map.get("outdoor", true)):
 		# Grottes, mais aussi tours, manoirs et repaires : on y croise des Pokémon partout sur le sol.
 		table = "grass" if map["wild"].has("grass") else "cave"
-	if table != "" and map.has("rare") and await Campaign.rare_check(self):
-		return
+	# Pas d'« await » dans une condition « and » : il ferait perdre une image même quand la condition est fausse.
+	if table != "" and map.has("rare"):
+		if await Campaign.rare_check(self):
+			return
 	if table != "" and map["wild"].has(table) and randf() < map.get("rate", 0.1):
 		await Events.wild_encounter(self, map["wild"][table])
 

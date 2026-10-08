@@ -34,6 +34,7 @@ func _ready() -> void:
 	_display()
 	_profile()
 	_social()
+	_campaign()
 	print("\n=== RÉSULTAT : %d vérifications OK, %d échecs ===" % [ok, fail])
 	for f in failures.slice(0, 60):
 		print("  ÉCHEC : ", f)
@@ -970,6 +971,102 @@ func _social() -> void:
 		if Decor.CATALOG[id].has("sid"):
 			check(Data.pokemon.has(int(Decor.CATALOG[id]["sid"])), "Peluche/statue %s : Pokémon existant" % id)
 	Game.new_game()
+
+
+func _campaign() -> void:
+	print("Campagne, Château Rocket, Abîme, Maître des Capacités...")
+	var saved_flags: Dictionary = Game.flags.duplicate()
+	# Un port par région, et l'ordre de déblocage de la campagne.
+	for r in Campaign.ORDER + ["rainbow"]:
+		check(not Campaign.port_of(r).is_empty(), "Port d'arrivée de %s" % r)
+	Game.flags = {}
+	check(not Campaign.unlocked("sevii") and not Campaign.unlocked("rainbow"), "Rien n'est ouvert avant la Ligue")
+	Game.set_flag("champion")
+	check(Campaign.unlocked("sevii") and not Campaign.unlocked("johto"), "Sevii s'ouvre après la Ligue, Johto après Sevii")
+	Game.set_flag("chap_sevii_done")
+	check(Campaign.unlocked("johto"), "Johto s'ouvre après Sevii")
+	for r in Campaign.ORDER.slice(1, -1):
+		Game.set_flag("champion_" + r)
+	check(Campaign.unlocked("paldea") and not Campaign.unlocked("rainbow"), "Paldea s'ouvre après Galar, le Château après Paldea")
+	Game.set_flag("champion_paldea")
+	check(Campaign.unlocked("rainbow"), "Le Château Rocket s'ouvre avec les 8 Maîtres")
+	check(Profile.value("region_champions") == 8, "Titre Conquérant : 8 Maîtres comptés")
+	Game.set_flag("rainbow_done")
+	check(Profile.value("rainbow") == 1, "Titre Fléau de la Team Rainbow")
+	Game.flags = saved_flags
+	# Abîme : 10 étages, dresseurs à 6 Pokémon au build compétitif, du niveau 91 au niveau 100.
+	var top := 0
+	var count := 0
+	for k in 10:
+		var m: Dictionary = Game.maps.get("cr_abime_%d" % (k + 1), {})
+		check(not m.is_empty(), "Abîme : étage %d" % (k + 1))
+		for npc in m.get("npcs", []):
+			if npc.get("kind", "") != "trainer":
+				continue
+			var t: Dictionary = Game.trainers[npc["trainer"]]
+			count += 1
+			check(t.get("build", "") == "auto" and int(t.get("ai", 0)) == 3 and t["team"].size() == 6, "Abîme : %s au build auto, IA 3, 6 Pokémon" % t["id"])
+			for e in t["team"]:
+				top = maxi(top, int(e[1]))
+				check(not Data.pokemon[int(e[0])].get("legendary", false), "Abîme : pas de légendaire chez %s" % t["id"])
+	check(count >= 15, "Abîme : au moins 15 dresseurs (%d)" % count)
+	check(top == 100, "Abîme : niveau 100 au fond (%d)" % top)
+	var bottom: Array = Game.maps["cr_abime_10"]["npcs"]
+	check(bottom.any(func(x): return int(x.get("species", 0)) == 493), "Arceus au fond de l'Abîme")
+	check(bottom.any(func(x): return x["id"] == "gardien"), "Gardien de l'Abîme au fond")
+	var gt: Dictionary = Game.trainers["gardien_abime"]
+	var gteam: Array = Events.make_team(gt["team"], gt)
+	check(gteam.size() == 6 and gteam.all(func(m): return m.level == 100 and m.moves.size() == 4), "Gardien : 6 Pokémon N.100 avec 4 capacités")
+	check(gteam.all(func(m): return m.evs.reduce(func(a, b): return a + b, 0) == 508), "Gardien : EV complets")
+	# Fin de campagne branchée sur les scripts.
+	var specials := []
+	for mid in ["cr_chateau_4", "cr_abime_10"]:
+		for npc in Game.maps[mid]["npcs"]:
+			for cmd in _flatten(npc.get("script", [])):
+				if cmd is Array and cmd.size() > 1 and cmd[0] is String and cmd[0] == "special":
+					specials.append(cmd[1])
+	check(specials.has("finale") and specials.has("abyss_done"), "Giovanni et le Gardien terminent la campagne (%s)" % [specials])
+	# Légendaires placés (Paldea, Septentria, Abîme...) et auras valides.
+	var legends := {}
+	const AURAS := ["", "fire", "steel", "electric", "ghost", "dragon", "grass", "dark", "water", "ice", "psychic", "fairy", "fighting",
+		"rock", "ground", "flying"]
+	for mid in Game.maps:
+		for npc in Game.maps[mid]["npcs"]:
+			if npc.get("kind", "") == "legend":
+				legends[int(npc["species"])] = mid
+			for cmd in _flatten(npc.get("script", [])):
+				if cmd is Array and cmd.size() > 4 and cmd[0] is String and cmd[0] == "boss":
+					check(cmd[4] in AURAS, "Aura connue : %s (%s)" % [cmd[4], mid])
+	for t in Game.trainers.values():
+		check(t.get("aura", "") in AURAS, "Aura de dresseur connue : %s" % t.get("aura", ""))
+	for sid in [1001, 1002, 1003, 1004, 1007, 1008, 1014, 1015, 1016, 1017, 1024, 1025, 493, 888, 889, 890, 791, 792]:
+		check(legends.has(sid), "Légendaire %d placé" % sid)
+	# Rencontres : chaque table d'herbe peut se déclencher (herbes hautes, ou sol d'un donjon).
+	for mid in Game.maps:
+		var m: Dictionary = Game.maps[mid]
+		if not m["wild"].has("grass"):
+			continue
+		var rows := "".join(m["rows"])
+		var floor_ok: bool = (m.get("cave", false) or not m.get("outdoor", true)) and (rows.contains("_") or rows.contains("u") or rows.contains("q"))
+		check(rows.contains('"') or floor_ok, "Rencontres possibles sur %s" % mid)
+	# Maître des Capacités.
+	check(Events.relearnable(Pokemon.create(234, 30)).has(828), "Cerfrousse peut réapprendre Sprint Bouclier (évolution en Cerbyllin)")
+	check(Events.relearnable(Pokemon.create(221, 40)).has(246), "Cochignon peut réapprendre Pouvoir Antique (évolution en Mammochon)")
+	var bulbi := Pokemon.create(1, 5)
+	var razor_lv := 0
+	for e in bulbi.data()["learn"]:
+		if e[1] == 75:
+			razor_lv = e[0]
+	check(razor_lv > 5 and not Events.relearnable(bulbi).has(75), "Pas de capacité au-dessus du niveau actuel")
+	bulbi.level = razor_lv
+	check(Events.relearnable(bulbi).has(75), "Capacité réapprenable une fois le niveau atteint")
+	check(Game.maps.values().filter(func(m): return m.get("heal", false) and m["npcs"].any(func(x): return x.get("kind", "") == "relearn")).size() > 50,
+		"Un Maître des Capacités dans les Centres Pokémon")
+	# Objets d'évolution propres au jeu.
+	check(Pokemon.create(808, 50).item_evolution("meltan-candy") == 809, "Bonbon Meltan : Meltan -> Melmetal")
+	check(Pokemon.create(999, 50).item_evolution("gimmighoul-coin") == 1000, "Pièce de Mordudor : Mordudor -> Gromago")
+	check(Pokemon.create(67, 40).item_evolution("linking-cord") == 68, "Fil de Liaison : Machopeur -> Mackogneur")
+	check(ItemUse.is_evo_item("meltan-candy") and ItemUse.is_evo_item("gimmighoul-coin"), "Bonbon Meltan et Pièce utilisables")
 
 
 func _flatten(cmds: Variant) -> Array:

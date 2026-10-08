@@ -43,13 +43,21 @@ func _ready() -> void:
 	_map.size = sz * _scale
 	_map.position = Vector2((480 - _map.size.x) / 2, 8)
 	add_child(_map)
+	# Noms des villes : au-dessus de la ville, ou en dessous si la place est prise par un nom voisin.
+	var taken: Array[Rect2] = []
 	for mid in Game.maps:
 		var m: Dictionary = Game.maps[mid]
 		if m.get("wx") == null or m.get("realm", "kanto") != _realm or not (mid in KANTO_TOWNS or m.get("town", false)):
 			continue
-		var l := Kit.label(self, m["name"], _map.position + Vector2(m["wx"] - _origin.x, m["wy"] - _origin.y) * _scale + Vector2(0, -12), 10, Color.WHITE, false)
+		var top := _map.position + Vector2(m["wx"] - _origin.x, m["wy"] - _origin.y) * _scale
+		var l := Kit.label(self, m["name"], top + Vector2(0, -12), 10, Color.WHITE, false)
 		l.add_theme_color_override("font_outline_color", Color.BLACK)
 		l.add_theme_constant_override("outline_size", 3)
+		var r := Rect2(l.position, l.get_minimum_size())
+		if taken.any(func(o): return o.intersects(r)):
+			l.position = top + Vector2(0, m["h"] * _scale + 1)
+			r = Rect2(l.position, l.get_minimum_size())
+		taken.append(r)
 	_dot = ColorRect.new()
 	_dot.size = Vector2(5, 5)
 	_dot.color = Color("ff3030")
