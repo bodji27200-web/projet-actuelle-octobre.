@@ -68,7 +68,7 @@ Et partout :
 - Chaque région a ses **villes et lieux officiels** (noms français officiels), ses **vraies listes de Pokémon sauvages** (écrites à la main pour Paldea), son professeur et ses **trois starters**, son repaire de la Team Rainbow Rocket à démanteler, son **Maître** à battre (qui rend un **Fragment Arc-en-Ciel**), ses boutiques et ses quêtes : Bracelet Z et Pokémon Dominants à Alola, Méga-Anneau et Méga-Gemmes à Kalos, Dojo de la Maîtrise à Galar, Pokémon Titans et Septentria à Paldea…
 - **Légendaires rares et cachés dans des endroits dangereux** : au fond des grottes, derrière des sceaux qui ne cèdent qu'au Maître de la région, ou errants (une chance sur plusieurs centaines par pas). Un légendaire mis K.O. n'est pas perdu : il revient.
 - **Boss et mini-boss à aura** (feu, acier, électrique, spectre, dragon, plante, ténèbres, eau, glace, psy, fée, combat, roche, sol, vol) : chaque aura donne un vrai avantage au boss. Les boss vaincus donnent un trophée pour ta Base Secrète.
-- **Fin de jeu** : les huit Fragments ouvrent le **Château Rocket** et le combat final contre Giovanni (niveau 90, aura). Puis **l'Abîme** : dix étages de dresseurs du niveau 91 au niveau 100, aux équipes compétitives (IV parfaits, EV optimisés, IA maximale), le **Gardien de l'Abîme** (six légendaires niveau 100)… et **Arceus**.
+- **Fin de jeu** : les huit Fragments ouvrent le **Château Rocket** et le combat final contre Giovanni (niveau 90, aura). Puis **l'Abîme** : dix étages de dresseurs du niveau 91 au niveau 100, aux équipes compétitives (IV parfaits, EV optimisés, IA maximale), le **Gardien de l'Abîme** (six légendaires niveau 100 à aura : même une équipe parfaite perd souvent)… et **Arceus**.
 - **Entraînement** : Centre d'Entraînement EV des Îles Sevii (six salles, une par statistique), Boutique de l'Élite (Capsules d'Argent et d'Or pour les IV, Aromates, objets Pouvoir, Bracelet Macho), **Maître des Capacités** dans chaque Centre Pokémon (réapprendre gratuitement une capacité, y compris les capacités Œuf).
 
 ### Pokémon et combats
@@ -94,5 +94,6 @@ Et partout :
   - `stress_test.tscn -- 2000` : des milliers de combats au hasard (talents, objets, Méga, Z, auras) sans erreur ;
   - `play_test.tscn` : un robot joue le début du jeu, puis va pêcher à Carmin ;
   - `campaign_test.tscn` : un robot joue la fin de la campagne (bateau, Giovanni, Gardien de l'Abîme, Arceus, Titan, starter de Paldea, Maître des Capacités) ;
+  - `balance_test.tscn -- 20` : une IA joue une équipe de fin de jeu contre Giovanni, l'Abîme et le Gardien, et donne le taux de victoire (le Gardien doit rester dur mais battable) ;
   - `region_shots.tscn -- all` : charge les 1090 cartes ; avec des identifiants de cartes, prend des captures d'écran ;
   - `net_test.tscn` et `social_test.tscn` : à lancer deux fois (sans `--fixed-fps`, `-- host` puis `-- client`), coop, échanges, Hôtel des Ventes, guildes, combats classés.
