@@ -172,8 +172,15 @@ func _autopilot(done: Array) -> void:
 	while not done[0] and frames < 60000:
 		frames += 1
 		var t := _top()
-		if frames % 10000 == 0:
-			print("   [pilote] ", frames, " ", t.get_script().resource_path.get_file() if t != null and t.get_script() else str(t))
+		if frames % 5000 == 0:
+			var info := ""
+			if t is BattleScreen and t.battle != null:
+				var b: Battle = t.battle
+				var labels: Array = t._menu_labels.filter(func(l): return is_instance_valid(l)).map(func(l): return l.text)
+				info = "tour %d, PV %s contre %s, invite=%s, menu=%s (%d), actif=%s" % [b.turn, b.sides[0].party.map(func(m): return m.hp),
+					b.sides[1].party.map(func(m): return m.hp), t._prompt.text.replace("\n", " "), labels, t._menu_index,
+					t._menu_active]
+			print("   [pilote] ", frames, " ", t.get_script().resource_path.get_file() if t != null and t.get_script() else str(t), " ", info)
 		if t == null:
 			await get_tree().process_frame
 			continue
@@ -199,7 +206,7 @@ func _autopilot(done: Array) -> void:
 			await get_tree().process_frame
 		elif t is BattleScreen:
 			# En combat : surtout A (attaquer), parfois changer de capacité ou de cible.
-			await _tap(["a", "a", "a", "a", "down", "right"][randi() % 6])
+			await _tap(["a", "a", "a", "a", "down", "right", "up", "left"][randi() % 8])
 		else:
 			await _tap(["a", "a", "a", "down", "right", "up", "b"][randi() % 7])
 
