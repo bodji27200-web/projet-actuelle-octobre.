@@ -94,8 +94,8 @@ add("maison", "Maison", [
     "WBBootoPbW",
     "WoooooooBW",
     "WooooooooW",
-    "WooXXooooW",
-    "WooXXooooW",
+    "WoXXoooooW",
+    "WoXXoooooW",
     "WooooooooW",
     "WWWWmWWWWW",
 ], outdoor=False)

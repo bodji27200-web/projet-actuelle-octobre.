@@ -6,11 +6,11 @@ var _fade: ColorRect
 
 func _ready() -> void:
 	Game.ui = self
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	size = Vector2(480, 320)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_fade = ColorRect.new()
 	_fade.color = Color(0, 0, 0, 0)
-	_fade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_fade.size = Vector2(480, 320)
 	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_fade.z_index = 100
 	add_child(_fade)
@@ -68,13 +68,14 @@ func choose(options: Array, at := Vector2(-1, -1), cancel := true, columns := 1,
 
 func _static_box(text: String) -> Control:
 	var holder := Control.new()
-	holder.set_anchors_preset(Control.PRESET_FULL_RECT)
+	holder.size = Vector2(480, 320)
 	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(holder)
 	var p := Kit.panel(holder, Rect2(4, 244, 472, 72))
-	var l := Kit.label(p, text, Vector2(12, 8))
-	l.size = Vector2(440, 56)
+	var l := Kit.label(p, "", Vector2(12, 8))
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.size = Vector2(440, 56)
+	l.text = text
 	return holder
 
 

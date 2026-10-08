@@ -16,12 +16,12 @@ var _t := 0.0
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	size = Vector2(480, 320)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var p := Kit.panel(self, Rect2(4, 244, 472, 72))
-	_label = Kit.label(p, "", Vector2(12, 8))
-	_label.size = Vector2(440, 56)
+	_label = Kit.label(p, "", Vector2(12, 4), 15)
 	_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_label.size = Vector2(440, 64)
 	_label.visible_characters_behavior = TextServer.VC_CHARS_AFTER_SHAPING
 	_arrow = Kit.label(p, "▼", Vector2(446, 44), 14, Color("e05050"), false)
 	_show_page()

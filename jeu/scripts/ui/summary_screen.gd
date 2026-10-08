@@ -13,10 +13,10 @@ var _root: Control
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	size = Vector2(480, 320)
 	var bg := ColorRect.new()
 	bg.color = Color("e8e0c8")
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.size = Vector2(480, 320)
 	add_child(bg)
 	_root = Control.new()
 	add_child(_root)
@@ -57,8 +57,8 @@ func _draw_page() -> void:
 	head.size = Vector2(480, 26)
 	_root.add_child(head)
 	for i in 3:
-		var t := Kit.label(_root, PAGES[i], Vector2(10 + i * 110, 3), 15, Color.WHITE if i == _page else Color("f0b0b0"), false)
-	Kit.label(_root, "◀ ▶ pages   ▲▼ Pokémon   B retour", Vector2(300, 6), 11, Color.WHITE, false)
+		var t := Kit.label(_root, PAGES[i], Vector2(10 + i * 92, 1), 14, Color.WHITE if i == _page else Color("f0b0b0"), false)
+	Kit.label(_root, "◀▶ pages  ▲▼ Pokémon  B retour", Vector2(296, 4), 10, Color.WHITE, false)
 	# Colonne gauche : sprite et nom.
 	var left := Kit.panel(_root, Rect2(6, 32, 170, 282), Color("f8f8f0"), Color("a09070"))
 	var spr := TextureRect.new()
@@ -94,24 +94,26 @@ func _draw_page() -> void:
 
 func _row(p: Control, y: int, k: String, v: String, vc := Kit.INK) -> void:
 	Kit.label(p, k, Vector2(10, y), 14, Color("806040"))
-	var l := Kit.label(p, v, Vector2(110, y), 14, vc)
-	l.size.x = 170
+	var l := Kit.label(p, "", Vector2(110, y), 14, vc)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.size.x = 170
+	l.text = v
 
 
 func _info(p: Control, mon: Pokemon, d: Dictionary) -> void:
 	_row(p, 4, "N° Pokédex", "%03d" % mon.species)
-	_row(p, 22, "Espèce", "%s (%s)" % [d["name"], d["genus"]])
+	_row(p, 22, "Espèce", d["genus"])
 	_row(p, 40, "Dresseur", mon.ot if mon.ot != "" else Game.player_name)
 	_row(p, 58, "Nature", Data.natures[mon.nature]["name"])
 	_row(p, 76, "Ball", Data.item_name(mon.ball))
 	_row(p, 94, "Points Exp.", str(mon.exp))
 	_row(p, 112, "Niv. suivant", "%d pts" % mon.exp_to_next() if mon.level < 100 else "—")
 	_row(p, 130, "Bonheur", "%d / 255" % mon.happiness)
-	Kit.label(p, "TALENT : " + Data.ability_name(mon.ability), Vector2(10, 154), 14, Color("c04040"))
-	var desc := Kit.label(p, Data.abilities.get(mon.ability, {}).get("desc", ""), Vector2(10, 172), 13)
-	desc.size = Vector2(270, 50)
+	Kit.label(p, "TALENT : " + Data.ability_name(mon.ability), Vector2(10, 148), 14, Color("c04040"))
+	var desc := Kit.label(p, "", Vector2(10, 166), 13)
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.size = Vector2(270, 50)
+	desc.text = Data.abilities.get(mon.ability, {}).get("desc", "")
 	var evo := ""
 	for e in d["evos"]:
 		var to: String = Data.pokemon[e["to"]]["name"]
@@ -119,9 +121,10 @@ func _info(p: Control, mon: Pokemon, d: Dictionary) -> void:
 			evo += "%s au N.%d. " % [to, e["level"]]
 		else:
 			evo += "%s avec %s. " % [to, Data.item_name(e["item"])]
-	var ev := Kit.label(p, "Évolution : " + (evo if evo != "" else "aucune"), Vector2(10, 226), 13, Color("406080"))
-	ev.size = Vector2(270, 50)
+	var ev := Kit.label(p, "", Vector2(10, 238), 13, Color("406080"))
 	ev.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	ev.size = Vector2(270, 50)
+	ev.text = "Évolution : " + (evo if evo != "" else "aucune")
 
 
 func _stats(p: Control, mon: Pokemon) -> void:
@@ -151,16 +154,16 @@ func _stats(p: Control, mon: Pokemon) -> void:
 	Kit.label(p, "IV au total : %d / 186" % iv_total, Vector2(10, 204), 13)
 	Kit.label(p, "Puissance Cachée : type %s" % Data.type_name(mon.hidden_power_type()), Vector2(10, 222), 13)
 	var exp_bg := ColorRect.new()
-	exp_bg.position = Vector2(10, 250)
-	exp_bg.size = Vector2(260, 8)
+	exp_bg.position = Vector2(40, 252)
+	exp_bg.size = Vector2(230, 8)
 	exp_bg.color = Color("404848")
 	p.add_child(exp_bg)
 	var exp := ColorRect.new()
 	exp.position = Vector2(2, 2)
-	exp.size = Vector2(256 * mon.exp_progress(), 4)
+	exp.size = Vector2(226 * mon.exp_progress(), 4)
 	exp.color = Color("48a0f8")
 	exp_bg.add_child(exp)
-	Kit.label(p, "EXP", Vector2(10, 232), 11, Color("406080"), false)
+	Kit.label(p, "EXP", Vector2(10, 244), 11, Color("406080"), false)
 
 
 func _moves(p: Control, mon: Pokemon) -> void:
@@ -179,6 +182,7 @@ func _moves(p: Control, mon: Pokemon) -> void:
 	Kit.label(p, "Catégorie : %s" % cat, Vector2(10, 128), 14, Color("806040"))
 	Kit.label(p, "Puissance : %s" % (str(sel["power"]) if sel["power"] > 0 else "—"), Vector2(10, 146), 14, Color("806040"))
 	Kit.label(p, "Précision : %s" % (str(sel["acc"]) if sel["acc"] > 0 else "—"), Vector2(150, 146), 14, Color("806040"))
-	var desc := Kit.label(p, sel["desc"], Vector2(10, 168), 13)
-	desc.size = Vector2(270, 100)
+	var desc := Kit.label(p, "", Vector2(10, 168), 13)
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.size = Vector2(270, 100)
+	desc.text = sel["desc"]

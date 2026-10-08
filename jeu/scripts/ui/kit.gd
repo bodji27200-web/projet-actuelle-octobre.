@@ -5,6 +5,8 @@ extends RefCounted
 const INK := Color("303030")
 const SHADOW := Color("d0d0c8")
 const FRAME := Color("4870a0")
+## La police Jersey 10 est étroite : on agrandit toutes les tailles demandées.
+const FONT_SCALE := 1.35
 
 
 static func box_style(bg := Color("f8f8f8"), border := FRAME, radius := 6, width := 3) -> StyleBoxFlat:
@@ -33,7 +35,7 @@ static func label(parent: Node, text: String, pos: Vector2, size := 16, color :=
 	var l := Label.new()
 	l.text = text
 	l.position = pos
-	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_font_size_override("font_size", int(round(size * FONT_SCALE)))
 	l.add_theme_color_override("font_color", color)
 	if shadow:
 		l.add_theme_color_override("font_shadow_color", SHADOW)

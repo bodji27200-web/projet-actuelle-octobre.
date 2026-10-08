@@ -15,10 +15,10 @@ var _icon: TextureRect
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	size = Vector2(480, 320)
 	var bg := ColorRect.new()
 	bg.color = Color("e0a860")
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.size = Vector2(480, 320)
 	add_child(bg)
 	var tp := Kit.panel(self, Rect2(6, 6, 160, 40), Color("f8f0d8"), Color("a06030"))
 	_title = Kit.label(tp, "", Vector2(10, 4), 16)
@@ -33,8 +33,8 @@ func _ready() -> void:
 	add_child(_icon)
 	var dp := Kit.panel(self, Rect2(6, 240, 468, 76), Color("f8f8f8"))
 	_desc = Kit.label(dp, "", Vector2(10, 6), 14)
-	_desc.size = Vector2(448, 64)
 	_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_desc.size = Vector2(448, 64)
 	_load_pocket()
 	build_list(Rect2(176, 6, 298, 228))
 

@@ -10,10 +10,10 @@ var _busy := false
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	size = Vector2(480, 320)
 	var bg := ColorRect.new()
 	bg.color = Color("88b0e0")
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.size = Vector2(480, 320)
 	add_child(bg)
 	var mp := Kit.panel(self, Rect2(6, 6, 160, 40))
 	_money = Kit.label(mp, "", Vector2(10, 4))
@@ -26,8 +26,8 @@ func _ready() -> void:
 	add_child(_icon)
 	var dp := Kit.panel(self, Rect2(6, 240, 468, 76))
 	_desc = Kit.label(dp, "", Vector2(10, 6), 14)
-	_desc.size = Vector2(448, 64)
 	_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_desc.size = Vector2(448, 64)
 	_update_money()
 	build_list(Rect2(176, 6, 298, 228))
 

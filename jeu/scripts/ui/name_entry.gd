@@ -9,10 +9,10 @@ var _edit: LineEdit
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	size = Vector2(480, 320)
 	var bg := ColorRect.new()
 	bg.color = Color(0, 0, 0, 0.6)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.size = Vector2(480, 320)
 	add_child(bg)
 	var p := Kit.panel(self, Rect2(60, 90, 360, 130))
 	Kit.label(p, title, Vector2(14, 10))

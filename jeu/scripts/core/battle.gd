@@ -98,7 +98,7 @@ class Battler:
 		return t_stats[i] if transformed else mon.stats[i]
 
 
-class Side:
+class BSide:
 	var party: Array = []
 	var b: Battler
 	var reflect := 0
@@ -111,7 +111,7 @@ class Side:
 	var name := ""
 
 
-var sides: Array = [Side.new(), Side.new()]
+var sides: Array = [BSide.new(), BSide.new()]
 var wild := true
 var trainer := {}
 var player_name := "Vous"
@@ -316,7 +316,7 @@ func start() -> Array:
 
 
 func _send(side_i: int, idx: int, announce := true, keep_stages := false) -> void:
-	var side: Side = sides[side_i]
+	var side: BSide = sides[side_i]
 	var old: Battler = side.b
 	var b := Battler.new()
 	b.mon = side.party[idx]
@@ -871,7 +871,7 @@ func _calc_damage(u: Battler, t: Battler, m: Dictionary, power: int, eff: float,
 	if phys and u.mon.status == "brn" and ab(u) != "guts":
 		dmg = int(dmg * 0.5)
 	if not crit:
-		var ts: Side = sides[t.side]
+		var ts: BSide = sides[t.side]
 		if (phys and ts.reflect > 0) or (not phys and ts.light_screen > 0):
 			dmg = int(dmg * 0.5)
 	return maxi(1, dmg)
@@ -1052,7 +1052,7 @@ func _damage_move(u: Battler, t: Battler, m: Dictionary) -> void:
 		u.trap_turns = 0
 		sides[u.side].spikes = 0
 	if ident == "brick-break":
-		var ts: Side = sides[t.side]
+		var ts: BSide = sides[t.side]
 		if ts.reflect > 0 or ts.light_screen > 0:
 			ts.reflect = 0
 			ts.light_screen = 0
@@ -1307,7 +1307,7 @@ func _field_move(u: Battler, m: Dictionary) -> void:
 
 
 func _side_move(u: Battler, m: Dictionary) -> void:
-	var s: Side = sides[u.side]
+	var s: BSide = sides[u.side]
 	match m["ident"]:
 		"reflect":
 			if s.reflect > 0:
@@ -1334,7 +1334,7 @@ func _side_move(u: Battler, m: Dictionary) -> void:
 			s.safeguard = 5
 			msg("L'équipe est protégée par un voile mystique !")
 		"spikes":
-			var o: Side = sides[1 - u.side]
+			var o: BSide = sides[1 - u.side]
 			if o.spikes >= 3:
 				_fail()
 				return
@@ -1587,7 +1587,7 @@ func _special_move(u: Battler, t: Battler, m: Dictionary) -> bool:
 			u.stages = t.stages.duplicate()
 			msg("%s copie les changements de stats de %s !" % [nm(u), nm(t)])
 		"future-sight":
-			var fs: Side = sides[t.side]
+			var fs: BSide = sides[t.side]
 			if fs.future_turns > 0:
 				_fail()
 				return true
@@ -1896,7 +1896,7 @@ func _give_exp(enemy: Battler) -> void:
 			continue
 		msg("%s gagne %d Points Exp. !" % [mon.name(), gained])
 		var reached := mon.add_exp(gained)
-		var active := sides[0].b != null and sides[0].b.party_index == i
+		var active: bool = sides[0].b != null and sides[0].b.party_index == i
 		events.append({"t": "exp", "index": i, "active": active})
 		for lv in reached:
 			leveled[i] = true
@@ -1930,7 +1930,7 @@ func _end_of_turn() -> void:
 				"sandstorm": "La tempête de sable fait rage.", "hail": "La grêle continue de tomber."}[weather])
 	for s in [0, 1]:
 		var b: Battler = sides[s].b
-		var side: Side = sides[s]
+		var side: BSide = sides[s]
 		if b.mon.hp <= 0:
 			continue
 		b.turns += 1

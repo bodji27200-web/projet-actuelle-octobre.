@@ -35,10 +35,10 @@ func _ready() -> void:
 	var f := FileAccess.open("res://data/maps.json", FileAccess.READ)
 	maps = Data._intify(JSON.parse_string(f.get_as_text()))
 	_setup_inputs()
-	font = load("res://assets/fonts/PixelifySans.ttf")
+	font = load("res://assets/fonts/Jersey10.ttf")
 	var theme := Theme.new()
 	theme.default_font = font
-	theme.default_font_size = 16
+	theme.default_font_size = 22
 	get_tree().root.theme = theme
 
 

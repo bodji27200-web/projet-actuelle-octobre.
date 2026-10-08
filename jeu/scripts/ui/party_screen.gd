@@ -15,10 +15,10 @@ var _busy := false
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	size = Vector2(480, 320)
 	var bg := ColorRect.new()
 	bg.color = Color("68a0b0")
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.size = Vector2(480, 320)
 	add_child(bg)
 	var p := Kit.panel(self, Rect2(4, 262, 472, 54))
 	_msg = Kit.label(p, title, Vector2(12, 8))

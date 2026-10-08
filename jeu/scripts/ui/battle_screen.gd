@@ -33,7 +33,7 @@ signal _menu_done(index: int)
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	size = Vector2(480, 320)
 	_build()
 	_run()
 
@@ -44,7 +44,7 @@ func _ready() -> void:
 
 func _build() -> void:
 	_bg = Control.new()
-	_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_bg.size = Vector2(480, 320)
 	_bg.draw.connect(_draw_bg)
 	add_child(_bg)
 	for side in 2:
@@ -65,8 +65,8 @@ func _build() -> void:
 		_sprites[side] = tr
 	_bottom = Kit.panel(self, Rect2(4, 244, 472, 72), Color("f8f8f8"), Color("c04848"))
 	_prompt = Kit.label(_bottom, "", Vector2(12, 8))
-	_prompt.size = Vector2(240, 56)
 	_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_prompt.size = Vector2(240, 56)
 	_ball_spr = TextureRect.new()
 	_ball_spr.texture = PixelArt.ball()
 	_ball_spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -108,7 +108,7 @@ func _make_box(side: int) -> void:
 	_box_species[side] = mon.species
 	var name := mon.name() + (" ★" if mon.shiny else "")
 	Kit.label(p, name, Vector2(10, 2), 15)
-	var g := Kit.label(p, mon.gender_symbol(), Vector2(150, 2), 15, Color("3068d8") if mon.gender == 0 else Color("e05878"))
+	var g := Kit.label(p, mon.gender_symbol(), Vector2(140, 2), 15, Color("3068d8") if mon.gender == 0 else Color("e05878"))
 	g.visible = mon.gender < 2
 	Kit.label(p, "N.%d" % mon.level, Vector2(164, 2), 15)
 	Kit.label(p, "PV", Vector2(40, 22), 12, Color("e0a020"), false)

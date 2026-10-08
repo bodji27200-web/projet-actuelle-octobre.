@@ -85,6 +85,8 @@ func load_map(id: String, at: Vector2i, facing := "down") -> void:
 	walkers.clear()
 	for c in _actors.get_children():
 		c.queue_free()
+	for c in _ground.get_children():
+		c.queue_free()
 	_blocked.clear()
 	_doors.clear()
 	for b in map["buildings"]:
@@ -220,7 +222,7 @@ func _process(delta: float) -> void:
 	if busy or moving or frozen or Game.ui_busy() or player == null:
 		return
 	if Input.is_action_just_pressed("start"):
-		_run(Events.start_menu(self))
+		_run(func(): await Events.start_menu(self))
 		return
 	if Input.is_action_just_pressed("a"):
 		_interact()
@@ -242,30 +244,30 @@ func _process(delta: float) -> void:
 	_try_step(dir)
 
 
-func _run(coro: Variant) -> void:
+func _run(c: Callable) -> void:
 	busy = true
-	await coro
+	await c.call()
 	busy = false
 
 
 func _try_step(dir: String) -> void:
-	var target := player.tile + DIRS[dir]
+	var target: Vector2i = player.tile + DIRS[dir]
 	# Porte d'un bâtiment.
 	if _doors.has(target) and dir == "up":
 		var b: Dictionary = _doors[target]
 		if Game.maps.has(b["to"]):
-			_run(_enter_building(b, target))
+			_run(func(): await _enter_building(b, target))
 		else:
-			_run(Game.ui.say("La porte est fermée à clé."))
+			_run(func(): await Game.ui.say("La porte est fermée à clé."))
 		return
 	if tile_at(target) == "v" and dir == "down":
 		var land := target + Vector2i(0, 1)
 		if can_enter(land, dir):
-			_run(_jump(land))
+			_run(func(): await _jump(land))
 		return
 	if not can_enter(target, dir):
 		return
-	_run(_step(dir, target))
+	_run(func(): await _step(dir, target))
 
 
 func _step(dir: String, target: Vector2i) -> void:
@@ -348,7 +350,7 @@ func _check_trainers() -> bool:
 		if w.data.get("kind", "") != "trainer" or Events.trainer_beaten(map_id, w.data):
 			continue
 		var d: Vector2i = DIRS[w.dir]
-		var t := w.tile
+		var t: Vector2i = w.tile
 		for i in w.data.get("sight", 4):
 			t += d
 			if t == player.tile:
@@ -360,19 +362,19 @@ func _check_trainers() -> bool:
 
 
 func _interact() -> void:
-	var front := player.tile + DIRS[player.dir]
+	var front: Vector2i = player.tile + DIRS[player.dir]
 	var w := walker_at(front)
 	if w == null and COUNTERS.contains(tile_at(front)):
 		w = walker_at(front + DIRS[player.dir])
 	if w != null:
-		_run(Events.talk(self, w))
+		_run(func(): await Events.talk(self, w))
 		return
 	var key := "%d,%d" % [front.x, front.y]
 	if map["signs"].has(key):
-		_run(Events.sign(self, map["signs"][key]))
+		_run(func(): await Events.sign(self, map["signs"][key]))
 		return
 	if tile_at(front) == "P":
-		_run(Events.sign(self, "@pc"))
+		_run(func(): await Events.sign(self, "@pc"))
 
 
 ## Fait marcher un PNJ jusqu'à côté du joueur (dresseurs).

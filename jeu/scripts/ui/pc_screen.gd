@@ -10,10 +10,10 @@ var _info: Label
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	size = Vector2(480, 320)
 	var bg := ColorRect.new()
 	bg.color = Color("7090c8")
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.size = Vector2(480, 320)
 	add_child(bg)
 	var tp := Kit.panel(self, Rect2(6, 6, 200, 40))
 	_title = Kit.label(tp, "", Vector2(10, 4))

@@ -14,7 +14,7 @@ var _panel: Panel
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	size = Vector2(480, 320)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var w := width
 	if w <= 0:

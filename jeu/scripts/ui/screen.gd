@@ -8,6 +8,7 @@ var _finished := false
 
 
 func _enter_tree() -> void:
+	size = Vector2(480, 320)
 	Game.push(self)
 
 
