@@ -93,6 +93,9 @@ func _run() -> void:
 	print("   capturé : ", caught)
 	# Capturé : il disparaît et le drapeau est posé. Sinon (K.O., fuite) : il reste là et revient plus tard.
 	check(Game.flag("leg_493") == caught, "Drapeau d'Arceus posé seulement s'il est capturé")
+	# Après une défaite, le joueur est au Centre Pokémon : on retourne voir.
+	world.load_map("cr_abime_10", _beside("arceus", "cr_abime_10"), "down")
+	await _settle()
 	check((world.find_walker("arceus") == null) == caught, "Arceus reste sur la carte tant qu'il n'est pas capturé")
 
 	print("5. Pokémon Titan de Paldea")
