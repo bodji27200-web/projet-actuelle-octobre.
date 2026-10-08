@@ -193,8 +193,23 @@ static func talk(ow: Node, w: Node) -> void:
 			await fossil()
 		"script":
 			await run_script(ow, w, n.get("script", []))
+		"social":
+			await social_npc(ow, n)
 		_:
 			await ui().say(n.get("text", ["..."]))
+
+
+## Guichets des Centres Pokémon : Hôtel des Ventes, guildes, combats classés, bases secrètes.
+static func social_npc(ow: Node, n: Dictionary) -> void:
+	match n.get("what", ""):
+		"gts":
+			await SocialMenus.gts()
+		"guild":
+			await SocialMenus.guilds()
+		"ranked":
+			await SocialMenus.ranked()
+		"base":
+			await SocialMenus.base_desk(ow)
 
 
 static func sign(_ow: Node, text: String) -> void:
@@ -204,6 +219,9 @@ static func sign(_ow: Node, text: String) -> void:
 			return
 		await ui().say("%s allume le PC." % Game.player_name)
 		await ui().open(PCScreen.new())
+		return
+	if text == "@decor":
+		await SocialMenus.decorate(_ow)
 		return
 	if text == "@wardrobe":
 		await ui().open(WardrobeScreen.new())
@@ -382,10 +400,13 @@ static func _cmd(ow: Node, w: Node, c: Array) -> bool:
 				return false
 		"boss":
 			var bm := make_boss(int(c[1]), int(c[2]))
-			var rb: String = await run_battle([[bm]], true, [], {"boss": true, "cave": ow.map.get("cave", false)})
+			var rb: String = await run_battle([[bm]], true, [], {"boss": true, "cave": ow.map.get("cave", false), "aura": c[4] if c.size() > 4 else ""})
 			if rb != "win":
 				return false
 			Game.set_flag(c[3])
+			if Decor.give_trophy(bm.species):
+				Audio.jingle("item")
+				await ui().say("Tu gagnes le %s ! Expose-le dans ta Base Secrète." % Decor.info("trophy_%d" % bm.species)["name"])
 			if w != null and is_instance_valid(w):
 				ow.remove_walker(w)
 		"choice":
@@ -978,19 +999,24 @@ static func _battle_stats(battle: Battle, result: String, wild: bool, trainers: 
 		Profile.add("wins")
 		if not wild:
 			Profile.add("trainers", trainers.size())
+			Social.contribute("trainer", trainers.size())
 			for t in trainers:
 				if t.get("kind", "") == "leader" or str(t.get("id", "")).begins_with("leader_"):
 					Profile.add("leaders")
+					Social.contribute("leader")
 		if opts.get("boss", false):
 			Profile.add("bosses")
+			Social.contribute("boss")
 	if result == "caught" and battle.caught != null and battle.caught_owner == owner:
 		var mon := battle.caught
 		Profile.add("caught_total")
 		if mon.shiny:
 			Profile.add("shinies")
+			Social.contribute("shiny")
 		var d: Dictionary = Data.pokemon.get(mon.species, {})
 		if d.get("legendary", false) or d.get("mythical", false):
 			Profile.add("legends")
+			Social.contribute("legend")
 		if battle.fishing:
 			Profile.add("fish")
 
@@ -1109,9 +1135,7 @@ static func learn_move(mon: Pokemon, mid: int) -> bool:
 # ---------------------------------------------------------------------------
 
 static func chat() -> void:
-	var text: String = await ui().enter_name("Message pour les autres joueurs :", "", 60)
-	if text.strip_edges() != "":
-		Net.send_chat(text)
+	await ui().open(ChatScreen.new())
 
 
 ## Parler à son Pokémon suiveur.
@@ -1135,11 +1159,16 @@ static func talk_follower(m: Pokemon) -> void:
 
 static func talk_player(pid: int) -> void:
 	var name: String = Net.players.get(pid, {}).get("name", "?")
-	var opts := ["VOIR SON PROFIL", "INVITER DANS LE GROUPE" if not Net.in_group() else "QUITTER LE GROUPE", "ANNULER"]
+	var opts := ["VOIR SON PROFIL", "INVITER DANS LE GROUPE" if not Net.in_group() else "QUITTER LE GROUPE", "ÉCHANGER", "DÉFIER", "ANNULER"]
 	var i: int = await ui().ask("C'est %s !" % name, opts)
 	match i:
 		0:
 			await show_profile(pid)
+		2:
+			await Social.trade_with(pid)
+			Game.save_game()
+		3:
+			await SocialMenus.challenge(pid)
 		1:
 			if Net.in_group():
 				Net.leave_group()

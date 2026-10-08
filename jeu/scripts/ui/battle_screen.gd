@@ -103,6 +103,10 @@ func role() -> String:
 	return coop.get("role", "solo")
 
 
+func pvp() -> bool:
+	return role() in ["pvp_host", "pvp_guest"]
+
+
 func local_owner() -> int:
 	return coop.get("local_owner", 0)
 
@@ -359,8 +363,11 @@ func _set_sprite(side: int, slot: int, mon: Pokemon, species := 0, shiny := fals
 
 func _run() -> void:
 	await get_tree().process_frame
-	if role() == "guest":
+	if role() in ["guest", "pvp_guest"]:
 		await _guest_loop()
+		return
+	if role() == "pvp_host":
+		await _pvp_loop()
 		return
 	_setup_layout()
 	var evs := battle.start()
@@ -416,6 +423,71 @@ func _run() -> void:
 func _share(evs: Array) -> void:
 	if role() == "host":
 		Net.send_events(coop["bid"], coop["peer"], evs, battle)
+	elif role() == "pvp_host":
+		Net.send_events(coop["bid"], coop["peer"], evs, battle, true)
+
+
+## PvP (ce joueur calcule) : l'adversaire choisit en même temps que nous, ses remplaçants aussi.
+func _pvp_loop() -> void:
+	var bid: int = coop["bid"]
+	var peer: int = coop["peer"]
+	_setup_layout()
+	var evs := battle.start()
+	_share(evs)
+	await _play(evs)
+	while not battle.over:
+		if battle.need_switch.size() > 0 or battle.foe_need_switch.size() > 0:
+			var foe_slots: Array = battle.foe_need_switch.map(func(n): return n["slot"])
+			for fs in foe_slots:
+				Net.ask_switch(bid, peer, fs, battle, true)
+			while battle.need_switch.size() > 0 and not battle.over:
+				var n: Dictionary = battle.need_switch[0]
+				var idx := await _pick_switch(n["slot"], true)
+				if idx < 0:
+					battle.need_switch.erase(n)
+					continue
+				evs = battle.player_switch(n["slot"], idx)
+				_share(evs)
+				await _play(evs)
+			for fs in foe_slots:
+				_prompt.text = "En attente de %s..." % battle.owner_name(1, 0)
+				var a: Dictionary = await Net.wait_action(bid, 100 + fs, peer, true)
+				if a.get("type", "") == "run":
+					battle.forfeit(1)
+					evs = battle.flush()
+				else:
+					evs = battle.foe_switch(fs, int(a.get("index", -1)))
+				_share(evs)
+				await _play(evs)
+			continue
+		var foe_slots2 := []
+		for k in battle.sides[1].slots.size():
+			var fb := battle.battler(1, k)
+			if fb != null and fb.alive():
+				foe_slots2.append(k)
+		Net.ask_actions(bid, peer, foe_slots2, battle, true)
+		var acts := {}
+		for k in battle.sides[0].slots.size():
+			var b := battle.battler(0, k)
+			if b == null or not b.alive():
+				continue
+			var a2 = await _choose_action(k)
+			acts[k] = a2
+			if a2.get("type", "") == "run":
+				break
+		var foe_acts := {}
+		_prompt.text = "En attente de %s..." % battle.owner_name(1, 0)
+		for k in foe_slots2:
+			var fa: Dictionary = await Net.wait_action(bid, k, peer, true)
+			if fa.has("target_side"):
+				fa["target_side"] = 1 - int(fa["target_side"])
+			foe_acts[k] = fa
+		_prompt.text = ""
+		evs = battle.play_turn(acts, foe_acts)
+		_share(evs)
+		await _play(evs)
+	await get_tree().create_timer(0.3).timeout
+	finish(battle.result)
 
 
 ## Invité : affiche ce que l'hôte envoie et répond quand on lui demande d'agir.
@@ -441,7 +513,7 @@ func _guest_loop() -> void:
 				for k in m["data"]["slots"]:
 					var a = await _choose_action(k)
 					Net.send_action(coop["bid"], coop["peer"], k, a)
-				_prompt.text = "En attente de %s..." % battle.owner_name(0, 0)
+				_prompt.text = "En attente de %s..." % battle.owner_name(1 if role() == "pvp_guest" else 0, 0)
 			"switch":
 				battle.apply_snapshot(m["data"]["snap"])
 				_sync_party()
@@ -476,7 +548,7 @@ func _offset() -> int:
 
 func _say(text: String) -> void:
 	_prompt.text = ""
-	await Game.ui.say(text, MSG_AUTO)
+	await Game.ui.say(Battle.resolve_text(text), MSG_AUTO)
 
 
 func _play(events: Array) -> void:
@@ -800,6 +872,9 @@ func _choose_action(slot: int) -> Dictionary:
 					_want_z = false
 					return a
 			1:
+				if pvp():
+					await _say("Les objets sont interdits dans les combats entre joueurs !")
+					continue
 				var bag := BagScreen.new()
 				bag.mode = "battle"
 				var item = await Game.ui.open(bag)
@@ -816,6 +891,10 @@ func _choose_action(slot: int) -> Dictionary:
 						continue
 					return {"type": "switch", "index": idx}
 			3:
+				if pvp():
+					if await Game.ui.confirm("Abandonner le combat ? Ce sera une défaite."):
+						return {"type": "run"}
+					continue
 				if not battle.wild:
 					await _say("Impossible de fuir un combat de Dresseur !")
 					continue

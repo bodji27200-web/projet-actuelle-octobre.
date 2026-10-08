@@ -38,6 +38,8 @@ class Map:
         self.heal = False
         self.protected = set()  # cases à ne pas recouvrir (chemins, portes...)
         self.doors = set()
+        self.realm = "kanto"
+        self.extra = {}
 
     # -- dessin ---------------------------------------------------------------
     def inside(self, x, y):
@@ -112,7 +114,8 @@ class Map:
         return {"name": self.name, "w": self.w, "h": self.h, "rows": self.rows(), "buildings": self.buildings,
                 "warps": self.warps, "npcs": self.npcs, "signs": self.signs, "wild": self.wild, "rate": self.rate,
                 "outdoor": self.outdoor, "cave": self.cave, "theme": self.theme, "music": self.music,
-                "wx": self.wx, "wy": self.wy, "region": self.region, "battle_bg": self.battle_bg, "heal": self.heal}
+                "wx": self.wx, "wy": self.wy, "region": self.region, "battle_bg": self.battle_bg, "heal": self.heal,
+                "realm": self.realm, **self.extra}
 
 
 # ---------------------------------------------------------------------------

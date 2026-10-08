@@ -84,17 +84,20 @@ for sid, p in POKE.items():
             TYPE_POOL.setdefault(t, []).append(sid)
 
 
-def evolve_to(sid, lvl):
-    """Forme évoluée qu'un dresseur aurait à ce niveau (évolutions par niveau ; pierres vers 32+)."""
+def evolve_to(sid, lvl, max_sid=151):
+    """Forme évoluée qu'un dresseur aurait à ce niveau (évolutions par niveau ; pierres vers 32+).
+    max_sid : on ne fait pas évoluer vers une espèce plus récente que la région (pas de Magnézone à Kanto)."""
     s = sid
     for _ in range(3):
         nxt = None
         for e in POKE[s]["evos"]:
+            if e["to"] > max_sid or "region" in e:
+                continue
             if "level" in e and lvl >= e["level"]:
                 nxt = e["to"]
             elif "item" in e and lvl >= 32 and e["item"] != "linking-cord" and nxt is None and s not in (133,):
                 nxt = e["to"]
-            elif e.get("item") == "linking-cord" and lvl >= 38:
+            elif (e.get("item") == "linking-cord" or e.get("trade") and "trade_with" not in e) and lvl >= 38:
                 nxt = e["to"]
         if nxt is None:
             break
@@ -320,6 +323,11 @@ def center_for(t, door, label):
     m.warp(6, 7, t.id, door[0], door[1], "down")
     m.npc("infirmiere", "nurse", 6, 2, kind="nurse")
     m.signs["11,2"] = "@pc"
+    # Guichets en ligne : Hôtel des Ventes, Arène Classée, Guildes, Bases Secrètes.
+    m.npc("hote_ventes", "clerk", 1, 2, "down", kind="social", what="gts")
+    m.npc("arene_classee", "ace", 9, 2, "down", kind="social", what="ranked")
+    m.npc("guichet_guildes", "scientist", 1, 6, "right", kind="social", what="guild")
+    m.npc("hotesse_bases", "lass", 11, 6, "left", kind="social", what="base")
     return cid
 
 
@@ -1535,6 +1543,17 @@ for mid, mm in maps.items():
                 table.append([sid, lo, hi, max(1, round(total * pct / 100))])
 
 # ---------------------------------------------------------------------------
+# Base secrète (modèle) : chaque joueur en a une instance « base:<id> », créée par le jeu.
+# La sortie ramène au Centre Pokémon d'où l'on vient (« @return »).
+# ---------------------------------------------------------------------------
+bs = add(interior("base_secrete", "Base Secrète", ["WWWWWWWWWWWWWWW", "WWWMWWWWWWWMWWW", "WPooooooooooooW"]
+                  + ["W" + "o" * 13 + "W" for _ in range(7)] + ["WWWWWWWmWWWWWWW"], "town"))
+bs.region = "bourg"
+bs.signs["1,2"] = "@decor"
+bs.warp(7, 10, "@return", 0, 0, "down")
+bs.extra["entry"] = [7, 9]
+
+# ---------------------------------------------------------------------------
 # Finitions : connexions, panneaux, vérifications
 # ---------------------------------------------------------------------------
 apply_links()
@@ -1563,6 +1582,8 @@ for mid, mm in maps.items():
 
 problems = []
 for mid, mm in maps.items():
+    if mid == "base_secrete":
+        continue
     ent = [(w["tx"], w["ty"]) for x in maps.values() for w in x.warps if w["to"] == mid]
     ent += [(b["tx"], b["ty"]) for x in maps.values() for b in x.buildings if b["to"] == mid]
     if not ent:

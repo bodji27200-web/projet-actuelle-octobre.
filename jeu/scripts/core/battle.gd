@@ -333,6 +333,14 @@ var z_owners := []
 var aura := ""
 ## Plus gros coup infligé par chaque dresseur du camp du joueur : {dmg, move, target}.
 var best_hit := [{}, {}]
+## Combat entre joueurs : le camp 1 est joué par l'autre joueur (pas d'IA, pas d'expérience, pas d'argent).
+var pvp := false
+## Clause Sommeil (Smogon) : un seul Pokémon adverse endormi à la fois par vos capacités.
+var sleep_clause := false
+## Clause de combat sans fin : match nul au-delà de ce nombre de tours (0 = pas de limite).
+var turn_limit := 0
+## PvP : emplacements du camp 1 à remplacer (choix de l'autre joueur).
+var foe_need_switch: Array = []
 
 
 ## p_parties / e_parties : une équipe par dresseur du camp.
@@ -365,6 +373,13 @@ func _init(p_parties: Array, e_parties: Array, is_wild: bool, trainer_infos: Var
 	can_z = [opts.get("zmove", false), not is_wild and ai_level >= 2]
 	mega_owners = opts.get("mega_owners", [])
 	z_owners = opts.get("z_owners", [])
+	pvp = opts.get("pvp", false)
+	sleep_clause = opts.get("sleep_clause", pvp)
+	turn_limit = int(opts.get("turn_limit", 0))
+	if pvp:
+		ai_level = 0
+		can_mega[1] = opts.get("foe_mega", false)
+		can_z[1] = opts.get("foe_zmove", false)
 
 
 func _fill(side: BSide, parties: Array, double: bool, names: Array) -> void:
@@ -449,6 +464,9 @@ func foe(b: Battler) -> Battler:
 
 
 func nm(b: Battler) -> String:
+	if pvp:
+		# Jeton résolu par chaque écran selon son point de vue (« adverse » pour l'autre camp).
+		return "\u0001%d|%s\u0002" % [b.side, b.mon.name()]
 	if b.side == 0:
 		return b.mon.name()
 	return b.mon.name() + (" sauvage" if wild else " ennemi")
@@ -883,7 +901,9 @@ func start() -> Array:
 		if e.party.size() > 0 and e.party[0].boss:
 			msg("%s dégage une aura terrifiante ! C'est un Pokémon BOSS !" % names[0])
 	else:
-		if trainers.size() >= 2:
+		if pvp:
+			msg("Combat classé : %s contre %s !" % [owner_name(0, 0), owner_name(1, 0)])
+		elif trainers.size() >= 2:
 			msg("%s et %s veulent se battre !" % [trainers[0].get("name", ""), trainers[1].get("name", "")])
 		else:
 			msg("%s veut se battre !" % trainer.get("name", "Le Dresseur"))
@@ -1061,7 +1081,9 @@ func _send(side_i: int, slot: int, idx: int, announce := true, keep_stages := fa
 		for p: Battler in actives(0):
 			_add_participant(idx, p.party_index)
 	if announce:
-		if side_i == 0:
+		if pvp:
+			msg("%s envoie %s !" % [owner_name(side_i, b.owner), b.mon.name()])
+		elif side_i == 0:
 			msg("Go ! %s !" % b.mon.name() if b.owner == 0 or sides[0].names.size() < 2 else "%s envoie %s !" % [owner_name(0, b.owner), b.mon.name()])
 		else:
 			msg("%s envoie %s !" % [owner_name(1, b.owner), b.mon.name()])
@@ -1507,7 +1529,7 @@ func _finish_items() -> void:
 
 ## actions : {emplacement_joueur: action}. Une action seule est acceptée pour le combat simple.
 ## Action de capacité : {"type": "move", "slot", "target_side", "target_slot", "mega": bool, "z": bool}.
-func play_turn(player_actions: Dictionary) -> Array:
+func play_turn(player_actions: Dictionary, foe_actions := {}) -> Array:
 	if player_actions.has("type"):
 		player_actions = {0: player_actions}
 	turn += 1
@@ -1547,7 +1569,17 @@ func play_turn(player_actions: Dictionary) -> Array:
 		if b != null and b.alive():
 			actions[b] = player_actions[k]
 	for b: Battler in actives(1):
-		actions[b] = _ai_action(b)
+		if pvp:
+			var fa: Dictionary = foe_actions.get(b.slot, foe_actions.get(str(b.slot), {}))
+			actions[b] = fa if fa.get("type", "") in ["move", "switch", "run"] else _pvp_default(b)
+		else:
+			actions[b] = _ai_action(b)
+	# PvP : abandon d'un des deux joueurs.
+	if pvp:
+		for b: Battler in actions:
+			if actions[b].get("type", "") == "run":
+				_forfeit(b.side)
+				return flush()
 
 	# Actions prioritaires : fuite, Balls, objets, changements.
 	for b: Battler in actives(0):
@@ -1598,6 +1630,54 @@ func play_turn(player_actions: Dictionary) -> Array:
 	if not over:
 		_end_of_turn()
 		_check_end()
+	if not over and turn_limit > 0 and turn >= turn_limit:
+		over = true
+		result = "draw"
+		_finish_items()
+		msg("Le combat dure depuis %d tours : match nul !" % turn)
+		events.append({"t": "end", "result": "draw"})
+	field_event()
+	return flush()
+
+
+## PvP : action par défaut si l'autre joueur n'a rien envoyé (1re capacité utilisable, sinon Lutte).
+func _pvp_default(b: Battler) -> Dictionary:
+	var usable := usable_slots(1, b.slot)
+	if locked_move(1, b.slot) != 0:
+		return {"type": "move", "slot": -1}
+	if usable.is_empty():
+		return {"type": "move", "id": STRUGGLE}
+	return {"type": "move", "slot": usable[0], "target_side": 0, "target_slot": 0}
+
+
+## PvP : un joueur abandonne.
+func forfeit(side_i: int) -> void:
+	if not over:
+		_forfeit(side_i)
+
+
+func _forfeit(side_i: int) -> void:
+	over = true
+	result = "lose" if side_i == 0 else "win"
+	_finish_items()
+	msg("%s abandonne le combat !" % owner_name(side_i, 0))
+	events.append({"t": "end", "result": result})
+
+
+## PvP : l'autre joueur choisit le Pokémon qui remplace celui mis K.O.
+func foe_switch(slot: int, idx: int) -> Array:
+	for n in foe_need_switch.duplicate():
+		if n["slot"] == slot:
+			foe_need_switch.erase(n)
+	if not bench(1, sides[1].slot_owner[slot]).has(idx):
+		var bl := bench(1, sides[1].slot_owner[slot])
+		if bl.is_empty():
+			return flush()
+		idx = bl[0]
+	_send(1, slot, idx)
+	_entry_ability(sides[1].slots[slot])
+	_entry_item(sides[1].slots[slot])
+	_check_end()
 	field_event()
 	return flush()
 
@@ -1650,7 +1730,9 @@ func _goes_before(a: Battler, c: Battler) -> bool:
 
 
 func _do_switch(b: Battler, idx: int) -> void:
-	if b.side == 0:
+	if pvp:
+		msg("%s rappelle %s !" % [owner_name(b.side, b.owner), b.mon.name()])
+	elif b.side == 0:
 		msg("%s, reviens !" % b.mon.name())
 	else:
 		msg("%s rappelle %s !" % [owner_name(1, b.owner), b.mon.name()])
@@ -3101,7 +3183,7 @@ func _damage_move(u: Battler, t: Battler, m: Dictionary) -> void:
 		msg("Touché %d fois !" % landed)
 	# Plus gros coup du joueur (carte de profil).
 	if u.side == 0 and t.side == 1 and total > int(best_hit[u.owner].get("dmg", 0)):
-		best_hit[u.owner] = {"dmg": total, "move": m.get("name", "?"), "target": nm(t)}
+		best_hit[u.owner] = {"dmg": total, "move": m.get("name", "?"), "target": t.mon.name()}
 	_after_damage(u, t, m, typ, total, landed, subst_hit, sheer, eff)
 
 
@@ -4110,6 +4192,7 @@ func _special_move(u: Battler, t: Battler, m: Dictionary) -> bool:
 				return true
 			u.mon.status = "slp"
 			u.mon.sleep_turns = 3
+			u.mon.counters.erase("foe_sleep")
 			u.mon.hp = u.mon.max_hp()
 			hp_event(u)
 			refresh()
@@ -4859,6 +4942,9 @@ func _set_status(t: Battler, st: String, src: Battler, loud: bool) -> bool:
 		fail = "Voile Sucré protège %s !" % nm(t)
 	elif ta == "flower-veil" and has_type(t, "grass") and src != t:
 		fail = "Flora-Voile protège %s !" % nm(t)
+	elif st == "slp" and sleep_clause and src != null and src.side != t.side \
+			and sides[t.side].party.any(func(p): return p != mon and p.hp > 0 and p.status == "slp" and p.counters.get("foe_sleep", false)):
+		fail = "Clause Sommeil : un seul Pokémon peut être endormi à la fois !"
 	if t.substitute > 0 and src != t and loud:
 		fail = "Mais cela échoue !"
 	if fail != "":
@@ -4868,6 +4954,7 @@ func _set_status(t: Battler, st: String, src: Battler, loud: bool) -> bool:
 	mon.status = st
 	if st == "slp":
 		mon.sleep_turns = randi_range(2, 4)
+		mon.counters["foe_sleep"] = src != null and src.side != t.side
 	if st == "tox":
 		t.toxic_n = 0
 	anim(t, "status_" + st)
@@ -5024,7 +5111,7 @@ func _faint(b: Battler) -> void:
 	sides[b.side].fainted_last_turn = true
 	events.append({"t": "faint", "side": b.side, "slot": b.slot})
 	msg("%s est K.O. !" % nm(b))
-	if b.side == 1:
+	if b.side == 1 and not pvp:
 		_give_exp(b)
 
 
@@ -5522,9 +5609,15 @@ func _check_end() -> void:
 		else:
 			_win()
 		return
-	# Remplacements adverses (automatiques).
+	# Remplacements adverses (automatiques ; en PvP, l'autre joueur choisit).
 	for k in sides[1].slots.size():
 		var b: Battler = sides[1].slots[k]
+		if pvp and b != null and not b.alive() and not b.empty:
+			if bench(1, sides[1].slot_owner[k]).is_empty():
+				b.empty = true
+			elif not foe_need_switch.any(func(n): return n["slot"] == k):
+				foe_need_switch.append({"slot": k, "owner": sides[1].slot_owner[k]})
+			continue
 		if b != null and not b.alive() and not b.empty:
 			var nxt := _ai_next(sides[1].slot_owner[k])
 			if nxt >= 0 and not wild:
@@ -5548,6 +5641,10 @@ func _win() -> void:
 	over = true
 	result = "win"
 	_finish_items()
+	if pvp:
+		msg("%s remporte le combat !" % owner_name(0, 0))
+		events.append({"t": "end", "result": "win"})
+		return
 	if not wild:
 		var total := 0
 		for t in trainers:
@@ -5573,6 +5670,10 @@ func _lose() -> void:
 	over = true
 	result = "lose"
 	_finish_items()
+	if pvp:
+		msg("%s remporte le combat !" % owner_name(1, 0))
+		events.append({"t": "end", "result": "lose"})
+		return
 	msg("Vous n'avez plus de Pokémon en forme !")
 	msg("Vous êtes pris de panique et perdez connaissance...")
 	events.append({"t": "end", "result": "lose"})
@@ -6180,3 +6281,64 @@ func apply_snapshot(d: Dictionary) -> void:
 			if not bd.has("ability"):
 				b.ability = b.mon.ability
 			side.slots.append(b)
+
+
+# ---------------------------------------------------------------------------
+# PvP : point de vue de l'autre joueur (camps inversés)
+# ---------------------------------------------------------------------------
+
+static func flip_text(t: String) -> String:
+	return t.replace("\u00010|", "\u0003").replace("\u00011|", "\u00010|").replace("\u0003", "\u00011|")
+
+
+## Remplace les jetons de nom par le nom (et « adverse » pour le camp d'en face).
+static func resolve_text(t: String) -> String:
+	if not t.contains("\u0001"):
+		return t
+	var out := ""
+	var i := 0
+	while i < t.length():
+		var c := t[i]
+		if c == "\u0001":
+			var j := t.find("\u0002", i)
+			if j < 0:
+				break
+			var tok := t.substr(i + 1, j - i - 1)
+			var side := int(tok.get_slice("|", 0))
+			out += tok.get_slice("|", 1) + (" adverse" if side == 1 else "")
+			i = j + 1
+		else:
+			out += c
+			i += 1
+	return out
+
+
+static func flip_events(evs: Array) -> Array:
+	var out := []
+	for e in evs:
+		var c: Dictionary = e.duplicate(true)
+		c.erase("mon")
+		for k in ["side", "tside"]:
+			if c.has(k):
+				c[k] = 1 - int(c[k])
+		if c.get("t", "") == "field" and c.has("sides"):
+			c["sides"] = [c["sides"][1], c["sides"][0]]
+		if c.get("t", "") == "end":
+			c["result"] = {"win": "lose", "lose": "win"}.get(c["result"], c["result"])
+		if c.has("text"):
+			c["text"] = flip_text(c["text"])
+		out.append(c)
+	return out
+
+
+static func flip_snapshot(d: Dictionary, host_name: String) -> Dictionary:
+	var c: Dictionary = d.duplicate(true)
+	c["sides"] = [d["sides"][1], d["sides"][0]]
+	c["can_mega"] = [d["can_mega"][1], d["can_mega"][0]]
+	c["can_z"] = [d["can_z"][1], d["can_z"][0]]
+	c["mega_owners"] = []
+	c["z_owners"] = []
+	c["need_switch"] = []
+	c["trainers"] = [{"name": host_name}]
+	c["result"] = {"win": "lose", "lose": "win"}.get(d["result"], d["result"])
+	return c

@@ -89,7 +89,7 @@ func local_ips() -> Array:
 func my_state() -> Dictionary:
 	var w = Game.world
 	var st := {"name": Game.player_name, "look": Game.look(), "map": Game.map_id, "x": Game.pos.x, "y": Game.pos.y,
-		"dir": Game.facing, "battle": in_battle, "group": partner != 0, "badges": Game.badge_count(), "title": Game.title,
+		"dir": Game.facing, "battle": in_battle, "group": partner != 0, "badges": Game.badge_count(), "title": Game.title, "uid": Game.uid,
 		"guild": Game.stats.get("guild", ""), "elo": int(Game.stats.get("elo", 1000)), "follow": []}
 	if w != null and w.follower != null:
 		st["follow"] = [w.follower.sid, w.follower.shiny]
@@ -344,8 +344,13 @@ func _coop_action(bid: int, slot: int, action: Dictionary) -> void:
 	_coop_msg.emit()
 
 
-## Envoie les événements d'un tour + l'état complet au partenaire.
-func send_events(bid: int, peer: int, events: Array, battle: Battle) -> void:
+## État du combat tel que le voit l'autre joueur (en PvP, son camp est en bas : camps inversés).
+func _snap_for(battle: Battle, flip: bool) -> Dictionary:
+	return Battle.flip_snapshot(battle.snapshot(), battle.owner_name(0, 0)) if flip else battle.snapshot()
+
+
+## Envoie les événements d'un tour + l'état complet au partenaire (ou à l'adversaire en PvP : flip).
+func send_events(bid: int, peer: int, events: Array, battle: Battle, flip := false) -> void:
 	if not players.has(peer):
 		return
 	var ser := []
@@ -353,25 +358,27 @@ func send_events(bid: int, peer: int, events: Array, battle: Battle) -> void:
 		var c: Dictionary = e.duplicate()
 		c.erase("mon")
 		ser.append(c)
-	_coop_to_guest.rpc_id(peer, bid, "events", {"events": ser, "snap": battle.snapshot()})
+	if flip:
+		ser = Battle.flip_events(ser)
+	_coop_to_guest.rpc_id(peer, bid, "events", {"events": ser, "snap": _snap_for(battle, flip)})
 
 
-func ask_actions(bid: int, peer: int, slots: Array, battle: Battle) -> void:
+func ask_actions(bid: int, peer: int, slots: Array, battle: Battle, flip := false) -> void:
 	if players.has(peer):
-		_coop_to_guest.rpc_id(peer, bid, "ask", {"slots": slots, "snap": battle.snapshot()})
+		_coop_to_guest.rpc_id(peer, bid, "ask", {"slots": slots, "snap": _snap_for(battle, flip)})
 
 
-func ask_switch(bid: int, peer: int, slot: int, battle: Battle) -> void:
+func ask_switch(bid: int, peer: int, slot: int, battle: Battle, flip := false) -> void:
 	if players.has(peer):
-		_coop_to_guest.rpc_id(peer, bid, "switch", {"slot": slot, "snap": battle.snapshot()})
+		_coop_to_guest.rpc_id(peer, bid, "switch", {"slot": slot, "snap": _snap_for(battle, flip)})
 
 
-## Attend l'action du partenaire pour un emplacement. Si le partenaire est parti : action automatique.
-func wait_action(bid: int, slot: int, peer: int) -> Dictionary:
+## Attend l'action du partenaire pour un emplacement. S'il est parti : action automatique (abandon en PvP).
+func wait_action(bid: int, slot: int, peer: int, pvp := false) -> Dictionary:
 	var key := "%d:%d" % [bid, slot]
 	while not _actions.has(key):
 		if not players.has(peer):
-			return {"type": "move", "slot": 0}
+			return {"type": "run"} if pvp else {"type": "move", "slot": 0}
 		await _coop_msg
 	var a: Dictionary = _actions[key]
 	_actions.erase(key)

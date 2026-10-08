@@ -33,6 +33,7 @@ func _ready() -> void:
 	_builds()
 	_display()
 	_profile()
+	_social()
 	print("\n=== RÉSULTAT : %d vérifications OK, %d échecs ===" % [ok, fail])
 	for f in failures.slice(0, 60):
 		print("  ÉCHEC : ", f)
@@ -669,7 +670,8 @@ func _world_data() -> void:
 		for b in m["buildings"]:
 			check(Game.maps.has(b["to"]), "Porte %s -> %s" % [mid, b["to"]])
 		for w in m["warps"]:
-			check(Game.maps.has(w["to"]), "Passage %s -> %s" % [mid, w["to"]])
+			# « @return » : sortie de la base secrète, vers le Centre d'où l'on vient.
+			check(Game.maps.has(w["to"]) or (w["to"] == "@return" and mid == "base_secrete"), "Passage %s -> %s" % [mid, w["to"]])
 	check(leaders == 8, "8 Champions d'Arène donnent un Badge (%d)" % leaders)
 	check(Game.maps.size() > 100, "Plus de 100 cartes (%d)" % Game.maps.size())
 
@@ -892,6 +894,81 @@ func _profile() -> void:
 	b.always_hit = true
 	b.play_turn({0: {"type": "move", "slot": 0}})
 	check(int(b.best_hit[0].get("dmg", 0)) > 0 and b.best_hit[0].get("target", "") != "", "Le moteur note le plus gros coup du joueur")
+	Game.new_game()
+
+
+func _mk(sid: int, lvl: int, moves: Array, item := "") -> Pokemon:
+	var m := Pokemon.create(sid, lvl)
+	m.moves = moves.map(func(id): return Pokemon.make_move(id))
+	m.held_item = item
+	return m
+
+
+func _social() -> void:
+	print("Combats classés, Elo, PvP, décorations...")
+	check(Ranked.tier_of(150) == "Uber", "Mewtwo est Uber (%s)" % Ranked.tier_of(150))
+	check(Ranked.tier_of(1) == "LC", "Bulbizarre est LC")
+	check(Ranked.rank("AG") < Ranked.rank("Uber") and Ranked.rank("Uber") < Ranked.rank("OU") and Ranked.rank("OU") < Ranked.rank("LC"), "Ordre des tiers")
+	for pid in Data.pokemon:
+		check(Ranked.rank(Ranked.tier_of(int(pid))) < 99, "Tier connu pour %s" % pid)
+	var mew2 := _mk(150, 70, [94])
+	var luca := _mk(448, 50, [396])
+	check(Ranked.validate([mew2, luca], "ou").size() == 1, "Mewtwo refusé en OU")
+	check(Ranked.validate([mew2, luca], "ubers").is_empty(), "Mewtwo accepté en Ubers")
+	check(Ranked.validate([luca, _mk(448, 40, [396])], "ou").any(func(e): return e.contains("Espèce")), "Clause Espèce")
+	check(Ranked.validate([_mk(130, 40, [90])], "ou").any(func(e): return e.contains("OHKO")), "Clause OHKO (Abîme)")
+	check(Ranked.validate([_mk(130, 40, [104])], "ou").any(func(e): return e.contains("Esquive")), "Clause Esquive (Reflet)")
+	check(Ranked.validate([_mk(172, 5, [84])], "lc").is_empty(), "Pichu accepté en Little Cup")
+	check(not Ranked.validate([_mk(25, 5, [84])], "lc").is_empty(), "Pikachu refusé en Little Cup")
+	check(Ranked.validate([_mk(144, 50, [58]), _mk(145, 50, [85]), _mk(146, 50, [53])], "vgc").any(func(e): return e.contains("légendaires")), "VGC : 3 légendaires refusés")
+	check(Ranked.validate([_mk(151, 50, [94]), luca], "vgc").any(func(e): return e.contains("fabuleux")), "VGC : fabuleux refusé")
+	check(Ranked.validate([_mk(3, 50, [202], "leftovers"), _mk(6, 50, [53], "leftovers")], "vgc").any(func(e): return e.contains("Objet")), "VGC : Clause Objet")
+	var kanga := _mk(115, 50, [34], "kangaskhanite")
+	check(Ranked.rank(Ranked.effective_tier(kanga)) <= Ranked.rank(Ranked.tier_of(115)), "Méga-Gemme : tier de la Méga-Évolution (%s)" % Ranked.effective_tier(kanga))
+	var copy := Ranked.battle_team([luca], "lc")
+	check(copy[0].level == 5 and luca.level == 50 and copy[0].hp == copy[0].max_hp(), "Équipe classée : copie au niveau du format, original intact")
+	check(Ranked.elo_after(1000, 1000) == [1016, 984], "Elo : victoire à égalité +16/-16")
+	check(Ranked.elo_after(1000, 1000, true) == [1000, 1000], "Elo : match nul à égalité")
+	var up := Ranked.elo_after(1400, 1000)
+	check(up[0] - 1400 < 16 and up[0] > 1400, "Elo : battre plus faible rapporte peu (+%d)" % (up[0] - 1400))
+	# Perspective inversée.
+	var ev := Battle.flip_events([{"t": "hp", "side": 0, "slot": 0}, {"t": "move_anim", "side": 1, "slot": 0, "tside": 0, "tslot": 0},
+		{"t": "end", "result": "win"}, {"t": "msg", "text": "\u00010|Lucario\u0002 attaque \u00011|Florizarre\u0002 !"}])
+	check(ev[0]["side"] == 1 and ev[1]["side"] == 0 and ev[1]["tside"] == 1 and ev[2]["result"] == "lose", "Inversion des camps et du résultat")
+	check(Battle.resolve_text(ev[3]["text"]) == "Lucario adverse attaque Florizarre !", "Noms résolus : « %s »" % Battle.resolve_text(ev[3]["text"]))
+	# Moteur en mode PvP.
+	var a1 := _mk(286, 60, [147])
+	var a2 := _mk(25, 60, [84])
+	var b1 := _mk(143, 60, [33])
+	var b2 := _mk(130, 60, [33])
+	var pb := Battle.new([[a1, a2]], [[b1, b2]], false, [{"name": "Lou"}], {"pvp": true, "player_names": ["Sacha"], "turn_limit": 300})
+	pb.always_hit = true
+	pb.start()
+	pb.play_turn({0: {"type": "move", "slot": 0, "target_side": 1, "target_slot": 0}}, {0: {"type": "move", "slot": 0, "target_side": 0, "target_slot": 0}})
+	check(b1.status == "slp", "Spore endort Ronflex (PvP)")
+	check(pb.sides[0].party[0].hp < pb.sides[0].party[0].max_hp() or b1.status == "slp", "L'adversaire humain a bien agi")
+	pb.play_turn({0: {"type": "move", "slot": 0}}, {0: {"type": "switch", "index": 1}})
+	check(pb.battler(1, 0).mon == b2, "Le joueur adverse a changé de Pokémon")
+	pb.play_turn({0: {"type": "move", "slot": 0, "target_side": 1, "target_slot": 0}}, {0: {"type": "move", "slot": 0}})
+	check(b2.status != "slp", "Clause Sommeil : 2e Pokémon adverse pas endormi")
+	var ko := Battle.new([[_mk(6, 100, [53])]], [[_mk(10, 5, [33]), _mk(13, 5, [40])]], false, [{"name": "Lou"}], {"pvp": true})
+	ko.always_hit = true
+	ko.start()
+	ko.play_turn({0: {"type": "move", "slot": 0}}, {0: {"type": "move", "slot": 0}})
+	check(ko.foe_need_switch.size() == 1 and not ko.over, "PvP : l'adversaire choisit son remplaçant")
+	ko.foe_switch(0, 1)
+	check(ko.battler(1, 0) != null and ko.battler(1, 0).mon.species == 13 and ko.foe_need_switch.is_empty(), "PvP : remplaçant envoyé")
+	ko.play_turn({0: {"type": "move", "slot": 0}}, {0: {"type": "run"}})
+	check(ko.over and ko.result == "win", "PvP : abandon de l'adversaire = victoire")
+	check(Battle.resolve_text("\u00011|Aspicot\u0002 est K.O. !") == "Aspicot adverse est K.O. !", "Texte PvP lisible")
+	# Décorations.
+	Game.new_game()
+	check(Decor.give_trophy(59) and not Decor.give_trophy(59) and Game.decor.get("trophy_59", 0) == 1, "Trophée de boss donné une seule fois")
+	check(Decor.info("trophy_59")["name"].contains("Arcanin"), "Nom du trophée")
+	for id in Decor.CATALOG:
+		check(Decor.texture(id) != null and int(Decor.CATALOG[id]["price"]) > 0, "Décoration %s" % id)
+		if Decor.CATALOG[id].has("sid"):
+			check(Data.pokemon.has(int(Decor.CATALOG[id]["sid"])), "Peluche/statue %s : Pokémon existant" % id)
 	Game.new_game()
 
 

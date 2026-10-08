@@ -48,8 +48,9 @@ func _menu() -> void:
 		if not Net.online():
 			opts = ["HÉBERGER", "REJOINDRE", "RETOUR"]
 		else:
-			opts = ["INVITER DANS LE GROUPE", "QUITTER LE GROUPE", "PROFIL D'UN JOUEUR", "ENVOYER UN MESSAGE", "SE DÉCONNECTER", "RETOUR"]
-		var i: int = await Game.ui.choose(opts, Vector2(250, 244 - opts.size() * 22), true)
+			opts = ["INVITER DANS LE GROUPE", "QUITTER LE GROUPE", "PROFIL D'UN JOUEUR", "DISCUSSION", "HÔTEL DES VENTES", "GUILDES",
+				"COMBATS CLASSÉS", "ÉCHANGER", "SE DÉCONNECTER", "RETOUR"]
+		var i: int = await Game.ui.choose(opts, Vector2(250, maxi(4, 244 - opts.size() * 22)), true)
 		var choice: String = opts[i] if i >= 0 else "RETOUR"
 		match choice:
 			"HÉBERGER":
@@ -90,8 +91,16 @@ func _menu() -> void:
 			"QUITTER LE GROUPE":
 				Net.leave_group()
 				await Game.ui.say("Tu n'es plus dans un groupe.")
-			"ENVOYER UN MESSAGE":
+			"DISCUSSION":
 				await Events.chat()
+			"HÔTEL DES VENTES":
+				await SocialMenus.gts()
+			"GUILDES":
+				await SocialMenus.guilds()
+			"COMBATS CLASSÉS":
+				await SocialMenus.ranked()
+			"ÉCHANGER":
+				await SocialMenus.trade_pick()
 			"SE DÉCONNECTER":
 				Net.stop()
 				await Game.ui.say("Déconnecté.")

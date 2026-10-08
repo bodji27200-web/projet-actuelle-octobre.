@@ -14,6 +14,7 @@ Sprites="*res://scripts/autoload/sprites.gd"
 Game="*res://scripts/autoload/game.gd"
 Audio="*res://scripts/autoload/audio.gd"
 Net="*res://scripts/autoload/net.gd"
+Social="*res://scripts/autoload/social.gd"
 
 [display]
 

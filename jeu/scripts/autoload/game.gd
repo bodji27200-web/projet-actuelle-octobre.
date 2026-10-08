@@ -2,6 +2,8 @@ extends Node
 ## État de la partie (équipe, sac, argent, Pokédex, badges, quêtes, tenues) + sauvegarde + paramètres.
 
 const SAVE_PATH := "user://sauvegarde.json"
+## Fichier de sauvegarde utilisé (les tests en changent pour ne pas toucher à la vraie partie).
+var save_path := SAVE_PATH
 const SETTINGS_PATH := "user://parametres.json"
 const PARTY_MAX := 6
 const RIVAL_NAME := "Régis"
@@ -65,6 +67,10 @@ var last_outdoor := "bourg"
 var stats := {}
 var titles: Array = ["debutant"]
 var title := "debutant"
+## Identifiant unique du dresseur (Hôtel des Ventes, guildes, classement, base secrète).
+var uid := ""
+## Décorations possédées pour la base secrète (id -> nombre).
+var decor := {}
 
 var settings := {
 	"text_speed": 1, "music": 0.7, "sfx": 0.8, "cries": true, "animations": true, "difficulty": 0,
@@ -499,7 +505,7 @@ func daycare_make_egg() -> Pokemon:
 # ---------------------------------------------------------------------------
 
 func has_save() -> bool:
-	return FileAccess.file_exists(SAVE_PATH)
+	return FileAccess.file_exists(save_path)
 
 
 func save_dict() -> Dictionary:
@@ -512,18 +518,19 @@ func save_dict() -> Dictionary:
 		"badges": badges, "quests": quests, "outfits": outfits, "outfit": outfit,
 		"daycare": daycare.map(func(m): return m.to_dict()), "daycare_steps": daycare_steps, "daycare_egg": daycare_egg,
 		"steps": steps, "last_outdoor": last_outdoor, "stats": stats, "titles": titles, "title": title,
+		"uid": uid, "decor": decor,
 	}
 
 
 func save_game() -> void:
-	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	var f := FileAccess.open(save_path, FileAccess.WRITE)
 	f.store_string(JSON.stringify(save_dict()))
 
 
 func load_game() -> bool:
 	if not has_save():
 		return false
-	var f := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	var f := FileAccess.open(save_path, FileAccess.READ)
 	var d = Data._intify(JSON.parse_string(f.get_as_text()))
 	if not d is Dictionary or int(d.get("version", 1)) < 2:
 		return false
@@ -541,9 +548,14 @@ func load_game() -> bool:
 	for s in d["caught"]:
 		caught[int(s)] = true
 	map_id = d["map"]
+	pos = Vector2i(d["x"], d["y"])
+	# Sauvegarde dans une base secrète : on reprend devant l'hôtesse du Centre.
+	if str(map_id).begins_with("base:") and d.get("return", {}).has("map"):
+		map_id = d["return"]["map"]
+		pos = Vector2i(d["return"]["x"], d["return"]["y"])
 	if not maps.has(map_id):
 		map_id = "maison"
-	pos = Vector2i(d["x"], d["y"])
+		pos = Vector2i(4, 3)
 	facing = d["facing"]
 	heal_point = d["heal"]
 	repel_steps = d.get("repel", 0)
@@ -564,6 +576,10 @@ func load_game() -> bool:
 	title = d.get("title", "debutant")
 	if not Profile.TITLES.has(title):
 		title = "debutant"
+	uid = d.get("uid", "")
+	if uid == "":
+		uid = new_uid()
+	decor = d.get("decor", {})
 	rival_name = RIVAL_NAME
 	return true
 
@@ -595,6 +611,13 @@ func new_game() -> void:
 	stats = {}
 	titles = ["debutant"]
 	title = "debutant"
+	uid = new_uid()
+	decor = {}
+
+
+static func new_uid() -> String:
+	var c := Crypto.new()
+	return c.generate_random_bytes(8).hex_encode()
 
 
 func time_text() -> String:

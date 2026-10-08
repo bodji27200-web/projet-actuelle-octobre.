@@ -69,6 +69,9 @@ var _bobber: Sprite2D
 ## Pokémon suiveur (1er Pokémon de l'équipe) : case et direction.
 var follower: Follower
 var _follow_species := -1
+## Base secrète : décorations posées et cases qu'elles occupent.
+var _decor: Array = []
+var _decor_block := {}
 
 
 ## Petit Pokémon en pixel art qui suit un dresseur (icône officielle, sautille en marchant).
@@ -135,6 +138,9 @@ func _ready() -> void:
 	_camera.zoom = Vector2(2, 2)
 	add_child(_camera)
 	_camera.make_current()
+	Social.changed.connect(func(c: String):
+		if c == "bases" and map.has("base_owner"):
+			refresh_decor())
 
 
 # ---------------------------------------------------------------------------
@@ -189,6 +195,8 @@ func load_map(id: String, at: Vector2i, facing := "down") -> void:
 		w.face(n.get("dir", "down"))
 		_actors.add_child(w)
 		walkers.append(w)
+	_decor.clear()
+	refresh_decor()
 	player = Walker.new()
 	player.centered = false
 	player.look = Game.look()
@@ -372,7 +380,7 @@ func walker_at(t: Vector2i) -> Walker:
 
 func can_enter(t: Vector2i, dir: String) -> bool:
 	var ch := tile_at(t)
-	if _blocked.has(t):
+	if _blocked.has(t) or _decor_block.has(t):
 		return false
 	if not WALKABLE.contains(ch):
 		return false
@@ -535,6 +543,10 @@ func _after_step() -> void:
 	for wp in map["warps"]:
 		if wp["x"] == t.x and wp["y"] == t.y:
 			Audio.sfx("door")
+			if wp["to"] == "@return":
+				var rp: Dictionary = Game.return_point
+				await warp_to(rp.get("map", Game.last_outdoor), Vector2i(rp.get("x", 5), rp.get("y", 5)), "down")
+				return
 			await warp_to(wp["to"], Vector2i(wp["tx"], wp["ty"]), wp.get("dir", "down"))
 			return
 	for egg in Game.on_step():
@@ -598,6 +610,42 @@ func _interact() -> void:
 		_run(func(): await Events.sign(self, "@pc"))
 	elif Events.water_ahead(self) and not Events.owned_rods().is_empty():
 		_run(func(): await Events.fish_prompt(self))
+
+
+## Décorations de la base secrète (redessinées quand quelqu'un décore).
+func refresh_decor() -> void:
+	for n in _decor:
+		if is_instance_valid(n):
+			n.queue_free()
+	_decor.clear()
+	_decor_block.clear()
+	var owner: String = map.get("base_owner", "")
+	if owner == "":
+		return
+	for it in Social.base(owner).get("items", []):
+		var id: String = it["id"]
+		var at := Vector2i(int(it["x"]), int(it["y"]))
+		var node := Decor.make_node(id)
+		node.position = Vector2(at * T)
+		if Decor.blocks(id):
+			_actors.add_child(node)
+			_decor_block[at] = true
+		else:
+			_ground.add_child(node)
+		_decor.append(node)
+
+
+## Case de la base où l'on peut poser une décoration.
+func base_free(t: Vector2i) -> bool:
+	if not map.has("base_owner") or not tile_at(t) in ["o", "q"] or _decor_block.has(t) or walker_at(t) != null:
+		return false
+	for it in Social.base(map["base_owner"]).get("items", []):
+		if int(it["x"]) == t.x and int(it["y"]) == t.y:
+			return false
+	for wp in map["warps"]:
+		if wp["x"] == t.x and (wp["y"] == t.y or wp["y"] == t.y + 1):
+			return false
+	return t != player.tile
 
 
 func front_tile() -> Vector2i:
