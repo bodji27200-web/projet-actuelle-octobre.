@@ -37,7 +37,7 @@ static func is_evo_item(item: String) -> bool:
 ## Objet qu'un Pokémon peut tenir.
 static func is_holdable(item: String) -> bool:
 	return Data.items.get(item, {}).get("held", false)
-const BATTLE_ONLY := ["x-attack", "x-defense", "x-sp-atk", "x-sp-def", "x-speed", "x-accuracy", "dire-hit", "guard-spec"]
+const BATTLE_ONLY := ["x-attack", "x-defense", "x-sp-atk", "x-sp-def", "x-speed", "x-accuracy", "dire-hit", "guard-spec", "poke-doll"]
 const PP_ITEMS := ["ether", "max-ether", "pp-up", "pp-max"]
 
 

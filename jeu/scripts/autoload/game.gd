@@ -370,6 +370,11 @@ func on_step() -> Array:
 	for m in party:
 		if not m.is_egg:
 			m.counters["steps"] = int(m.counters.get("steps", 0)) + 1
+	# En marchant ensemble, les Pokémon s'attachent au dresseur (plus vite avec la Grelot Zen).
+	if steps % 128 == 0:
+		for m in party:
+			if not m.is_egg:
+				m.happiness = mini(255, m.happiness + (2 if m.held_item == "soothe-bell" else 1))
 	if steps % 2000 == 0:
 		for m in party:
 			if m.pokerus > 0:

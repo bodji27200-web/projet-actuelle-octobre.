@@ -209,7 +209,7 @@ func add_exp(amount: int) -> Array:
 	while level < 100 and exp >= Data.exp_at(data()["growth"], level + 1):
 		level += 1
 		recalc_stats()
-		happiness = mini(255, happiness + 3)
+		happiness = mini(255, happiness + (5 if held_item == "soothe-bell" else 3))
 		reached.append(level)
 	return reached
 

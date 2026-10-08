@@ -1110,6 +1110,9 @@ func _item_action(item: String, b: Battle.Battler) -> Variant:
 			target_slot = foes[i].slot
 		Game.remove_item(item)
 		return {"type": "ball", "item": item, "target": target_slot}
+	if item == "poke-doll" and not battle.wild:
+		await _say("Ce n'est pas le moment d'utiliser ça !")
+		return null
 	if item in ItemUse.BATTLE_ONLY:
 		Game.remove_item(item)
 		return {"type": "item", "item": item}

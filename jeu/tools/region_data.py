@@ -83,6 +83,11 @@ def johto(W):
     return {
         "realm": R, "name": "Johto", "prefix": "jo", "gen": 2, "max_species": 251, "versions": ["15", "16"], "band": (42, 58),
         "classes": ["Topdresseur", "Montagnard", "Fillette", "Gamin", "Scout", "Pêcheur", "Karatéka", "Médium", "Canon", "Ornithologue"],
+        "lore": ["Johto est la région voisine de Kanto. Ici, on vit au rythme des traditions et des vieilles tours d'Écorcia.",
+                 "Il y a longtemps, la Tour Cendrée brûla. Trois Pokémon y périrent... et Ho-Oh les ramena à la vie.",
+                 "Au fond des Tourb'Îles, au large d'Oliville, dormirait un gardien des mers : Lugia.",
+                 "Fargas, à Écorcia, fabrique des Poké Balls avec des Noigrumes. Elles ont toutes un petit secret !",
+                 "Les Pokémon du Parc Naturel sont plus nombreux le matin... et les Insectes adorent le Concours !"],
         "mart_extra": ["dusk-ball", "quick-ball", "heal-ball", "moon-ball", "friend-ball", "love-ball", "fast-ball", "level-ball", "lure-ball", "heavy-ball"],
         "loot": ["ultra-ball", "full-restore", "max-revive", "rare-candy", "pp-up", "max-elixir", "exp-candy-l", "sun-stone", "moon-stone",
                  "dragon-scale", "kings-rock", "metal-coat", "up-grade", "tmsv071", "tmsv081", "tmsv117"],
@@ -1246,7 +1251,9 @@ def paldea(W):
                            "Alisma : ... Admirable. Paldea a un nouveau Maître.", "champion_f", "champion")
     W.quests["chap_paldea"] = chapter(R, "Paldea", "Une IA, copie du Prof. Turum, aide la Team Rainbow Rocket à tirer des Pokémon du futur de la Zone Zéro. Descends dans le Grand Cratère !",
                                       "L'IA Turum est arrêtée ! Alisma, présidente de la Ligue, t'attend à la Ligue Pokémon de Paldea.")
-    W.quests["q_paldea_titans"] = {"title": "Les Pokémon Titans", "stages": ["", "Cinq Pokémon Titans, géants et entourés d'une aura, rôdent à Paldea. Trouve-les tous !"]}
+    W.quests["q_paldea_titans"] = {"title": "Les Pokémon Titans", "stages": ["", "Cinq Pokémon Titans, géants et entourés d'une aura, rôdent à Paldea. Trouve-les tous !",
+                                                                         "Terminé ! Tu as vaincu les cinq Pokémon Titans de Paldea."]}
+    titan_flags = [f"boss_titan_{k}" for k in ("lestombaile", "craparoi", "fort_ivoire", "ferdeter", "oyacata")]
     W.quests["q_septentria"] = {"title": "La légende de Septentria", "stages": ["",
         "À Septentria, on raconte que trois « Loyaux » ont volé les masques d'un ogre. Cherche-les dans les Terres Vierges, la Forêt Ternelle et le Mont Strueux.",
         "Les trois Loyaux sont capturés. L'ogre, Ogerpon, t'attend dans la Gueule du Monstre... avec ses masques."]}
@@ -1256,6 +1263,7 @@ def paldea(W):
                      ["Le Pokémon Titan s'enfuit en laissant derrière lui une herbe mystérieuse..."])
         n["script"].insert(0, quest("q_paldea_titans", 1))
         n["script"].append(give("exp-candy-xl", 2))
+        n["script"].append(iff({"all_flags": titan_flags}, [quest("q_paldea_titans", 2), say("Tu as vaincu les cinq Pokémon Titans de Paldea !")]))
         return n
 
     clavel_intro = ["Directeur Clavel : Bienvenue à l'Académie Orange ! Un Maître de Kanto venu à Paldea ? Quel honneur !",

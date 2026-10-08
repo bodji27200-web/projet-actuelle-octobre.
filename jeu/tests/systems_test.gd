@@ -1067,6 +1067,18 @@ func _campaign() -> void:
 	check(Pokemon.create(999, 50).item_evolution("gimmighoul-coin") == 1000, "Pièce de Mordudor : Mordudor -> Gromago")
 	check(Pokemon.create(67, 40).item_evolution("linking-cord") == 68, "Fil de Liaison : Machopeur -> Mackogneur")
 	check(ItemUse.is_evo_item("meltan-candy") and ItemUse.is_evo_item("gimmighoul-coin"), "Bonbon Meltan et Pièce utilisables")
+	# Objets hors combat : Poké Poupée, Grelot Zen.
+	var bt := _battle1(Pokemon.create(25, 30), Pokemon.create(16, 30))
+	bt.play_turn({"type": "item", "item": "poke-doll"})
+	check(bt.over and bt.result == "run", "Poké Poupée : fuite assurée face à un sauvage")
+	var bt2 := _battle1(Pokemon.create(25, 30), Pokemon.create(16, 30), false)
+	bt2.play_turn({"type": "item", "item": "poke-doll"})
+	check(not bt2.over, "Poké Poupée : sans effet contre un dresseur")
+	var gz := Pokemon.create(25, 10)
+	gz.held_item = "soothe-bell"
+	var h0 := gz.happiness
+	gz.add_exp(Data.exp_at(gz.data()["growth"], 11) - gz.exp)
+	check(gz.level == 11 and gz.happiness == h0 + 5, "Grelot Zen : +5 d'amitié par niveau au lieu de +3")
 
 
 func _flatten(cmds: Variant) -> Array:

@@ -197,6 +197,7 @@ func load_map(id: String, at: Vector2i, facing := "down") -> void:
 		walkers.append(w)
 	_decor.clear()
 	refresh_decor()
+	at = _safe_spot(at)
 	player = Walker.new()
 	player.centered = false
 	player.look = Game.look()
@@ -317,6 +318,23 @@ func _follow(from: Vector2i, time: float) -> void:
 	follower.tile = from
 	var tw := create_tween()
 	tw.tween_property(follower, "position", Vector2(from * T) + Vector2(8, 4), time)
+
+
+## Case d'arrivée praticable : si la case demandée est bloquée (vieille sauvegarde, carte régénérée),
+## la case libre la plus proche.
+func _safe_spot(at: Vector2i) -> Vector2i:
+	var free := func(p: Vector2i) -> bool:
+		return p.y >= 0 and p.y < rows.size() and p.x >= 0 and p.x < rows[p.y].length() \
+			and WALKABLE.contains(tile_at(p)) and not _blocked.has(p) and walker_at(p) == null
+	if free.call(at):
+		return at
+	for r in range(1, 40):
+		for dy in range(-r, r + 1):
+			for dx in [-(r - absi(dy)), r - absi(dy)]:
+				var p := at + Vector2i(dx, dy)
+				if free.call(p):
+					return p
+	return at
 
 
 func remove_walker(w: Walker) -> void:
@@ -574,7 +592,9 @@ func _after_step() -> void:
 	if table != "" and map.has("rare"):
 		if await Campaign.rare_check(self):
 			return
-	if table != "" and map["wild"].has(table) and randf() < map.get("rate", 0.1):
+	# Rune Purifiante tenue par le premier Pokémon : un tiers de rencontres en moins.
+	var rate: float = map.get("rate", 0.1) * (0.67 if Game.lead() != null and Game.lead().held_item == "cleanse-tag" else 1.0)
+	if table != "" and map["wild"].has(table) and randf() < rate:
 		await Events.wild_encounter(self, map["wild"][table])
 
 

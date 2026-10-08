@@ -574,13 +574,16 @@ ITEMS += ["red-orb", "blue-orb", "rusted-sword", "rusted-shield", "adamant-cryst
 ITEMS += [i for i in ("black-augurite", "peat-block", "metal-alloy", "galarica-cuff", "galarica-wreath", "auspicious-armor")
           if i not in ITEMS]
 # Prix des objets tenus pour les boutiques de combat (PokeAPI en met souvent 0).
-DEFAULT_HELD_PRICE = {"mega-stones": 0, "z-crystals": 0, "memories": 15000, "plates": 15000, "jewels": 3000,
+DEFAULT_HELD_PRICE = {"mega-stones": 30000, "z-crystals": 15000, "memories": 15000, "plates": 15000, "jewels": 3000,
                       "type-enhancement": 8000, "choice": 25000, "held-items": 15000, "in-a-pinch": 2000,
                       "picky-healing": 1500, "type-protection": 1500, "medicine": 800, "other": 2500,
                       "evolution": 3000, "species-specific": 8000, "effort-training": 10000, "training": 10000,
                       "bad-held-items": 5000, "nature-mints": 15000, "effort-drop": 500}
 PRICES = {"ability-capsule": 30000, "bottle-cap": 25000, "gold-bottle-cap": 100000, "heart-scale": 500,
-          "exp-candy-xs": 100, "exp-candy-s": 800, "exp-candy-m": 3000, "exp-candy-l": 10000, "exp-candy-xl": 30000}
+          "exp-candy-xs": 100, "exp-candy-s": 800, "exp-candy-m": 3000, "exp-candy-l": 10000, "exp-candy-xl": 30000,
+          # Balls Noigrume (Fargas) et Rêve Ball : vendues dans les boutiques spéciales.
+          "fast-ball": 1000, "friend-ball": 1000, "heavy-ball": 1000, "level-ball": 1000, "love-ball": 1000, "lure-ball": 1000,
+          "moon-ball": 1000, "dream-ball": 1000}
 berries = {r["item_id"]: r for r in rows("berries")}
 out_items = {}
 for ident in ITEMS:

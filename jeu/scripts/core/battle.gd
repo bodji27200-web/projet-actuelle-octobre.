@@ -5905,6 +5905,18 @@ func _use_item(b: Battler, item: String, target: int, move_index: int) -> void:
 		sides[0].mist = 5
 		msg("L'équipe est entourée de brume !")
 		return
+	if item == "poke-doll":
+		# Fuite assurée face à un Pokémon sauvage, même piégé (mais pas face à un boss).
+		var e := _first_active(1)
+		if not wild or (e != null and e.mon.boss):
+			msg("Ça n'a aucun effet.")
+			return
+		msg("Le Pokémon sauvage est distrait par la poupée ! Vous prenez la fuite !")
+		over = true
+		result = "run"
+		_finish_items()
+		events.append({"t": "end", "result": "run"})
+		return
 	var mon: Pokemon = sides[0].party[target]
 	var text := ItemUse.apply(mon, item, move_index)
 	if text == "":
