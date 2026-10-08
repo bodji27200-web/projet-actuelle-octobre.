@@ -39,6 +39,17 @@ var _info_type: Label
 var _bg: Control
 var _ball_spr: TextureRect
 var _layout_double := false
+var _fx: Control
+var _weather_fx: Control
+var _field_bar: Label
+var _chips := {}
+var _field := {}
+var _weather := ""
+var _terrain := ""
+var _wt := 0.0
+var _info_panel: Control
+var _want_mega := false
+var _want_z := false
 
 signal _menu_done(index: int)
 
@@ -61,6 +72,30 @@ func _ready() -> void:
 	_ball_spr.pivot_offset = Vector2(12, 12)
 	_ball_spr.visible = false
 	add_child(_ball_spr)
+	# Couches d'effets : météo (en continu) et animations des capacités.
+	_weather_fx = Control.new()
+	_weather_fx.size = Vector2(480, 244)
+	_weather_fx.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_weather_fx.draw.connect(_draw_weather)
+	add_child(_weather_fx)
+	_fx = Control.new()
+	_fx.size = Vector2(480, 320)
+	_fx.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_fx)
+	set_meta("fx_layer", _fx)
+	var strip := ColorRect.new()
+	strip.color = Color(0, 0, 0, 0.35)
+	strip.position = Vector2(0, 0)
+	strip.size = Vector2(480, 13)
+	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	strip.visible = false
+	add_child(strip)
+	set_meta("strip", strip)
+	_field_bar = Kit.label(self, "", Vector2(6, -2), 10, Color.WHITE, false)
+	_field_bar.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+	_field_bar.add_theme_constant_override("shadow_offset_x", 1)
+	_field_bar.add_theme_constant_override("shadow_offset_y", 1)
+	move_child(_bottom, -1)
 	_run()
 
 
@@ -105,12 +140,110 @@ func _setup_layout() -> void:
 			tr.pivot_offset = tr.size / 2
 			tr.visible = false
 			add_child(tr)
-			move_child(tr, _bottom.get_index())
+			move_child(tr, _weather_fx.get_index())
 			var k := _key(side, slot)
 			_sprites[k] = tr
 			_home[k] = pos
 			_sizes[k] = sz
 	_bg.queue_redraw()
+
+
+## Changements de stats visibles sous le nom : « ATQ+2 VIT-1 » (rouge = hausse, bleu = baisse).
+func _update_chip(k: String) -> void:
+	if not _chips.has(k) or not is_instance_valid(_chips[k]):
+		return
+	var parts: PackedStringArray = k.split(":")
+	var b := battle.battler(int(parts[0]), int(parts[1]))
+	if b == null:
+		return
+	var names := {"atk": "ATQ", "def": "DÉF", "spa": "A.SP", "spd": "D.SP", "spe": "VIT", "acc": "PRÉ", "eva": "ESQ"}
+	var txt := []
+	var up := 0
+	var down := 0
+	for key in ["atk", "def", "spa", "spd", "spe", "acc", "eva"]:
+		var v: int = b.stages[key]
+		if v != 0:
+			txt.append("%s%s%d" % [names[key], "+" if v > 0 else "", v])
+			if v > 0:
+				up += 1
+			else:
+				down += 1
+	if b.confusion > 0:
+		txt.append("CONF")
+	if b.substitute > 0:
+		txt.append("CLONE")
+	if b.mega:
+		txt.append("MÉGA")
+	var chip: Label = _chips[k]
+	chip.text = " ".join(txt)
+	chip.add_theme_color_override("font_color", Color("c03020") if up > 0 and down == 0 else Color("2048c0") if down > 0 and up == 0 else Color("704070"))
+
+
+## Barre d'état du terrain : météo, champ, Distorsion, Gravité, protections et pièges de chaque camp.
+func _update_field() -> void:
+	for k in _chips:
+		_update_chip(k)
+	var parts := []
+	if battle.weather != "":
+		parts.append(Battle.WEATHER_NAMES.get(battle.weather, battle.weather))
+	if battle.terrain != "":
+		parts.append(Battle.TERRAIN_NAMES.get(battle.terrain, battle.terrain))
+	if battle.trick_room > 0:
+		parts.append("Distorsion")
+	if battle.gravity > 0:
+		parts.append("Gravité")
+	for s in 2:
+		var side: Battle.BSide = battle.sides[s]
+		var sp := []
+		if side.reflect > 0:
+			sp.append("Protection")
+		if side.light_screen > 0:
+			sp.append("Mur Lumière")
+		if side.aurora_veil > 0:
+			sp.append("Voile Aurore")
+		if side.tailwind > 0:
+			sp.append("Vent Arrière")
+		if side.stealth_rock:
+			sp.append("Piège de Roc")
+		if side.spikes > 0:
+			sp.append("Picots x%d" % side.spikes)
+		if side.toxic_spikes > 0:
+			sp.append("Pics Toxik x%d" % side.toxic_spikes)
+		if side.sticky_web:
+			sp.append("Toile Gluante")
+		if sp.size() > 0:
+			parts.append(("Vous : " if s == 0 else "Adversaire : ") + ", ".join(sp))
+	_field_bar.text = "  |  ".join(parts)
+	get_meta("strip").visible = parts.size() > 0
+	_weather = battle.weather
+	if _terrain != battle.terrain:
+		_terrain = battle.terrain
+		_bg.queue_redraw()
+
+
+func _draw_weather() -> void:
+	match _weather:
+		"rain", "heavy-rain":
+			for i in 40:
+				var x := fmod(i * 53.0 + _wt * 300.0, 520.0) - 20.0
+				var y := fmod(i * 37.0 + _wt * 420.0, 250.0)
+				_weather_fx.draw_line(Vector2(x, y), Vector2(x - 4, y + 10), Color(0.6, 0.7, 1.0, 0.6), 1.0)
+		"snow", "hail":
+			for i in 34:
+				var x2 := fmod(i * 61.0 + sin(_wt * 2.0 + i) * 10.0, 480.0)
+				var y2 := fmod(i * 29.0 + _wt * 50.0, 244.0)
+				_weather_fx.draw_rect(Rect2(x2, y2, 2, 2), Color(1, 1, 1, 0.85))
+		"sandstorm":
+			for i in 40:
+				var x3 := fmod(i * 47.0 + _wt * 380.0, 500.0) - 10.0
+				var y3 := fmod(i * 23.0, 244.0)
+				_weather_fx.draw_line(Vector2(x3, y3), Vector2(x3 + 8, y3 + 1), Color(0.85, 0.7, 0.45, 0.6), 1.0)
+		"sun", "harsh-sun":
+			_weather_fx.draw_rect(Rect2(0, 0, 480, 244), Color(1.0, 0.85, 0.4, 0.10 + 0.03 * sin(_wt * 3.0)))
+		"strong-winds":
+			for i in 20:
+				var x4 := fmod(i * 71.0 + _wt * 500.0, 520.0) - 20.0
+				_weather_fx.draw_line(Vector2(x4, 20 + i * 11), Vector2(x4 + 22, 20 + i * 11), Color(0.9, 0.9, 1.0, 0.4), 1.0)
 
 
 func _draw_bg() -> void:
@@ -119,6 +252,10 @@ func _draw_bg() -> void:
 	_bg.draw_rect(Rect2(0, 140, 480, 180), c[1])
 	for i in 6:
 		_bg.draw_rect(Rect2(0, 20 + i * 18, 480, 2), c[0].darkened(0.04))
+	if _terrain != "":
+		var tc: Color = {"electric": Color(1.0, 0.95, 0.4, 0.35), "grassy": Color(0.4, 0.9, 0.4, 0.35), "misty": Color(1.0, 0.7, 0.9, 0.35),
+			"psychic": Color(0.9, 0.5, 1.0, 0.35)}.get(_terrain, Color.TRANSPARENT)
+		_bg.draw_rect(Rect2(0, 140, 480, 180), tc)
 	if _layout_double:
 		_ellipse(Vector2(350, 140), Vector2(120, 24), c[2], c[3])
 		_ellipse(Vector2(150, 262), Vector2(150, 28), c[2], c[3])
@@ -141,7 +278,7 @@ func _box_rect(side: int, slot: int) -> Rect2:
 	if not _layout_double:
 		return Rect2(12, 14, 214, 52) if side == 1 else Rect2(256, 160, 216, 72)
 	if side == 1:
-		return Rect2(6, 6 + slot * 50, 200, 46)
+		return Rect2(6, 16 + slot * 50, 200, 46)
 	return Rect2(272, 146 + slot * 48, 204, 46)
 
 
@@ -177,6 +314,11 @@ func _make_box(side: int, slot: int) -> void:
 		p.add_child(ball)
 	if side == 1 and mon.boss:
 		Kit.label(p, "BOSS", Vector2(rect.size.x - 54, 28 if small else 32), 11, Color("c02020"), false)
+	var chip := Kit.label(p, "", Vector2(10 if side == 1 else 8, 30 if small else 36), 10, Color("303030"), false)
+	chip.clip_text = true
+	chip.size = Vector2(rect.size.x - 20 if side == 1 else 108.0, 14)
+	_chips[k] = chip
+	_update_chip(k)
 	if side == 0:
 		if small:
 			if not mine:
@@ -429,6 +571,26 @@ func _play(events: Array) -> void:
 			"transform":
 				if _sprites.has(k):
 					Sprites.apply(_sprites[k], "back" if e["side"] == 0 else "front", e["species"], e["shiny"], PixelArt.placeholder())
+			"form":
+				if _sprites.has(k) and _sprites[k].visible:
+					Sprites.apply(_sprites[k], "back" if e["side"] == 0 else "front", e["sprite"], e.get("shiny", false), PixelArt.placeholder())
+					if not e.get("reset", false):
+						var keep2: int = _shown_hp.get(k, 0)
+						_make_box(e["side"], e["slot"])
+						_shown_hp[k] = keep2
+			"move_anim":
+				if Game.settings.get("animations", true):
+					var uk := _key(e["side"], e["slot"])
+					var tk := _key(e["tside"], e["tslot"])
+					await MoveFx.play(self, _fx, _sprites.get(uk), _sprites.get(tk, _sprites.get(uk)), e)
+			"field":
+				_field = e
+				_update_field()
+			"weather":
+				_weather = e.get("w", "")
+			"terrain":
+				_terrain = e.get("terrain", "")
+				_bg.queue_redraw()
 		i += 1
 
 
@@ -511,7 +673,15 @@ func _anim(k: String, kind: String) -> void:
 	if not tr.visible or not Game.settings.get("animations", true):
 		return
 	var base := tr.modulate
+	if kind.begins_with("status_"):
+		MoveFx.status(self, _fx, tr, kind)
 	match kind:
+		"mega":
+			await MoveFx.mega(self, _fx, tr)
+			return
+		"zmove":
+			await MoveFx.z_aura(self, _fx, tr)
+			return
 		"hit":
 			for n in 3:
 				tr.modulate.a = 0.0
@@ -526,6 +696,15 @@ func _anim(k: String, kind: String) -> void:
 			tw.tween_property(tr, "modulate", base, 0.25)
 			await tw.finished
 		_:
+			if kind.begins_with("aura_"):
+				var ac: Color = {"aura_fire": Color(1.6, 0.8, 0.5), "aura_steel": Color(1.2, 1.2, 1.5), "aura_electric": Color(1.6, 1.5, 0.6),
+					"aura_ghost": Color(1.0, 0.7, 1.5), "aura_dragon": Color(1.1, 0.8, 1.7), "aura_grass": Color(0.8, 1.6, 0.8),
+					"aura_dark": Color(0.7, 0.6, 0.8)}.get(kind, Color(1.4, 1.4, 1.4))
+				tr.set_meta("aura", ac)
+				var tw3 := create_tween()
+				tw3.tween_property(tr, "modulate", ac, 0.3)
+				await tw3.finished
+				return
 			var col: Color = {"status_psn": Color(1.3, 0.6, 1.4), "status_tox": Color(1.3, 0.6, 1.4),
 				"status_par": Color(1.6, 1.5, 0.5), "status_slp": Color(0.7, 0.7, 0.8), "status_brn": Color(1.7, 0.8, 0.5),
 				"status_frz": Color(0.7, 1.2, 1.7), "status_conf": Color(1.4, 1.2, 1.4)}.get(kind, Color(1.3, 1.3, 1.3))
@@ -598,8 +777,11 @@ func _choose_action(slot: int) -> Dictionary:
 	var b := battle.battler(0, slot)
 	while true:
 		_prompt.text = "Que doit faire\n%s ?" % b.mon.name()
-		var i: int = await _menu(["ATTAQUE", "SAC", "POKéMON", "FUITE"], Rect2(256, 244, 220, 72), 2, false)
+		var i: int = await _menu(["ATTAQUE", "SAC", "POKéMON", "FUITE", "INFOS"], Rect2(256, 244, 220, 72), 2, false)
 		match i:
+			4:
+				await _show_info()
+				continue
 			0:
 				if battle.usable_slots(0, slot).is_empty():
 					return {"type": "move", "id": Battle.STRUGGLE}
@@ -610,6 +792,12 @@ func _choose_action(slot: int) -> Dictionary:
 						continue
 					var a := {"type": "move", "slot": ms}
 					a.merge(target)
+					if _want_mega and battle.can_mega_evolve(b):
+						a["mega"] = true
+					if _want_z and battle.can_z_move(b, b.moves()[ms]["id"]):
+						a["z"] = true
+					_want_mega = false
+					_want_z = false
 					return a
 			1:
 				var bag := BagScreen.new()
@@ -658,14 +846,104 @@ func _pick_target(b: Battle.Battler, m: Dictionary) -> Variant:
 	return options[i]
 
 
+## Fiche détaillée du combat : stats modifiées, statuts, objets connus, effets de terrain.
+func _show_info() -> void:
+	_info_panel = Kit.panel(self, Rect2(6, 6, 468, 308), Color("f8f8f0"), Color("4870a0"))
+	var y := 6
+	Kit.label(_info_panel, "ÉTAT DU COMBAT", Vector2(10, y), 15, Color("4870a0"))
+	y += 22
+	var head := []
+	if battle.weather != "":
+		head.append("Météo : %s (%d tours)" % [Battle.WEATHER_NAMES.get(battle.weather, battle.weather), battle.weather_turns])
+	if battle.terrain != "":
+		head.append("%s (%d tours)" % [Battle.TERRAIN_NAMES.get(battle.terrain, battle.terrain), battle.terrain_turns])
+	if battle.trick_room > 0:
+		head.append("Distorsion (%d)" % battle.trick_room)
+	Kit.label(_info_panel, " | ".join(head) if head.size() > 0 else "Aucun effet de terrain.", Vector2(10, y), 11)
+	y += 18
+	var names := {"atk": "Atq", "def": "Déf", "spa": "AtqS", "spd": "DéfS", "spe": "Vit", "acc": "Pré", "eva": "Esq"}
+	for s in [1, 0]:
+		for bt: Battle.Battler in battle.sides[s].slots:
+			if bt == null or not bt.alive():
+				continue
+			var st := []
+			for key in ["atk", "def", "spa", "spd", "spe", "acc", "eva"]:
+				var v: int = bt.stages[key]
+				st.append("%s %s%d" % [names[key], "+" if v > 0 else "", v])
+			var extra := []
+			if bt.mon.status != "":
+				extra.append({"psn": "Empoisonné", "tox": "Gravement empoisonné", "par": "Paralysé", "slp": "Endormi", "brn": "Brûlé", "frz": "Gelé"}.get(bt.mon.status, ""))
+			if bt.confusion > 0:
+				extra.append("Confus")
+			if bt.seeded:
+				extra.append("Vampigraine")
+			if bt.substitute > 0:
+				extra.append("Clone")
+			if bt.taunt > 0:
+				extra.append("Provoqué")
+			if bt.encore_turns > 0:
+				extra.append("Encore")
+			if bt.trap_turns > 0:
+				extra.append("Piégé")
+			if bt.side == 0 and bt.item != "":
+				extra.append("Objet : " + Data.item_name(bt.item))
+			if bt.side == 0:
+				extra.append("Talent : " + Data.ability_name(bt.ability))
+			var title := "%s %s N.%d — %s" % ["◀" if s == 1 else "▶", bt.mon.name(), bt.mon.level, " / ".join(bt.types.map(func(t): return Data.type_name(t)))]
+			Kit.label(_info_panel, title, Vector2(10, y), 13, Color("c03020") if s == 1 else Color("2048c0"))
+			y += 18
+			Kit.label(_info_panel, "  ".join(st), Vector2(18, y), 11)
+			y += 15
+			if extra.size() > 0:
+				var l := Kit.label(_info_panel, "", Vector2(18, y), 11, Color("606060"))
+				l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				l.size = Vector2(440, 30)
+				l.text = ", ".join(extra)
+				y += 16
+			y += 4
+	for s in 2:
+		var side: Battle.BSide = battle.sides[s]
+		var sp := []
+		for pair in [["reflect", "Protection"], ["light_screen", "Mur Lumière"], ["aurora_veil", "Voile Aurore"], ["tailwind", "Vent Arrière"],
+				["safeguard", "Rune Protect"], ["mist", "Brume"]]:
+			if side.get(pair[0]) > 0:
+				sp.append("%s (%d)" % [pair[1], side.get(pair[0])])
+		if side.stealth_rock:
+			sp.append("Piège de Roc")
+		if side.spikes > 0:
+			sp.append("Picots x%d" % side.spikes)
+		if side.toxic_spikes > 0:
+			sp.append("Pics Toxik x%d" % side.toxic_spikes)
+		if side.sticky_web:
+			sp.append("Toile Gluante")
+		if sp.size() > 0:
+			Kit.label(_info_panel, ("Votre camp : " if s == 0 else "Camp adverse : ") + ", ".join(sp), Vector2(10, mini(y, 270)), 11, Color("806040"))
+			y += 16
+	Kit.label(_info_panel, "A / B : fermer", Vector2(370, 290), 10, Color("808080"), false)
+	await _menu_done
+
+
 func _move_menu(slot: int) -> int:
 	var b := battle.battler(0, slot)
 	var ms := b.moves()
 	var labels := []
 	for m in ms:
-		labels.append(Data.move_name(m["id"]))
+		var md: Dictionary = Data.moves[m["id"]]
+		if _want_z and battle.can_z_move(b, m["id"]):
+			labels.append(battle.z_move(b, md)["name"])
+		else:
+			labels.append(Data.move_name(m["id"]))
 	while labels.size() < 4:
 		labels.append("-")
+	var mega_ok := battle.can_mega_evolve(b)
+	var z_ok := false
+	for m2 in ms:
+		if battle.can_z_move(b, m2["id"]):
+			z_ok = true
+	if mega_ok:
+		labels.append("◆ MÉGA : %s" % ("OUI" if _want_mega else "NON"))
+	if z_ok:
+		labels.append("◆ CAPACITÉ Z : %s" % ("OUI" if _want_z else "NON"))
 	_info = Kit.panel(self, Rect2(330, 244, 146, 72))
 	_info_pp = Kit.label(_info, "", Vector2(10, 6))
 	_info_type = Kit.label(_info, "", Vector2(10, 32))
@@ -687,7 +965,18 @@ func _move_menu(slot: int) -> int:
 		var i: int = await _menu(labels, Rect2(4, 244, 326, 72), 2, true, on_move)
 		if i < 0:
 			_info.queue_free()
+			_want_mega = false
+			_want_z = false
 			return -1
+		if i >= 4:
+			# Bascule Méga / Z puis on rouvre le menu.
+			var is_mega: bool = mega_ok and i == 4
+			if is_mega:
+				_want_mega = not _want_mega
+			else:
+				_want_z = not _want_z
+			_info.queue_free()
+			return await _move_menu(slot)
 		if i >= ms.size():
 			continue
 		if ms[i]["pp"] <= 0:
@@ -777,7 +1066,9 @@ func _menu(labels: Array, rect: Rect2, cols: int, cancel: bool, on_move := Calla
 	var cw := (rect.size.x - 20) / cols
 	var rows_n := ceili(float(labels.size()) / cols)
 	var rh: float = 26.0 if rows_n <= 2 else (rect.size.y - 12) / rows_n
-	if rows_n > 2:
+	if rows_n == 3:
+		rh = 20
+	elif rows_n > 3:
 		_menu_panel.size.y = rows_n * 22 + 14
 		_menu_panel.position.y = 316 - _menu_panel.size.y
 		rh = 22
@@ -808,7 +1099,19 @@ func _menu_set(i: int, cw := -1.0) -> void:
 		_menu_on_move.call(_menu_index)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	if _weather != "" and Game.settings.get("animations", true):
+		_wt += delta
+		_weather_fx.queue_redraw()
+	elif _wt != 0.0:
+		_wt = 0.0
+		_weather_fx.queue_redraw()
+	if _info_panel != null:
+		if act("a") or act("b"):
+			_info_panel.queue_free()
+			_info_panel = null
+			_menu_done.emit(-2)
+		return
 	if not _menu_active:
 		return
 	if act("up"):

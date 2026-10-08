@@ -127,7 +127,7 @@ func _test_evolutions() -> void:
 			var to := m.level_evolution()
 			if to != 0:
 				m.evolve(to)
-		for item in ItemUse.STONES:
+		for item in ["fire-stone", "water-stone", "thunder-stone", "leaf-stone", "moon-stone", "linking-cord", "sun-stone", "ice-stone", "shiny-stone", "dusk-stone", "dawn-stone"]:
 			var t := m.item_evolution(item)
 			if t != 0:
 				m.evolve(t)

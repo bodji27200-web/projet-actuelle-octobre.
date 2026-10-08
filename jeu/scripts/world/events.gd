@@ -667,8 +667,17 @@ static func pick_wild(table: Array) -> Pokemon:
 		if r < 0:
 			pick = e
 			break
-	var mon := Pokemon.create(pick[0], randi_range(pick[1], pick[2]))
+	var mon := Pokemon.create(pick[0], randi_range(pick[1], pick[2]), randi() % 50 == 0)
 	lead_ability(mon)
+	# Objet tenu des Pokémon sauvages (50 %, 5 % ou 1 % selon l'objet, comme dans les jeux).
+	var lead_compound := Game.lead() != null and Data.ability_ident(Game.lead().ability) in ["compound-eyes", "super-luck"]
+	for wi in mon.data().get("wild_items", []):
+		var chance: int = wi[1]
+		if lead_compound:
+			chance = mini(100, chance * 2)
+		if randi() % 100 < chance and Data.items.has(wi[0]):
+			mon.held_item = wi[0]
+			break
 	return mon
 
 
@@ -857,8 +866,8 @@ static func run_battle(enemy_parties: Array, wild: bool, trainers: Array, opts :
 	Audio.play_music(_battle_music(wild, trainers, opts))
 	await ui().battle_intro()
 	var screen := BattleScreen.new()
-	var bopts := {"double": opts.get("double", false), "wild_double": wild and enemy_parties.size() > 1, "boss": opts.get("boss", false),
-		"player_names": [Game.player_name]}
+	var bopts := battle_opts(opts, wild, enemy_parties)
+	bopts["player_names"] = [Game.player_name]
 	screen.battle = Battle.new([Game.party], enemy_parties, wild, trainers, bopts)
 	screen.battle.player_name = Game.player_name
 	screen.battle.cave = opts.get("cave", false)
@@ -868,6 +877,13 @@ static func run_battle(enemy_parties: Array, wild: bool, trainers: Array, opts :
 	screen.bg = opts.get("bg", "cave" if opts.get("cave", false) else "grass")
 	var result: String = await ui().open(screen)
 	return await after_battle(screen.battle, result, wild, trainers, opts, 0)
+
+
+## Options du moteur pour un combat du joueur : Méga-Anneau / Bracelet Z, IA, aura de boss.
+static func battle_opts(opts: Dictionary, wild: bool, enemy_parties: Array) -> Dictionary:
+	return {"double": opts.get("double", false), "wild_double": wild and enemy_parties.size() > 1, "boss": opts.get("boss", false),
+		"mega": Game.item_count("mega-ring") > 0, "zmove": Game.item_count("z-ring") > 0,
+		"ai": opts.get("ai", 0 if wild else 1), "aura": opts.get("aura", "")}
 
 
 static func _battle_music(wild: bool, trainers: Array, opts: Dictionary) -> String:
@@ -921,6 +937,17 @@ static func after_battle(battle: Battle, result: String, wild: bool, trainers: A
 		var hp: Dictionary = Game.heal_point
 		await Game.world.warp_to(hp["map"], Vector2i(hp["x"], hp["y"]), "down")
 		return result
+	# Pokérus : contamination rare après un combat sauvage, puis propagation aux voisins d'équipe.
+	if wild and randi() % 3000 == 0 and Game.party.size() > 0:
+		var victim: Pokemon = Game.party[randi() % Game.party.size()]
+		if victim.pokerus == 0 and not victim.is_egg:
+			victim.pokerus = randi_range(1, 4)
+	for i in Game.party.size():
+		var pm: Pokemon = Game.party[i]
+		if pm.pokerus > 0 and randi() % 3 == 0:
+			for j in [i - 1, i + 1]:
+				if j >= 0 and j < Game.party.size() and Game.party[j].pokerus == 0 and not Game.party[j].is_egg:
+					Game.party[j].pokerus = pm.pokerus
 	# Évolutions après le combat (Pokémon du joueur local uniquement).
 	for i in battle.leveled:
 		if battle.sides[0].owners[i] != owner:
@@ -929,6 +956,19 @@ static func after_battle(battle: Battle, result: String, wild: bool, trainers: A
 		var to := mon2.level_evolution()
 		if to != 0 and not mon2.is_fainted():
 			await evolve(mon2, to)
+	# Évolutions spéciales (3 coups critiques, dégâts subis, capacité utilisée 20 fois...).
+	for i in battle.sides[0].party.size():
+		if battle.sides[0].owners[i] != owner:
+			continue
+		var mon3: Pokemon = battle.sides[0].party[i]
+		if mon3.is_fainted() and not mon3.data()["evos"].any(func(e): return e.get("special", "") == "take-damage"):
+			continue
+		var sp := mon3.special_evolution()
+		if sp != 0 and mon3.hp > 0:
+			await evolve(mon3, sp)
+		mon3.counters.erase("crits_battle")
+		if mon3.hp <= 0:
+			mon3.counters.erase("damage")
 	return result
 
 
@@ -940,9 +980,23 @@ static func evolve(mon: Pokemon, to: int) -> bool:
 	if not ok:
 		await ui().say("%s n'a pas évolué." % mon.name())
 		return false
-	Game.catch_register(to)
+	Game.catch_register(Data.pokemon[to].get("species", to))
+	for mid in mon.evolution_moves():
+		await learn_move(mon, mid)
 	for mid in mon.moves_at(mon.level):
 		await learn_move(mon, mid)
+	# Ningale : Munja apparaît aussi s'il reste une place et une Poké Ball.
+	if Data.pokemon.has(290) and mon.species == 291 and Game.party.size() < Game.PARTY_MAX and Game.item_count("poke-ball") > 0:
+		Game.remove_item("poke-ball")
+		var shed := Pokemon.create(292, mon.level)
+		shed.ivs = mon.ivs.duplicate()
+		shed.nature = mon.nature
+		shed.moves = mon.moves.duplicate(true)
+		shed.recalc_stats()
+		shed.hp = shed.max_hp()
+		Game.give_pokemon(shed)
+		Game.catch_register(292)
+		await ui().say("Une nouvelle forme de vie est apparue... Munja rejoint l'équipe !")
 	return true
 
 
@@ -1028,8 +1082,77 @@ static func bag_flow(ow: Node) -> bool:
 		if item in RODS:
 			await fish(ow, item)
 			return true
+		var usable: bool = Data.items.get(item, {}).get("key", false) or ItemUse.targets_pokemon(item) or item.ends_with("repel") \
+			or item == "escape-rope" or ItemUse.is_ball(item) or item in ItemUse.BATTLE_ONLY
+		if ItemUse.is_holdable(item) and not Data.items.get(item, {}).get("key", false):
+			var c: int = await ui().ask("Que faire avec %s ?" % Data.item_name(item), ["UTILISER", "FAIRE TENIR", "ANNULER"] if usable else ["FAIRE TENIR", "ANNULER"])
+			if usable and c == 0:
+				await use_item_field(ow, item)
+			elif (usable and c == 1) or (not usable and c == 0):
+				await give_item(item)
+			continue
 		await use_item_field(ow, item)
 	return false
+
+
+## Faire tenir un objet du Sac à un Pokémon de l'équipe (l'ancien objet revient dans le Sac).
+static func give_item(item: String) -> void:
+	var ps := PartyScreen.new()
+	ps.mode = "select"
+	ps.title = "Donner %s à quel Pokémon ?" % Data.item_name(item)
+	var idx = await ui().open(ps)
+	if idx == null or idx < 0:
+		return
+	var mon: Pokemon = Game.party[idx]
+	if mon.is_egg:
+		await ui().say("Un Œuf ne peut rien tenir.")
+		return
+	if mon.held_item != "":
+		if not await ui().confirm("%s tient déjà %s. Échanger les objets ?" % [mon.name(), Data.item_name(mon.held_item)]):
+			return
+		Game.add_item(mon.held_item)
+		await ui().say("%s est rangé dans le Sac." % Data.item_name(mon.held_item))
+	Game.remove_item(item)
+	mon.held_item = item
+	await ui().say("%s tient maintenant %s." % [mon.name(), Data.item_name(item)])
+	# Un Pokémon qui évolue en tenant un objet en montant de niveau n'évolue qu'au prochain niveau ;
+	# Fil de Liaison et échanges sont gérés ailleurs.
+
+
+## Menu OBJET d'un Pokémon de l'équipe : prendre ou donner un objet.
+static func held_item_menu(mon: Pokemon) -> void:
+	if mon.is_egg:
+		await ui().say("Un Œuf ne peut rien tenir.")
+		return
+	if mon.held_item == "":
+		var bag := BagScreen.new()
+		bag.mode = "give"
+		BagScreen.last_pocket = BagScreen.POCKETS.find("tenus")
+		var it = await ui().open(bag)
+		if it == null:
+			return
+		if not ItemUse.is_holdable(it):
+			await ui().say("Cet objet ne peut pas être tenu.")
+			return
+		Game.remove_item(it)
+		mon.held_item = it
+		await ui().say("%s tient maintenant %s." % [mon.name(), Data.item_name(it)])
+		return
+	var c: int = await ui().ask("%s tient %s." % [mon.name(), Data.item_name(mon.held_item)], ["PRENDRE", "ÉCHANGER", "RETOUR"])
+	if c == 0:
+		Game.add_item(mon.held_item)
+		await ui().say("%s est rangé dans le Sac." % Data.item_name(mon.held_item))
+		mon.held_item = ""
+	elif c == 1:
+		var bag2 := BagScreen.new()
+		bag2.mode = "give"
+		var it2 = await ui().open(bag2)
+		if it2 == null or not ItemUse.is_holdable(it2):
+			return
+		Game.add_item(mon.held_item)
+		Game.remove_item(it2)
+		mon.held_item = it2
+		await ui().say("%s tient maintenant %s." % [mon.name(), Data.item_name(it2)])
 
 
 # ---------------------------------------------------------------------------
@@ -1175,6 +1298,10 @@ static func use_item_field(ow: Node, item: String) -> void:
 			await evolve(mon, evo)
 		return
 	var move_index := -1
+	if ItemUse.needs_stat(item):
+		move_index = await ui().ask("Quelle statistique ?", Data.STAT_NAMES)
+		if move_index < 0:
+			return
 	if ItemUse.needs_move(item):
 		var opts := []
 		for m in mon.moves:
@@ -1182,6 +1309,7 @@ static func use_item_field(ow: Node, item: String) -> void:
 		move_index = await ui().ask("Quelle capacité ?", opts)
 		if move_index < 0:
 			return
+	var lvl_before := mon.level
 	var text := ItemUse.apply(mon, item, move_index)
 	if text == "":
 		await ui().say("Ça n'aura aucun effet.")
@@ -1189,3 +1317,12 @@ static func use_item_field(ow: Node, item: String) -> void:
 	Game.remove_item(item)
 	Audio.sfx("heal")
 	await ui().say(text.split("\n"))
+	# Bonbons Exp. : capacités apprises et évolution comme pour un Super Bonbon.
+	if mon.level > lvl_before:
+		Audio.jingle("levelup")
+		for lv in range(lvl_before + 1, mon.level + 1):
+			for mid in mon.moves_at(lv):
+				await learn_move(mon, mid)
+		var evo2 := mon.level_evolution()
+		if evo2 != 0:
+			await evolve(mon, evo2)

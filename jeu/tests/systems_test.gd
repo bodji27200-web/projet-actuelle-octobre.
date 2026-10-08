@@ -398,7 +398,7 @@ func _pp() -> void:
 
 ## Vérifie l'effet de CHAQUE capacité dans une situation contrôlée.
 func _moves() -> void:
-	print("Effets des 303 capacités...")
+	print("Effets des %d capacités..." % Data.moves.size())
 	var skip_reason := {"counter": "riposte", "mirror-coat": "riposte", "spit-up": "stock", "future-sight": "différé",
 		"focus-punch": "", "snore": "sommeil", "dream-eater": "sommeil", "sleep-talk": "sommeil", "nightmare": "sommeil",
 		"endeavor": "pv", "bide": "", "mimic": "", "mirror-move": "", "metronome": "aléatoire", "transform": "",
@@ -412,13 +412,27 @@ func _moves() -> void:
 		"refresh": "", "aromatherapy": "", "heal-bell": "", "taunt": "", "block": "", "mean-look": "", "spikes": "",
 		"safeguard": "", "reflect": "", "light-screen": "", "focus-energy": "", "mud-sport": "", "water-sport": "", "charge": "",
 		"minimize": "", "defense-curl": "", "leech-seed": "", "false-swipe": "", "fissure": "ohko", "guillotine": "ohko",
-		"horn-drill": "ohko", "sheer-cold": "ohko", "psywave": "", "struggle": ""}
+		"horn-drill": "ohko", "sheer-cold": "ohko", "psywave": "", "struggle": "", "doom-desire": "différé",
+		"aromatic-mist": "allié", "coaching": "allié", "decorate": "allié", "after-you": "double", "ally-switch": "double",
+		"quash": "double", "instruct": "double", "rage-powder": "double", "spotlight": "double", "dragon-cheer": "allié",
+		"healing-wish": "équipe", "lunar-dance": "équipe", "revival-blessing": "équipe", "shed-tail": "équipe",
+		"parting-shot": "équipe", "chilly-reception": "équipe", "u-turn": "", "volt-switch": "", "flip-turn": "",
+		"final-gambit": "pv", "last-respects": "", "sketch": "", "copycat": "", "assist": "", "me-first": "", "nature-power": ""}
+	# Capacités à condition : on crée la situation qui les rend possibles.
+	var setup := {
+		"sucker-punch": "target_attacks", "thunderclap": "target_attacks", "comeuppance": "target_priority",
+		"upper-hand": "target_priority", "metal-burst": "target_priority",
+		"last-resort": "last_resort", "belch": "berry_eaten", "stuff-cheeks": "hold_berry",
+		"hyperspace-fury": 720, "aura-wheel": 877, "burn-up": 6, "double-shock": 25,
+		"steel-roller": "terrain", "poltergeist": "target_item", "heal-pulse": "heal_target", "floral-healing": "heal_target",
+		"pollen-puff": "", "fling": "hold_item", "natural-gift": "hold_berry"}
 	var checked := 0
 	var skipped := 0
 	for id in Data.moves:
 		var m: Dictionary = Data.moves[id]
 		var ident: String = m["ident"]
-		var user := Pokemon.create(147, 50)  # Minidraco : type Dragon, neutre partout
+		var how = setup.get(ident, "")
+		var user := Pokemon.create(how if how is int else 147, 50)  # Minidraco : type Dragon, neutre partout
 		user.moves = [Pokemon.make_move(id)]
 		var target := Pokemon.create(143, 50)  # Ronflex : Normal
 		if m["type"] in ["fighting"]:
@@ -432,11 +446,32 @@ func _moves() -> void:
 		user.ability = 0
 		target.ability = 0
 		target.moves = [Pokemon.make_move(150)]
+		if how is String and how in ["target_attacks"]:
+			target.moves = [Pokemon.make_move(33)]
+		if how is String and how in ["target_priority"]:
+			target.moves = [Pokemon.make_move(98)]
+		if how is String and how == "last_resort":
+			user.moves = [Pokemon.make_move(33), Pokemon.make_move(id)]
+		if how is String and how in ["hold_berry", "berry_eaten"]:
+			user.held_item = "oran-berry"
+		if how is String and how == "hold_item":
+			user.held_item = "iron-ball"
+		if how is String and how == "target_item":
+			target.held_item = "leftovers"
 		var b := Battle.new([user], [target], true)
 		b.always_hit = true
 		b.start()
 		var tb: Battle.Battler = b.battler(1, 0)
 		var ub: Battle.Battler = b.battler(0, 0)
+		if how is String and how == "berry_eaten":
+			ub.berry_eaten = true
+		if how is String and how == "terrain":
+			b.terrain = "grassy"
+			b.terrain_turns = 5
+		if how is String and how == "last_resort":
+			b.play_turn({"type": "move", "slot": 0})
+			target.hp = target.max_hp()
+		var slot := user.moves.size() - 1
 		if skip_reason.has(ident):
 			# Ces capacités ont des conditions particulières : on vérifie seulement qu'elles ne plantent pas.
 			b.play_turn({"type": "move", "slot": 0})
@@ -444,13 +479,15 @@ func _moves() -> void:
 			continue
 		if m["mcat"] == 3 or ident in ["swallow", "synthesis", "moonlight", "recover", "soft-boiled"]:
 			user.hp = user.max_hp() / 3
+		if how is String and how == "heal_target":
+			target.hp = target.max_hp() / 3
 		var hp0 := target.hp
 		var uhp0 := user.hp
 		var stages0: Dictionary = tb.stages.duplicate()
 		var ustages0: Dictionary = ub.stages.duplicate()
-		b.play_turn({"type": "move", "slot": 0})
+		b.play_turn({"type": "move", "slot": slot})
 		if TWO_TURN_LIKE(ident):
-			b.play_turn({"type": "move", "slot": 0})
+			b.play_turn({"type": "move", "slot": slot})
 		checked += 1
 		var what := "%s (%s)" % [m["name"], ident]
 		if m["cat"] != "status" and m["power"] > 0 or ident in ["seismic-toss", "night-shade", "dragon-rage", "sonic-boom", "super-fang"]:
@@ -469,8 +506,12 @@ func _moves() -> void:
 				if tb.stages[k] != stages0[k] or ub.stages[k] != ustages0[k]:
 					changed = true
 			check(changed, what + " modifie des statistiques")
+		elif how is String and how == "heal_target":
+			check(target.hp > hp0, what + " soigne la cible")
 		elif m["mcat"] == 3:
 			check(user.hp > uhp0, what + " soigne")
+		elif ident in ["toxic-thread", "tar-shot"]:
+			check(tb.stages["spe"] < 0, what + " baisse la Vitesse")
 		elif m["mcat"] == 5:
 			check(tb.confusion > 0, what + " rend confus et booste")
 		elif m["mcat"] == 10 and ident in ["rain-dance", "sunny-day", "sandstorm", "hail"]:

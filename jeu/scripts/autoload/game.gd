@@ -356,6 +356,16 @@ func check(cond: Variant) -> bool:
 func on_step() -> Array:
 	var hatched := []
 	steps += 1
+	# Pas comptés pour certaines évolutions (Pohmotte, Ronflamme, Léboulérou) ; le Pokérus guérit avec le temps.
+	for m in party:
+		if not m.is_egg:
+			m.counters["steps"] = int(m.counters.get("steps", 0)) + 1
+	if steps % 2000 == 0:
+		for m in party:
+			if m.pokerus > 0:
+				m.pokerus -= 1
+				if m.pokerus == 0:
+					m.pokerus = -1
 	var fast := false
 	for m in party:
 		if not m.is_egg and Data.ability_ident(m.ability) in ["flame-body", "magma-armor"]:

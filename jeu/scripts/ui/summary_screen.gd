@@ -118,10 +118,10 @@ func _info(p: Control, mon: Pokemon, d: Dictionary) -> void:
 	_row(p, 40, "Dresseur", mon.ot if mon.ot != "" else Game.player_name)
 	_row(p, 58, "Nature", Data.natures[mon.nature]["name"])
 	_row(p, 76, "Ball", Data.item_name(mon.ball))
-	_row(p, 94, "Points Exp.", str(mon.exp))
+	_row(p, 94, "Objet", Data.item_name(mon.held_item) if mon.held_item != "" else "Aucun")
 	_row(p, 112, "Niv. suivant", "%d pts" % mon.exp_to_next() if mon.level < 100 else "—")
 	_row(p, 130, "Bonheur", "%d / 255" % mon.happiness)
-	Kit.label(p, "TALENT : " + Data.ability_name(mon.ability), Vector2(10, 148), 14, Color("c04040"))
+	Kit.label(p, "TALENT : " + Data.ability_name(mon.ability) + (" (caché)" if mon.has_hidden_ability() else ""), Vector2(10, 148), 14, Color("c04040"))
 	var desc := Kit.label(p, "", Vector2(10, 166), 13)
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.size = Vector2(270, 50)

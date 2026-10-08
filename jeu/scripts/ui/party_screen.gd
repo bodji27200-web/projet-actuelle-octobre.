@@ -59,6 +59,17 @@ func _build() -> void:
 			Kit.label(p, "Il éclora en marchant.", Vector2(64, 30), 12, Color("707070"))
 			continue
 		Kit.name_line(p, mon, Vector2(64, 4), 15)
+		if mon.held_item != "":
+			var hi := TextureRect.new()
+			hi.position = Vector2(42, 34)
+			hi.size = Vector2(20, 20)
+			hi.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			hi.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			hi.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			Sprites.apply(hi, "item", mon.held_item, false, PixelArt.ball())
+			p.add_child(hi)
+		if mon.pokerus != 0:
+			Kit.label(p, "PKRS" if mon.pokerus > 0 else "☺", Vector2(176, 24), 11, Color("a040c0"), false)
 		Kit.label(p, "N.%d" % mon.level, Vector2(64, 24), 14)
 		Kit.status_tag(p, mon.status, Vector2(116, 28))
 		Kit.hp_bar(p, Vector2(64, 48), 140, float(mon.hp) / mon.max_hp())
@@ -126,11 +137,16 @@ func _choose() -> void:
 				await _summary()
 		_:
 			_busy = true
-			var c2: int = await Game.ui.choose(["RÉSUMÉ", "DÉPLACER", "RETOUR"], Vector2(330, 180))
+			var c2: int = await Game.ui.choose(["RÉSUMÉ", "OBJET", "DÉPLACER", "RETOUR"], Vector2(330, 160))
 			_busy = false
 			if c2 == 0:
 				await _summary()
 			elif c2 == 1:
+				_busy = true
+				await Events.held_item_menu(Game.party[_index])
+				_busy = false
+				_build()
+			elif c2 == 2:
 				_swap_from = _index
 				_msg.text = "Avec quel Pokémon échanger ?"
 				_build()

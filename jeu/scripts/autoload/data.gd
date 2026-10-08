@@ -42,6 +42,9 @@ var moves := {}
 var abilities := {}
 var items := {}
 var natures: Array = []
+## Méga-Gemme -> forme Méga ; Cristal Z -> type ou capacité exclusive.
+var mega_stones := {}
+var z_crystals := {}
 var characteristics: Array = []
 var exp_table := {}
 var type_names := {}
@@ -54,6 +57,10 @@ func _ready() -> void:
 	items = _load("items")
 	var misc: Dictionary = _load("misc")
 	natures = misc["natures"]
+	mega_stones = misc.get("mega_stones", {})
+	for k in mega_stones:
+		mega_stones[k] = int(mega_stones[k])
+	z_crystals = misc.get("z_crystals", {})
 	characteristics = misc.get("characteristics", [])
 	type_names = misc["types"]
 	exp_table = _int_keys(misc["exp"])

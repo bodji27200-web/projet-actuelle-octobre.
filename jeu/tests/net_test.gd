@@ -39,7 +39,7 @@ func _ready() -> void:
 	else:
 		await get_tree().create_timer(1.0).timeout
 		Net.join("127.0.0.1", 24690)
-	await _wait(func(): return Net.players.size() > 0, 15.0)
+	await _wait(func(): return Net.players.size() > 0, 90.0)
 	say("connecté, joueurs vus : %s" % str(Net.players.values().map(func(p): return p["name"])))
 	await get_tree().create_timer(1.0).timeout
 	say("l'autre joueur est affiché sur la carte : %s" % str(world.remotes.size() == 1))

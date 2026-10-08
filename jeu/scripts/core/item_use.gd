@@ -11,6 +11,13 @@ const CURE := {"antidote": ["psn", "tox"], "paralyze-heal": ["par"], "awakening"
 	"burn-heal": ["brn"], "ice-heal": ["frz"], "full-heal": ["psn", "tox", "par", "slp", "brn", "frz"],
 	"full-restore": ["psn", "tox", "par", "slp", "brn", "frz"]}
 const VITAMINS := {"hp-up": 0, "protein": 1, "iron": 2, "calcium": 3, "zinc": 4, "carbos": 5}
+## Baies utilisables hors combat : PV rendus (fraction des PV max si < 1).
+const BERRY_HEAL := {"oran-berry": 10, "sitrus-berry": 0.25, "figy-berry": 0.33, "wiki-berry": 0.33, "mago-berry": 0.33,
+	"aguav-berry": 0.33, "iapapa-berry": 0.33}
+const BERRY_CURE := {"cheri-berry": ["par"], "chesto-berry": ["slp"], "pecha-berry": ["psn", "tox"], "rawst-berry": ["brn"],
+	"aspear-berry": ["frz"], "lum-berry": ["par", "slp", "psn", "tox", "brn", "frz"]}
+## Bonbons Exp. : points d'expérience donnés.
+const EXP_CANDIES := {"exp-candy-xs": 100, "exp-candy-s": 800, "exp-candy-m": 3000, "exp-candy-l": 10000, "exp-candy-xl": 30000}
 ## Baies qui baissent les EV d'une stat de 10 (et rendent le Pokémon plus amical).
 const EV_BERRIES := {"pomeg-berry": 0, "kelpsy-berry": 1, "qualot-berry": 2, "hondew-berry": 3, "grepa-berry": 4, "tamato-berry": 5}
 ## Objets qui font évoluer quand on les utilise (pierres, Fil de Liaison, pommes, tasses...), calculés depuis les données.
@@ -47,9 +54,10 @@ static func is_mint(item: String) -> bool:
 	return item.ends_with("-mint")
 
 
-## Objets d'entraînement (vitamines, Baies, Aromates) : hors combat seulement.
+## Objets d'entraînement (vitamines, Baies, Aromates, Capsule Talent, Capsules d'Argent...) : hors combat seulement.
 static func field_only(item: String) -> bool:
-	return VITAMINS.has(item) or EV_BERRIES.has(item) or is_mint(item)
+	return VITAMINS.has(item) or EV_BERRIES.has(item) or is_mint(item) or EXP_CANDIES.has(item) \
+		or item in ["ability-capsule", "ability-patch", "bottle-cap", "gold-bottle-cap"]
 
 
 static func category(item: String) -> String:
@@ -71,15 +79,20 @@ static func category(item: String) -> String:
 	return "objets"
 
 
-## Faut-il choisir une capacité (Huile, PP Plus) ?
+## Faut-il choisir une capacité (Huile, PP Plus, Baie Mepo) ?
 static func needs_move(item: String) -> bool:
-	return PP_ITEMS.has(item)
+	return PP_ITEMS.has(item) or item == "leppa-berry"
+
+
+## Faut-il choisir une statistique (Capsule d'Argent : un IV au maximum) ?
+static func needs_stat(item: String) -> bool:
+	return item == "bottle-cap"
 
 
 ## Objet utilisable sur un Pokémon de l'équipe ?
 static func targets_pokemon(item: String) -> bool:
-	return HEAL.has(item) or CURE.has(item) or field_only(item) or is_evo_item(item) \
-		or PP_ITEMS.has(item) or item in ["revive", "max-revive", "elixir", "max-elixir", "rare-candy"] or is_tm(item)
+	return HEAL.has(item) or CURE.has(item) or field_only(item) or is_evo_item(item) or BERRY_HEAL.has(item) or BERRY_CURE.has(item) \
+		or PP_ITEMS.has(item) or item in ["revive", "max-revive", "elixir", "max-elixir", "rare-candy", "leppa-berry"] or is_tm(item)
 
 
 ## Applique l'objet. Renvoie le message, ou "" si l'objet n'a aucun effet (il n'est alors pas consommé).
@@ -129,6 +142,52 @@ static func apply(mon: Pokemon, item: String, move_index := -1) -> String:
 		mon.nature = nat
 		mon.recalc_stats()
 		msgs.append("%s hume l'Aromate... Sa nature devient %s !" % [n, Data.natures[nat]["name"]])
+	if BERRY_HEAL.has(item) and mon.hp < mon.max_hp():
+		var before2 := mon.hp
+		var v = BERRY_HEAL[item]
+		mon.hp = mini(mon.max_hp(), mon.hp + (int(v) if v is int else maxi(1, int(mon.max_hp() * v))))
+		msgs.append("%s récupère %d PV !" % [n, mon.hp - before2])
+	if BERRY_CURE.has(item) and BERRY_CURE[item].has(mon.status):
+		mon.status = ""
+		mon.sleep_turns = 0
+		msgs.append("%s est soigné !" % n)
+	if item == "leppa-berry" and move_index >= 0 and move_index < mon.moves.size():
+		var lm: Dictionary = mon.moves[move_index]
+		if lm["pp"] >= lm["max"]:
+			return ""
+		lm["pp"] = mini(lm["max"], lm["pp"] + 10)
+		msgs.append("Les PP de %s sont restaurés !" % Data.move_name(lm["id"]))
+	if item == "ability-capsule":
+		var abl: Array = mon.data()["abilities"]
+		if abl.size() < 2 or mon.has_hidden_ability():
+			return ""
+		mon.ability = abl[1] if mon.ability == abl[0] else abl[0]
+		msgs.append("Le talent de %s devient %s !" % [n, Data.ability_name(mon.ability)])
+	if item == "ability-patch":
+		var ha: int = mon.data().get("ha", 0)
+		if ha == 0 or mon.ability == ha:
+			return ""
+		mon.ability = ha
+		msgs.append("Le talent de %s devient %s, son talent caché !" % [n, Data.ability_name(ha)])
+	if item == "gold-bottle-cap":
+		if mon.level < 50 or mon.ivs.all(func(v): return v == 31):
+			return ""
+		mon.ivs = [31, 31, 31, 31, 31, 31]
+		mon.recalc_stats()
+		msgs.append("Entraînement Ultime ! Tous les IV de %s sont au maximum !" % n)
+	if item == "bottle-cap" and move_index >= 0 and move_index < 6:
+		if mon.level < 50 or mon.ivs[move_index] >= 31:
+			return ""
+		mon.ivs[move_index] = 31
+		mon.recalc_stats()
+		msgs.append("Entraînement Ultime ! L'IV %s de %s est au maximum !" % [Data.STAT_NAMES[move_index], n])
+	if EXP_CANDIES.has(item):
+		if mon.level >= 100:
+			return ""
+		var reached := mon.add_exp(EXP_CANDIES[item])
+		msgs.append("%s gagne %d Points Exp. !" % [n, EXP_CANDIES[item]])
+		if reached.size() > 0:
+			msgs.append("%s monte au niveau %d !" % [n, mon.level])
 	if item in ["elixir", "max-elixir"]:
 		var any := false
 		for m in mon.moves:

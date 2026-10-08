@@ -260,8 +260,13 @@ func host_coop_battle(enemy_parties: Array, wild: bool, trainers: Array, opts: D
 	send_state()
 	Audio.play_music(Events._battle_music(wild, trainers, opts))
 	await Game.ui.battle_intro()
-	var bopts := {"wild_double": wild and enemy_parties.size() > 1, "boss": opts.get("boss", false),
-		"player_names": [Game.player_name, guest_name]}
+	var bopts := Events.battle_opts(opts, wild, enemy_parties)
+	bopts["double"] = false
+	bopts["player_names"] = [Game.player_name, guest_name]
+	bopts["mega_owners"] = [Game.item_count("mega-ring") > 0, reply.get("mega", false)]
+	bopts["z_owners"] = [Game.item_count("z-ring") > 0, reply.get("zmove", false)]
+	bopts["mega"] = bopts["mega_owners"].has(true)
+	bopts["zmove"] = bopts["z_owners"].has(true)
 	var battle := Battle.new([Game.party, guest_party], enemy_parties, wild, trainers, bopts)
 	battle.player_name = Game.player_name
 	battle.cave = opts.get("cave", false)
@@ -349,7 +354,8 @@ func _coop_request(bid: int, setup: Dictionary) -> void:
 	if busy or Game.alive_count() == 0:
 		_coop_accept.rpc_id(pid, bid, {"ok": false})
 		return
-	_coop_accept.rpc_id(pid, bid, {"ok": true, "party": Game.party.map(func(m): return m.to_dict()), "name": Game.player_name, "exp_share": Game.flag("exp_share_on")})
+	_coop_accept.rpc_id(pid, bid, {"ok": true, "party": Game.party.map(func(m): return m.to_dict()), "name": Game.player_name, "exp_share": Game.flag("exp_share_on"),
+		"mega": Game.item_count("mega-ring") > 0, "zmove": Game.item_count("z-ring") > 0})
 	_join_coop.call_deferred(bid, pid, setup)
 
 
